@@ -1,0 +1,4 @@
+D:\SteamLibrary\steamapps\common\RimWorld\Assemblies\Werewolf.dll
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\Rim-of-Madness---Werewolves\Source\obj\Debug\Werewolf.csprojResolveAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\Rim-of-Madness---Werewolves\Source\obj\Debug\Werewolf.dll
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\Rim-of-Madness---Werewolves\Assemblies\Werewolf.dll

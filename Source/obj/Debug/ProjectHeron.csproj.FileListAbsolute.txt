@@ -1,0 +1,3 @@
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\ProjectHeron\Assemblies\ProjectHeron.dll
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\ProjectHeron\Source\obj\Debug\ProjectHeron.csprojResolveAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\ProjectHeron\Source\obj\Debug\ProjectHeron.dll

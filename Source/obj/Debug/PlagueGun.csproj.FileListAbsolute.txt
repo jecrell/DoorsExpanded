@@ -1,0 +1,3 @@
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\PlagueGun\Source\PlagueGun\PlagueGun\obj\Debug\PlagueGun.csprojResolveAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\PlagueGun\Assemblies\Plague.dll
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\PlagueGun\Source\PlagueGun\PlagueGun\obj\Debug\Plague.dll
