@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ProjectHeron
 {
-    public class Building_DoorCurtains : Building_Door
+    public class Building_DoorCurtains : Building_DoorExpanded
     {
 
     }

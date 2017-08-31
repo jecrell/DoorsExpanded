@@ -1,7 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
-	
-	
+
+
+
+	  <ThingDef ParentName="BuildingBase">
+			<defName>HeronInvisibleDoor</defName>
+			<label>invisible door</label>
+	    <thingClass>ProjectHeron.Building_DoorRegionHandler</thingClass>
+      <blueprintClass>Blueprint_Door</blueprintClass>
+			<category>Building</category>
+			<graphicData>
+				<texPath>BlankTex</texPath>
+				<graphicClass>Graphic_Single</graphicClass>
+				<damageData>
+					<enabled>false</enabled>
+				</damageData>
+			</graphicData>
+	    <altitudeLayer>FloorEmplacement</altitudeLayer>
+	    <fillPercent>1</fillPercent>
+	    <useHitPoints>false</useHitPoints>
+			<scatterableOnMapGen>false</scatterableOnMapGen>
+	    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
+	    <selectable>false</selectable>
+			<neverMultiSelect>true</neverMultiSelect>
+			<isAutoAttackableMapObject>false</isAutoAttackableMapObject>
+	    <tickerType>Normal</tickerType>
+	    <rotatable>false</rotatable>
+	    <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
+	    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
+	    <blockLight>false</blockLight>
+	    <drawerType>RealtimeOnly</drawerType>
+			<building>
+				<isInert>true</isInert>
+				<ignoreNeedsPower>true</ignoreNeedsPower>
+				<canPlaceOverWall>true</canPlaceOverWall>
+	    </building>
+	    <comps>
+	      <li Class="CompProperties_Forbiddable"/>
+	    </comps>
+			<placeWorkers>
+				<li>PlaceWorker_DoorLearnOpeningSpeed</li>
+			</placeWorkers>
+	  </ThingDef>
 
   <!--========================= Doors =============================-->
 
@@ -52,7 +92,7 @@
 		</placeWorkers>
   </ThingDef>
 
-	
+
   <ThingDef Name="BuildingBase" Abstract="True">
     <category>Building</category>
     <thingClass>Building</thingClass>

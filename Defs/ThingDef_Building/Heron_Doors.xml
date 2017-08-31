@@ -1,66 +1,167 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Buildings>
 
+  <!--
+   ██████   █████  ████████ ███████ ███████
+  ██       ██   ██    ██    ██      ██
+  ██   ███ ███████    ██    █████   ███████
+  ██    ██ ██   ██    ██    ██           ██
+   ██████  ██   ██    ██    ███████ ███████
+ -->
 
-  <!--========================= Doors =============================-->
-
-  <ThingDef ParentName="BuildingBase" Name="DoorBase" Abstract="True">
-    <thingClass>Building_Door</thingClass>
-    <blueprintClass>Blueprint_Door</blueprintClass>
-    <category>Building</category>
+  <ProjectHeron.DoorExpandedDef ParentName="HeronDoor">
+    <defName>PH_GateDoubleThick</defName>
+    <label>gate (1x2)</label>
+    <size>(2,1)</size>
+    <placeWorkers>
+      <li>JecsTools.PlaceWorker_Outline</li>
+    </placeWorkers>
     <blueprintGraphicData>
-      <texPath>Things/Building/Door/Door_Blueprint</texPath>
+      <texPath>Things/Building/Door/DoorDoubleThick_Blueprint</texPath>
     </blueprintGraphicData>
-    <altitudeLayer>DoorMoveable</altitudeLayer>
-    <fillPercent>1</fillPercent>
-    <useHitPoints>true</useHitPoints>
-    <stuffCategories>
-      <li>Metallic</li>
-      <li>Woody</li>
-      <li>Stony</li>
-    </stuffCategories>
-    <statBases>
-      <MaxHitPoints>250</MaxHitPoints>
-      <Flammability>1.0</Flammability>
-    </statBases>
-    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
-    <selectable>true</selectable>
-    <tickerType>Normal</tickerType>
-    <rotatable>false</rotatable>
-    <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
-    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-    <designationCategory>Structure</designationCategory>
-    <holdsRoof>true</holdsRoof>
-    <staticSunShadowHeight>1.0</staticSunShadowHeight>
-    <blockLight>true</blockLight>
-    <drawerType>RealtimeOnly</drawerType>
-    <building>
-			<isInert>true</isInert>
-			<ignoreNeedsPower>true</ignoreNeedsPower>
-			<canPlaceOverWall>true</canPlaceOverWall>
-      <soundDoorOpenPowered>DoorOpenPowered</soundDoorOpenPowered>
-      <soundDoorClosePowered>DoorClosePowered</soundDoorClosePowered>
-      <soundDoorOpenManual>DoorOpenManual</soundDoorOpenManual>
-      <soundDoorCloseManual>DoorCloseManual</soundDoorCloseManual>
-    </building>
-    <comps>
-      <li Class="CompProperties_Forbiddable"/>
-    </comps>
-		<placeWorkers>
-			<li>PlaceWorker_DoorLearnOpeningSpeed</li>
-		</placeWorkers>
+    <uiIconPath>Things/Building/Door/Gate_MenuUI</uiIconPath>
+    <graphicData>
+      <texPath>Things/Building/Door/GateDoubleThick_Mover</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <drawSize>(2,2)</drawSize>
+      <damageData>
+        <!--  no damage marks because they don't move with the door
+            <rect>(0,0.12,1,0.76)</rect>-->
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+    <doorSwing>true</doorSwing>
+    <fixedPerspective>true</fixedPerspective>
+  </ProjectHeron.DoorExpandedDef>
+
+  <!--
+  ██████  ██       █████  ███████ ████████     ██████   ██████   ██████  ██████  ███████
+  ██   ██ ██      ██   ██ ██         ██        ██   ██ ██    ██ ██    ██ ██   ██ ██
+  ██████  ██      ███████ ███████    ██        ██   ██ ██    ██ ██    ██ ██████  ███████
+  ██   ██ ██      ██   ██      ██    ██        ██   ██ ██    ██ ██    ██ ██   ██      ██
+  ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
+  -->
+
+  <ProjectHeron.DoorExpandedDef ParentName="HeronDoor">
+    <defName>PH_DoorThickBlastDoor</defName>
+    <label>blast door (thick)</label>
+    <size>(3,2)</size>
+    <blueprintGraphicData>
+      <texPath>Things/Building/Door/DoorTripleThick_Blueprint</texPath>
+    </blueprintGraphicData>
+    <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
+    <graphicData>
+      <texPath>Things/Building/Door/DoorBlastDoor_Mover</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <drawSize>(3,2)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+    <doorAsync>
+      <texPath>Things/Building/Door/DoorBlastDoor_MoverAsync</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <drawSize>(3,2)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </doorAsync>
+    <doorFrame>
+      <texPath>Things/Building/Door/DoorBlastDoorFrame</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <drawSize>(3,2)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </doorFrame>
+    <doorSwing>false</doorSwing>
+    <fixedPerspective>true</fixedPerspective>
+  </ProjectHeron.DoorExpandedDef>
+
+  <!--
+    ██████   ██████   ██████  ██████  ███████
+    ██   ██ ██    ██ ██    ██ ██   ██ ██
+    ██   ██ ██    ██ ██    ██ ██████  ███████
+    ██   ██ ██    ██ ██    ██ ██   ██      ██
+    ██████   ██████   ██████  ██   ██ ███████
+  -->
+
+  <ThingDef ParentName="HeronDoor">
+    <defName>PH_DoorTripleThick</defName>
+    <label>door (2x3)</label>
+    <size>(3,2)</size>
+    <blueprintGraphicData>
+      <texPath>Things/Building/Door/DoorTripleThick_Blueprint</texPath>
+    </blueprintGraphicData>
+    <graphicData>
+      <texPath>Things/Building/Door/DoorTripleThick_Mover</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(3,2)</drawSize>
+      <damageData>
+        <!--  no damage marks because they don't move with the door
+          <rect>(0,0.12,1,0.76)</rect>-->
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
   </ThingDef>
 
-  <ThingDef ParentName="DoorBase">
-    <defName>Door</defName>
-    <label>door</label>
+  <ThingDef ParentName="HeronDoor">
+    <defName>PH_DoorDoubleThick</defName>
+    <label>door (2x2)</label>
+    <size>(2,2)</size>
+    <blueprintGraphicData>
+      <texPath>Things/Building/Door/DoorDoubleThick_Blueprint</texPath>
+    </blueprintGraphicData>
+    <uiIconPath>Things/Building/Door/DoorSimple_MenuIcon</uiIconPath>
+    <graphicData>
+      <texPath>Things/Building/Door/DoorDoubleThick_Mover</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(2,2)</drawSize>
+      <damageData>
+        <!--  no damage marks because they don't move with the door
+        <rect>(0,0.12,1,0.76)</rect>-->
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+  </ThingDef>
+
+  <ThingDef ParentName="HeronDoor">
+    <defName>PH_DoorTriple</defName>
+    <label>door (1x3)</label>
+    <size>(3,1)</size>
+    <blueprintGraphicData>
+      <texPath>Things/Building/Door/DoorTriple_Blueprint</texPath>
+    </blueprintGraphicData>
+    <graphicData>
+      <texPath>Things/Building/Door/DoorTriple_Mover</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(3,1)</drawSize>
+      <damageData>
+        <!--  no damage marks because they don't move with the door
+        <rect>(0,0.12,1,0.76)</rect>-->
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+  </ThingDef>
+
+  <ThingDef Name="HeronDoor" ParentName="DoorBase">
+    <defName>PH_DoorDouble</defName>
+    <label>door (1x2)</label>
+    <thingClass>ProjectHeron.Building_DoorExpanded</thingClass>
+    <blueprintClass>Blueprint_Build</blueprintClass>
+    <blueprintGraphicData>
+      <texPath>Things/Building/Door/DoorDouble_Blueprint</texPath>
+    </blueprintGraphicData>
     <description>Divides rooms. Must be manually opened and closed, which slows people down.</description>
     <statBases>
       <WorkToBuild>850</WorkToBuild>
     </statBases>
+    <size>(2,1)</size>
+    <rotatable>true</rotatable>
     <graphicData>
-      <texPath>Things/Building/Door/DoorSimple_Mover</texPath>
+      <texPath>Things/Building/Door/DoorDouble_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(2,1)</drawSize>
       <damageData>
         <!--  no damage marks because they don't move with the door
         <rect>(0,0.12,1,0.76)</rect>-->
@@ -73,17 +174,19 @@
   </ThingDef>
 
   <ThingDef ParentName="DoorBase">
-    <defName>Autodoor</defName>
+    <defName>HeronAutodoor</defName>
     <label>autodoor</label>
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
     <statBases>
       <WorkToBuild>1100</WorkToBuild>
     </statBases>
+    <size>(2,1)</size>
     <graphicData>
       <texPath>Things/Building/Door/Autodoor_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(2,1)</drawSize>
       <damageData>
-      <!--  no damage marks because they don't move with the door
+        <!--  no damage marks because they don't move with the door
         <rect>(0,0.12,1,0.76)</rect>-->
         <enabled>false</enabled>
       </damageData>
