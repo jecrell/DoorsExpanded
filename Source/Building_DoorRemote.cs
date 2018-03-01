@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ProjectHeron
+namespace DoorsExpanded
 {
     public class Building_DoorRemote : Building_Door
     {

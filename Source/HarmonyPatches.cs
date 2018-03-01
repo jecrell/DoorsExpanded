@@ -8,7 +8,7 @@ using UnityEngine;
 using Verse;
 using Verse.AI;
 
-namespace ProjectHeron
+namespace DoorsExpanded
 {
     [StaticConstructorOnStartup]
     static class HarmonyPatches
@@ -23,7 +23,7 @@ namespace ProjectHeron
                 nameof(InvisDoorTryClose)), null);
             harmony.Patch(AccessTools.Method(typeof(Building_Door), "Notify_PawnApproaching"), null, new HarmonyMethod(typeof(HarmonyPatches),
                nameof(InvisDoorNotifyApproaching)), null);
-            harmony.Patch(AccessTools.Method(typeof(Building_Door), "StartManualCloseBy"), null, new HarmonyMethod(typeof(HarmonyPatches),
+            harmony.Patch(AccessTools.Method(typeof(Building_Door), "StartManualCloseBy"), new HarmonyMethod(typeof(HarmonyPatches),
                 nameof(InvisDoorManualClose)), null);
             harmony.Patch(AccessTools.Method(typeof(Building_Door), "StartManualOpenBy"), null, new HarmonyMethod(typeof(HarmonyPatches),
                 nameof(InvisDoorManualOpen)), null);
@@ -31,6 +31,67 @@ namespace ProjectHeron
             //    nameof(HeronDoorIsDoor)), null);
             harmony.Patch(AccessTools.Method(typeof(GhostDrawer), "DrawGhostThing"), new HarmonyMethod(typeof(HarmonyPatches),
                 nameof(HeronDoorGhostHandler)), null);
+            harmony.Patch(AccessTools.Method(typeof(GenSpawn), "SpawnBuildingAsPossible"), new HarmonyMethod(typeof(HarmonyPatches),
+                nameof(HeronSpawnBuildingAsPossible)), null);
+            harmony.Patch(AccessTools.Method(typeof(GenSpawn), "WipeExistingThings"), new HarmonyMethod(typeof(HarmonyPatches),
+                nameof(WipeExistingThings)), null);
+            harmony.Patch(AccessTools.Method(typeof(GenSpawn), "SpawningWipes"), null, new HarmonyMethod(typeof(HarmonyPatches),
+                nameof(InvisDoorsDontWipe)), null);
+            harmony.Patch(AccessTools.Method(typeof(GenPath), "ShouldNotEnterCell"), null, new HarmonyMethod(typeof(HarmonyPatches),
+                nameof(ShouldNotEnterCellInvisDoors)), null);
+        }
+        
+        public static void ShouldNotEnterCellInvisDoors(Pawn pawn, Map map, IntVec3 dest, ref bool __result )
+        {
+            if (__result)
+                return;
+            Building edifice = dest.GetEdifice(map);
+            if (edifice != null)
+            {
+                Building_DoorExpanded building_doorEx = edifice as Building_DoorExpanded;
+                if (building_doorEx != null)
+                {
+                    if (building_doorEx.IsForbidden(pawn))
+                    {
+                        __result = true;
+                    }
+                    if (!building_doorEx.PawnCanOpen(pawn))
+                    {
+                        __result = true;
+                    }
+                }
+            }
+        }
+        
+        public static bool WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map, DestroyMode mode)
+        {
+            //Log.Message("1");
+            if (thingDef == HeronDefOf.HeronInvisibleDoor ||
+                thingDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
+                return false;
+            }
+            return true; 
+        }
+
+        //GenSpawn
+        public static void InvisDoorsDontWipe(BuildableDef newEntDef, BuildableDef oldEntDef, ref bool __result)
+        {
+            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName || oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+                __result = false;  //false, meaning, don't wipe the old thing when you spawn
+        }
+
+        // Verse.GenSpawn
+        public static bool HeronSpawnBuildingAsPossible(Building building, Map map, bool respawningAfterLoad = false)
+        {
+            //Log.Message("1");
+            if (building is Building_DoorRegionHandler ||
+                building.def == HeronDefOf.HeronInvisibleDoor ||
+                building.def.thingClass == typeof(Building_DoorRegionHandler)) 
+            {
+                return false;
+            }
+            return true;
         }
 
         // Verse.Graphic
@@ -121,12 +182,14 @@ namespace ProjectHeron
         }
 
         // RimWorld.Building_Door
-        public static void InvisDoorManualClose(Building_Door __instance, Pawn closer)
+        public static bool InvisDoorManualClose(Building_Door __instance, Pawn closer)
         {
             if (__instance is Building_DoorRegionHandler w)
             {
-                w.ParentDoor.StartManualCloseBy(closer);
+                //w.ParentDoor.StartManualCloseBy(closer);
+                return false;
             }
+            return true;
 
         }
 
@@ -135,22 +198,24 @@ namespace ProjectHeron
         {
             if (__instance is Building_DoorRegionHandler w)
             {
-                w.ParentDoor.StartManualOpenBy(opener);
-                if (w.ParentDoor.invisDoors.FindAll(x => x != __instance) is List<Building_DoorRegionHandler> otherDoors && !otherDoors.NullOrEmpty())
+                if (w.ParentDoor.PawnCanOpen(opener))
                 {
-                    foreach (Building_DoorRegionHandler door in otherDoors)
+                    w.ParentDoor.StartManualOpenBy(opener);
+                    if (w.ParentDoor.InvisDoors.ToList().FindAll(x => x != __instance) is List<Building_DoorRegionHandler> otherDoors && !otherDoors.NullOrEmpty())
                     {
-                        if (!door.Open)
+                        foreach (Building_DoorRegionHandler door in otherDoors)
                         {
-                            int math = (int)(1200 * Math.Max(w.ParentDoor.Graphic.drawSize.x, w.ParentDoor.Graphic.drawSize.y));
-                            //this.ticksUntilClose = ticksToClose;
-                            Traverse.Create(door).Field("ticksUntilClose").SetValue(math);
-                            //this.openInt = true;
-                            Traverse.Create(door).Field("openInt").SetValue(true);
+                            if (!door.Open)
+                            {
+                                int math = (int)(1200 * Math.Max(w.ParentDoor.Graphic.drawSize.x, w.ParentDoor.Graphic.drawSize.y));
+                                //this.ticksUntilClose = ticksToClose;
+                                Traverse.Create(door).Field("ticksUntilClose").SetValue(math);
+                                //this.openInt = true;
+                                Traverse.Create(door).Field("openInt").SetValue(true);
+                            }
                         }
-                    }
+                    }   
                 }
-
             }
         }
 

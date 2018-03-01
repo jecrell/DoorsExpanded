@@ -5,7 +5,7 @@ using System.Text;
 using Verse;
 using RimWorld;
 
-namespace ProjectHeron
+namespace DoorsExpanded
 {
     [DefOf]
     public class HeronDefOf

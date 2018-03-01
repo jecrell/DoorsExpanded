@@ -5,7 +5,7 @@ using System.Text;
 using RimWorld;
 using Verse;
 
-namespace ProjectHeron
+namespace DoorsExpanded
 {
     public class Building_DoorLockable : Building_Door
     {

@@ -1,3 +1,12 @@
 D:\SteamLibrary\steamapps\common\RimWorld\Mods\ProjectHeron\Assemblies\ProjectHeron.dll
-D:\SteamLibrary\steamapps\common\RimWorld\Mods\ProjectHeron\Source\obj\Debug\ProjectHeron.csprojResolveAssemblyReference.cache
 D:\SteamLibrary\steamapps\common\RimWorld\Mods\ProjectHeron\Source\obj\Debug\ProjectHeron.dll
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\ProjectHeron\Source\obj\Debug\ProjectHeron.csprojResolveAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\Doors Expanded\Assemblies\ProjectHeron.dll
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\Doors Expanded\Source\obj\Debug\ProjectHeron.csprojResolveAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\RimWorld\Mods\Doors Expanded\Source\obj\Debug\ProjectHeron.dll
+D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors Expanded\Assemblies\ProjectHeron.dll
+D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors Expanded\Source\obj\Debug\ProjectHeron.csprojResolveAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors Expanded\Source\obj\Debug\ProjectHeron.dll
+D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors-Expanded\Source\obj\Debug\ProjectHeron.csprojResolveAssemblyReference.cache
+D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors-Expanded\Assemblies\DoorsExpanded.dll
+D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors-Expanded\Source\obj\Debug\DoorsExpanded.dll

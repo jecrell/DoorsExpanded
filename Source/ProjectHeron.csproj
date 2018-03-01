@@ -7,8 +7,8 @@
     <ProjectGuid>{3A4FB893-1148-4E16-B548-867647DF1724}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ProjectHeron</RootNamespace>
-    <AssemblyName>ProjectHeron</AssemblyName>
+    <RootNamespace>DoorsExpanded</RootNamespace>
+    <AssemblyName>DoorsExpanded</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -33,15 +33,6 @@
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>..\..\..\Harmony1091\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="0Reloader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\0Reloader.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="AbilityUser">
-      <HintPath>..\..\JecsTools\Assemblies\AbilityUser.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\RimWorldWin_Data\Managed\Assembly-CSharp.dll</HintPath>

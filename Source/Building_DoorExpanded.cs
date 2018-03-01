@@ -10,10 +10,10 @@ using Verse.AI.Group;
 using Verse.AI;
 using System.Diagnostics;
 using Harmony;
-using Reloader;
+//using Reloader;
 
 
-namespace ProjectHeron
+namespace DoorsExpanded
 {
     /// <summary>
     /// 
@@ -30,27 +30,38 @@ namespace ProjectHeron
     /// </summary>
     public class Building_DoorExpanded : Building
     {
-        public List<Building_DoorRegionHandler> invisDoors;
+        private List<Building_DoorRegionHandler> invisDoors;
+        
+        public List<Building_DoorRegionHandler> InvisDoors => invisDoors ?? (invisDoors = new List<Building_DoorRegionHandler>());
 
+        public List<Pawn> crossingPawns;
+        
         public DoorExpandedDef Def => this.def as DoorExpandedDef;
+
+        public void SpawnDoors()
+        {
+            InvisDoors.Clear();
+            foreach (IntVec3 c in this.OccupiedRect().Cells)
+            {
+                Building_DoorRegionHandler thing = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
+                thing.ParentDoor = this;
+                GenSpawn.Spawn(thing, c, MapHeld);
+                thing.SetFaction(this.Faction);
+                AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(thing, true);
+                InvisDoors.Add(thing);
+            }
+            this.ClearReachabilityCache(this.MapHeld);
+            if (this.BlockedOpenMomentary)
+                this.DoorOpen(60);
+        }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
-            invisDoors = new List<Building_DoorRegionHandler>();
-            foreach (IntVec3 c in this.OccupiedRect().Cells)
-            {
-                Building_DoorRegionHandler thing = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor, null);
-                thing.ParentDoor = this;
-                GenSpawn.Spawn(thing, c, map);
-                invisDoors.Add(thing as Building_DoorRegionHandler);
-            }
+            crossingPawns = new List<Pawn>();
+
             base.SpawnSetup(map, respawningAfterLoad);
             this.powerComp = base.GetComp<CompPowerTrader>();
-            this.ClearReachabilityCache(map);
-            if (this.BlockedOpenMomentary)
-            {
-                this.DoorOpen(60);
-            }
+            
         }
 
         public override bool BlocksPawn(Pawn p)
@@ -68,50 +79,67 @@ namespace ProjectHeron
 
         public override void DeSpawn()
         {
-            if (!invisDoors.NullOrEmpty())
+            if (invisDoors?.Count > 0)
             {
                 foreach (Building_DoorRegionHandler door in invisDoors)
                 {
                     door.Destroy(DestroyMode.Vanish);
                 }
             }
-            invisDoors.Clear();
-            invisDoors = null;
             base.DeSpawn();
         }
         
-        [ReloadMethod]
+        //[ReloadMethod]
         public override void Draw()
         {
             float num = Mathf.Clamp01((float)this.visualTicksOpen / (float)this.VisualTicksToOpen);
             float num2 = this.def.Size.x;
             float d = (0f + 0.45f * num) * num2;
+            Rot4 rotation = base.Rotation;
+            if (!Def.rotatesSouth && this.Rotation == Rot4.South) rotation = Rot4.North;
             for (int i = 0; i < 2; i++)
             {
                 bool flipped = (i != 0) ? true : false;
                 Mesh mesh;
                 Matrix4x4 matrix;
-                if (Def.doorSwing)
-                    DrawSwingParams(Def, this.DrawPos, this.Rotation, out mesh, out matrix, d, flipped);
-                else
-                    DrawParams(Def, this.DrawPos, this.Rotation, out mesh, out matrix, d, flipped);
 
-                Material matToDraw = (!flipped && Def.doorAsync is GraphicData dA) ? dA.GraphicColoredFor(this).MatAt(base.Rotation) : this.Graphic.MatAt(base.Rotation);
+                switch (Def.doorType)
+                {
+                    case DoorType.Stretch:
+                        DrawStretchParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped);
+                        break;
+                    case DoorType.DoubleSwing:
+                        DrawDoubleSwingParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped);
+                        break;
+                    case DoorType.Standard:
+                    default:
+                        DrawParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped);
+                        break;
+                }
+                Material matToDraw = (!flipped && Def.doorAsync is GraphicData dA) ? dA.GraphicColoredFor(this).MatAt(rotation) : this.Graphic.MatAt(rotation);
                 Graphics.DrawMesh(mesh, matrix, matToDraw, 0);
-                
+                if (Def.singleDoor)
+                    break;
             }
             if (Def.doorFrame is GraphicData f)
             {
                 Mesh fMesh;
                 Matrix4x4 fMatrix;
-                DrawFrameParams(Def, this.DrawPos, this.Rotation, out fMesh, out fMatrix);
-                Graphics.DrawMesh(MeshPool.plane10, fMatrix, Def.doorFrame.GraphicColoredFor(this).MatAt(base.Rotation), 0);
+                DrawFrameParams(Def, this.DrawPos, rotation, false, out fMesh, out fMatrix);
+
+                //Rot4 currRot = (Def.fixedPerspective && this.Rotation == Rot4.West) ? Rot4.East : base.Rotation;
+                Graphics.DrawMesh(fMesh, fMatrix, Def.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
+                if (Def.doorFrameSplit is GraphicData ff)
+                { 
+                    DrawFrameParams(Def, this.DrawPos, rotation, true, out fMesh, out fMatrix);
+                    Graphics.DrawMesh(fMesh, fMatrix, Def.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
+                }
             }
             base.Comps_PostDraw();
         }
-
-        [ReloadMethod]
-        public static void DrawFrameParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix)
+        
+        //[ReloadMethod]
+        public void DrawFrameParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, bool split, out Mesh mesh, out Matrix4x4 matrix)
         {
             float d = (0f + 0.45f * 1) * thingDef.Size.x;
             bool verticalRotation = rotation.IsHorizontal;
@@ -119,26 +147,52 @@ namespace ProjectHeron
             rotationVector = new Vector3(-1f, 0f, 0f);
             mesh = MeshPool.plane10;
 
+
+            if (thingDef.doorFrameSplit != null)
+            {
+                if (rotation == Rot4.West)
+                {
+                    //;
+                    rotationVector.x = 1f;
+                    //rotationVector.z *= -1f;
+                    //rotationVector.y *= -1f;
+                }
+            }
+
             Quaternion rotQuat = rotation.AsQuat;
             rotationVector = rotQuat * rotationVector;
 
+
             Vector3 graphicVector = drawPos;
-            graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.MoteOverhead);
+            graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.Blueprint);
+            if (rotation == Rot4.North || rotation == Rot4.South) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.PawnState);
             if (!verticalRotation) graphicVector.x += d;
-            if (rotation == Rot4.East) graphicVector.z -= d;
-            if (rotation == Rot4.West) graphicVector.z += d;
+            if (rotation == Rot4.East) { graphicVector.z -= d; if (split) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable); }
+            if (rotation == Rot4.West) { graphicVector.z += d; if (split) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable); }
+
+
             graphicVector += rotationVector * d;
+
 
             float persMod = (thingDef.fixedPerspective) ? 2f : 1f;
             Vector3 scaleVector = (verticalRotation) ?
                 new Vector3(thingDef.doorFrame.drawSize.x * persMod, 1f, thingDef.doorFrame.drawSize.y * persMod) :
                 new Vector3(thingDef.doorFrame.drawSize.x, 1f, thingDef.doorFrame.drawSize.y);
 
+            if (thingDef.doorFrameSplit != null)
+            {
+                if (rotation == Rot4.West)
+                {
+                    rotQuat = Quaternion.Euler(0, 270, 0); //new Quaternion(0, 0.7f, 0, -0.7f);// Euler(0, 270, 0);
+                    graphicVector.z -= 2.7f;
+                    mesh = MeshPool.plane10Flip;
+                }
+            }
+
             matrix = default(Matrix4x4);
             matrix.SetTRS(graphicVector, rotQuat, scaleVector);
         }
-
-        [ReloadMethod]
+        
         public static void DrawParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
         {
             bool verticalRotation = rotation.IsHorizontal;
@@ -173,8 +227,42 @@ namespace ProjectHeron
             matrix.SetTRS(graphicVector, rotQuat, scaleVector);
         }
 
-        [ReloadMethod]
-        public static void DrawSwingParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+        //[ReloadMethod]
+        public void DrawStretchParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+        {
+            base.Rotation = Building_Door.DoorRotationAt(base.Position, base.Map);
+            bool verticalRotation = base.Rotation.IsHorizontal;
+            Vector3 rotationVector = default(Vector3);
+            if (!flipped)
+            {
+                rotationVector = new Vector3(0f, 0f, -1f);
+                mesh = MeshPool.plane10;
+            }
+            else
+            {
+                rotationVector = new Vector3(0f, 0f, 1f);
+                mesh = MeshPool.plane10Flip;
+            }
+            rotation.Rotate(RotationDirection.Clockwise);
+            rotationVector = rotation.AsQuat * rotationVector;
+            
+            Vector3 graphicVector = drawPos;
+            graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
+            graphicVector += rotationVector * (mod * 1.15f);
+
+            //Vector3 scaleVector = new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
+            float persMod = (thingDef.fixedPerspective) ? 2f : 1f;
+            Vector3 scaleVector = (verticalRotation) ?
+                new Vector3((thingDef.graphicData.drawSize.x * persMod)- mod * 1.3f, 1f, thingDef.graphicData.drawSize.y * persMod) :
+                new Vector3((thingDef.graphicData.drawSize.x)- mod * 1.3f, 1f, thingDef.graphicData.drawSize.y);
+
+
+            matrix = default(Matrix4x4);
+            matrix.SetTRS(graphicVector, base.Rotation.AsQuat, scaleVector);
+        }
+
+
+        public static void DrawDoubleSwingParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
         {
             bool verticalRotation = rotation.IsHorizontal;
             rotation = (rotation == Rot4.South) ? Rot4.North : rotation;
@@ -242,7 +330,8 @@ namespace ProjectHeron
         {
             get
             {
-                return !this.DoorPowerOn || this.TicksToOpenNow > 20;
+                return this.TicksToOpenNow > 20;
+                //return !this.DoorPowerOn || this.TicksToOpenNow > 20;
             }
         }
 
@@ -251,19 +340,41 @@ namespace ProjectHeron
         public virtual bool PawnCanOpen(Pawn p)
         {
             Lord lord = p.GetLord();
-            return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || base.Faction == null || GenAI.MachinesLike(base.Faction, p);
+            return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
+                   (p.IsWildMan() && !p.mindState.wildManEverReachedOutside) || base.Faction == null || 
+                   (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
         }
 
 
         // RimWorld.Building_Door
         public void Notify_PawnApproaching(Pawn p)
         {
+            //Log.Message("PawnPawn!");
+            if (crossingPawns.Contains(p)) return;
+            //Log.Message("PawnPawn!2");
+            //Log.Message("PawnPawn!3");
+
+            if (!p.HostileTo(this))
+            {
+                this.FriendlyTouched();
+            }
+            
             if (this.PawnCanOpen(p))
             {
+
+                //base.Map.fogGrid.Notify_PawnEnteringDoor(this, p);
+                crossingPawns.Add(p);
+
+                //Log.Message("PawnPawn!4");
+
                 //base.Map.fogGrid.Notify_PawnEnteringDoor(this, p);
                 if (!this.SlowsPawns)
                 {
+                    //Log.Message("PawnPawn!5");
+
                     this.DoorOpen(300);
+                    //Log.Message("PawnPawn!6");
+
                 }
             }
         }
@@ -282,6 +393,11 @@ namespace ProjectHeron
                 else
                 {
                     this.def.building.soundDoorOpenManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+                }
+                foreach (Building_DoorRegionHandler door in invisDoors)
+                {
+                    door.OpenMe(ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2);
+                    //AccessTools.Method(typeof(Building_Door), "DoorOpen").Invoke(door, new object[] { ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2});
                 }
             }
         }
@@ -362,6 +478,8 @@ namespace ProjectHeron
                 return this.powerComp != null && this.powerComp.PowerOn;
             }
         }
+        
+       
 
         public override void PostMake()
         {
@@ -378,6 +496,7 @@ namespace ProjectHeron
                 {
                     num *= 0.25f;
                 }
+                num *= Def.doorOpenSpeedRate;
                 return Mathf.RoundToInt(num);
             }
         }
@@ -404,9 +523,34 @@ namespace ProjectHeron
             this.freePassageWhenClearedReachabilityCache = this.FreePassage;
         }
 
+        List<Pawn> temp = new List<Pawn>();
         public override void Tick()
         {
             base.Tick();
+            if (!this.Spawned || this.DestroyedOrNull())
+                return;
+            if (this.invisDoors.NullOrEmpty())
+            {
+                this.SpawnDoors();
+            }
+
+            int closedTempLeakRate = Def?.tempLeakRate ?? 375;
+            if (crossingPawns.Count > 0)
+            {
+                temp.Clear();
+                temp = new List<Pawn>(crossingPawns);
+                foreach (Pawn p in temp)
+                {
+                    if (!p.PositionHeld.IsInside(this))
+                    {
+                        crossingPawns.Remove(p);
+                    }
+                }
+            }
+            else
+            {
+                this.DoorTryClose();
+            }
             if (this.FreePassage != this.freePassageWhenClearedReachabilityCache)
             {
                 this.ClearReachabilityCache(base.Map);
@@ -417,7 +561,7 @@ namespace ProjectHeron
                 {
                     this.visualTicksOpen--;
                 }
-                if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % 375 == 0)
+                if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
                 {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, false);
                 }
@@ -430,22 +574,29 @@ namespace ProjectHeron
                 }
                 if (!this.holdOpenInt)
                 {
-                    if (base.Map.thingGrid.CellContains(base.Position, ThingCategory.Pawn))
+                    bool isPawnPresent = false;
+                    foreach (var door in invisDoors)
                     {
-                        this.ticksUntilClose = 60;
-                        
+                        if (!base.Map.thingGrid.CellContains(door.PositionHeld, ThingCategory.Pawn)) continue;
+                        door.OpenValue = true;
+                        door.TicksUntilClose = 60;
+                        isPawnPresent = true;
                     }
-                    else
+                    if (!isPawnPresent)
                     {
                         this.ticksUntilClose--;
                         if (this.ticksUntilClose <= 0 && this.CanCloseAutomatically)
                         {
                             this.DoorTryClose();
-                            foreach (Building_DoorRegionHandler door in invisDoors)
+                            foreach (var door in invisDoors)
                             {
                                 AccessTools.Method(typeof(Building_Door), "DoorTryClose").Invoke(door, null);
                             }
                         }
+                    }
+                    else
+                    {
+                        this.ticksUntilClose = 60;
                     }
                 }
                 if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % 22 == 0)
@@ -456,30 +607,16 @@ namespace ProjectHeron
         }
 
 
-        public bool BlockedOpenMomentary
-        {
-            get
-            {
-                List<Thing> thingList = base.Position.GetThingList(base.Map);
-                for (int i = 0; i < thingList.Count; i++)
-                {
-                    Thing thing = thingList[i];
-                    if (thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Pawn)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }
+        public bool BlockedOpenMomentary => !InvisDoors.NullOrEmpty() && Enumerable.Any(InvisDoors, r => r.BlockedOpenMomentary);
 
         public void DoorTryClose()
         {
-            if (this.holdOpenInt || this.BlockedOpenMomentary)
+            if (!this.openInt || holdOpenInt || this.BlockedOpenMomentary || FriendlyTouchedRecently)
             {
                 return;
             }
-            foreach (Building_DoorRegionHandler handler in invisDoors)
+         
+            foreach (Building_DoorRegionHandler handler in InvisDoors)
             {
                 if (handler.Open) AccessTools.Field(typeof(Building_Door), "openInt").SetValue(handler, false); //AccessTools.Method(typeof(Building_Door), "DoorTryClose").Invoke(handler, null);
             }
@@ -497,6 +634,7 @@ namespace ProjectHeron
         // RimWorld.Building_Door
         public void StartManualOpenBy(Pawn opener)
         {
+            if (PawnCanOpen(opener))
             this.DoorOpen(60);
         }
 
@@ -527,18 +665,21 @@ namespace ProjectHeron
                         this.holdOpenInt = !this.holdOpenInt;
                     }
                 };
-                yield return new Command_Toggle
+                if (DebugSettings.godMode)
                 {
-                    defaultLabel = "openInt".Translate(),
-                    defaultDesc = "debug".Translate(),
-                    hotKey = KeyBindingDefOf.Misc3,
-                    icon = TexCommand.HoldOpen,
-                    isActive = (() => this.openInt),
-                    toggleAction = delegate
+                    yield return new Command_Toggle
                     {
-                        this.openInt = !this.openInt;
-                    }
-                };
+                        defaultLabel = "DEV: openInt",
+                        defaultDesc = "debug".Translate(),
+                        hotKey = KeyBindingDefOf.Misc3,
+                        icon = TexCommand.HoldOpen,
+                        isActive = (() => this.openInt),
+                        toggleAction = delegate
+                        {
+                            this.openInt = !this.openInt;
+                        }
+                    };   
+                }
             }
         }
 
@@ -546,14 +687,37 @@ namespace ProjectHeron
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look<Building_DoorRegionHandler>(ref this.invisDoors, "invisDoors", LookMode.Reference);
+            //Scribe_Collections.Look<Building_DoorRegionHandler>(ref this.invisDoors, "invisDoors", LookMode.Reference);
+            Scribe_Collections.Look<Pawn>(ref this.crossingPawns, "crossingPawns", LookMode.Reference);
             Scribe_Values.Look<bool>(ref this.openInt, "open", false, false);
             Scribe_Values.Look<bool>(ref this.holdOpenInt, "holdOpen", false, false);
             Scribe_Values.Look<int>(ref this.lastFriendlyTouchTick, "lastFriendlyTouchTick", 0, false);
-            if (Scribe.mode == LoadSaveMode.LoadingVars && this.openInt)
+/*            if (Scribe.mode == LoadSaveMode.Saving)
             {
-                this.visualTicksOpen = this.VisualTicksToOpen;
+                if (this.invisDoors != null && this.invisDoors?.Count > 0)
+                {
+                    foreach (Building_DoorRegionHandler invisDoor in invisDoors)
+                    {
+                        invisDoor.Destroy(DestroyMode.Vanish);
+                    }
+                    invisDoors = null;
+                }
             }
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (this.invisDoors != null && this.invisDoors?.Count > 0)
+                {
+                    foreach (Building_DoorRegionHandler invisDoor in invisDoors)
+                    {
+                        invisDoor.Destroy(DestroyMode.Vanish);
+                    }
+                    invisDoors = null;
+                    this.SpawnDoors();
+                }
+
+                if (this.openInt)
+                    this.visualTicksOpen = this.VisualTicksToOpen;
+            }*/
         }
         #endregion Building_Door Copy
         
