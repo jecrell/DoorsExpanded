@@ -9,6 +9,7 @@ using Verse.Sound;
 using Verse.AI.Group;
 using Verse.AI;
 using System.Diagnostics;
+using System.Globalization;
 using Harmony;
 //using Reloader;
 
@@ -66,14 +67,14 @@ namespace DoorsExpanded
 
         public override bool BlocksPawn(Pawn p)
         {
-            return !this.openInt && !this.PawnCanOpen(p);
+            return Def.doorType != DoorType.FreePassage && !this.openInt && !this.PawnCanOpen(p);
         }
 
         public bool Open
         {
             get
             {
-                return this.openInt;
+                return Def.doorType == DoorType.FreePassage || this.openInt;
             }
         }
 
@@ -111,7 +112,6 @@ namespace DoorsExpanded
                     case DoorType.DoubleSwing:
                         DrawDoubleSwingParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped);
                         break;
-                    case DoorType.Standard:
                     default:
                         DrawParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped);
                         break;
@@ -179,6 +179,7 @@ namespace DoorsExpanded
                 new Vector3(thingDef.doorFrame.drawSize.x * persMod, 1f, thingDef.doorFrame.drawSize.y * persMod) :
                 new Vector3(thingDef.doorFrame.drawSize.x, 1f, thingDef.doorFrame.drawSize.y);
 
+            Vector3 offset = thingDef.doorFrameOffset;
             if (thingDef.doorFrameSplit != null)
             {
                 if (rotation == Rot4.West)
@@ -186,9 +187,12 @@ namespace DoorsExpanded
                     rotQuat = Quaternion.Euler(0, 270, 0); //new Quaternion(0, 0.7f, 0, -0.7f);// Euler(0, 270, 0);
                     graphicVector.z -= 2.7f;
                     mesh = MeshPool.plane10Flip;
+                    offset = thingDef.doorFrameSplitOffset;
                 }
             }
-
+            graphicVector += offset;
+            
+            
             matrix = default(Matrix4x4);
             matrix.SetTRS(graphicVector, rotQuat, scaleVector);
         }
@@ -330,7 +334,7 @@ namespace DoorsExpanded
         {
             get
             {
-                return this.TicksToOpenNow > 20;
+                return Def.doorType != DoorType.FreePassage && this.TicksToOpenNow > 20;
                 //return !this.DoorPowerOn || this.TicksToOpenNow > 20;
             }
         }
@@ -340,7 +344,7 @@ namespace DoorsExpanded
         public virtual bool PawnCanOpen(Pawn p)
         {
             Lord lord = p.GetLord();
-            return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
+            return Def.doorType == DoorType.FreePassage || (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
                    (p.IsWildMan() && !p.mindState.wildManEverReachedOutside) || base.Faction == null || 
                    (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
         }
@@ -388,11 +392,17 @@ namespace DoorsExpanded
                 this.openInt = true;
                 if (this.DoorPowerOn)
                 {
-                    this.def.building.soundDoorOpenPowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+                    var buildingSoundDoorOpenPowered = this.def?.building?.soundDoorOpenPowered;
+                    if (buildingSoundDoorOpenPowered != null)
+                        buildingSoundDoorOpenPowered.PlayOneShot(new TargetInfo(base.Position, base.Map,
+                            false));
                 }
                 else
                 {
-                    this.def.building.soundDoorOpenManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+                    var buildingSoundDoorOpenManual = this.def?.building?.soundDoorOpenManual;
+                    if (buildingSoundDoorOpenManual != null)
+                        buildingSoundDoorOpenManual.PlayOneShot(
+                            new TargetInfo(base.Position, base.Map, false));
                 }
                 foreach (Building_DoorRegionHandler door in invisDoors)
                 {
@@ -458,7 +468,7 @@ namespace DoorsExpanded
         {
             get
             {
-                return this.openInt && (this.holdOpenInt || !this.WillCloseSoon);
+                return Def.doorType == DoorType.FreePassage || this.openInt && (this.holdOpenInt || !this.WillCloseSoon);
             }
         }
 
@@ -497,6 +507,10 @@ namespace DoorsExpanded
                     num *= 0.25f;
                 }
                 num *= Def.doorOpenSpeedRate;
+                if (Def.doorType == DoorType.FreePassage)
+                {
+                    num *= 0.01f;
+                }
                 return Mathf.RoundToInt(num);
             }
         }
@@ -623,11 +637,15 @@ namespace DoorsExpanded
             this.openInt = false;
             if (this.DoorPowerOn)
             {
-                this.def.building.soundDoorClosePowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+                var buildingSoundDoorClosePowered = this.def?.building?.soundDoorClosePowered;
+                if (buildingSoundDoorClosePowered != null)
+                    buildingSoundDoorClosePowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
             }
             else
             {
-                this.def.building.soundDoorCloseManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+                var buildingSoundDoorCloseManual = this.def?.building?.soundDoorCloseManual;
+                if (buildingSoundDoorCloseManual != null)
+                    buildingSoundDoorCloseManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
             }
         }
 

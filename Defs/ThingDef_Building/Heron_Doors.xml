@@ -162,9 +162,77 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+  
+  <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
+    <defName>PH_DoorBlastDoor</defName>
+    <label>blast door (1x2)</label>
+    <size>(2,1)</size>
+	<building>
+	  <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
+      <soundDoorCloseManual>HeronBlastDoorClose</soundDoorCloseManual>
+	</building>
+    <placeWorkers>
+      <li>JecsTools.PlaceWorker_Outline</li>
+    </placeWorkers>
+    <stuffCategories>
+      <li>Metallic</li>
+    </stuffCategories>
+	<statBases>
+      <MaxHitPoints>450</MaxHitPoints>
+      <WorkToBuild>1800</WorkToBuild>
+    </statBases>
+    <costStuffCount>200</costStuffCount>
+    <costList>
+      <Steel>100</Steel>
+      <Component>10</Component>
+    </costList>
+    <blueprintGraphicData>
+      <texPath>Things/Building/Door/DoorTripleThick_Blueprint</texPath>
+    </blueprintGraphicData>
+    <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
+    <graphicData>
+      <texPath>Things/Building/Door/DoorBlastDoor_Mover</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <drawSize>(2,1)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+    <doorAsync>
+      <texPath>Things/Building/Door/DoorBlastDoor_MoverAsync</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <drawSize>(2,1)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </doorAsync>
+	<doorFrameSplitOffset>(0,0,1)</doorFrameSplitOffset>
+    <doorFrame>
+      <texPath>Things/Building/Door/DoorBlastDoorFrame</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <shaderType>CutoutComplex</shaderType>
+      <drawSize>(2,1)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </doorFrame>
+    <doorFrameSplit>
+      <texPath>Things/Building/Door/DoorBlastDoorFrameAsync</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <shaderType>CutoutComplex</shaderType>
+      <drawSize>(2,1)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </doorFrameSplit>
+    <doorType>Standard</doorType>
+    <fixedPerspective>true</fixedPerspective>
+    <rotatesSouth>false</rotatesSouth>
+  </DoorsExpanded.DoorExpandedDef>
+  
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorThickBlastDoor</defName>
-    <label>blast door (thick)</label>
+    <label>blast door (2x3)</label>
     <size>(3,2)</size>
 	<building>
 	  <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>

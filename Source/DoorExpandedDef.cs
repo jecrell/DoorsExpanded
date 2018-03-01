@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Verse;
 using RimWorld;
+using UnityEngine;
 
 namespace DoorsExpanded
 {
@@ -12,7 +13,8 @@ namespace DoorsExpanded
     {
         Standard = 0,
         Stretch,
-        DoubleSwing
+        DoubleSwing,
+        FreePassage
     }
     public class DoorExpandedDef : ThingDef
     {
@@ -23,7 +25,9 @@ namespace DoorsExpanded
         public int tempLeakRate = 375;
         public float doorOpenSpeedRate = 1.0f;
         public GraphicData doorFrame;
+        public Vector3 doorFrameOffset = new Vector3(0,0,0);
         public GraphicData doorFrameSplit;
+        public Vector3 doorFrameSplitOffset = new Vector3(0,0,0);
         public GraphicData doorAsync;
 
         public CompPower powerComp;
