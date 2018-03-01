@@ -3,7 +3,7 @@
 
 
 
-	  <ThingDef ParentName="BuildingBase">
+	  <ThingDef ParentName="HeronBuildingBase">
 			<defName>HeronInvisibleDoor</defName>
 			<label>invisible door</label>
 	    <thingClass>DoorsExpanded.Building_DoorRegionHandler</thingClass>
@@ -45,7 +45,7 @@
   <!--========================= Doors =============================-->
 
 
-		  <ThingDef ParentName="BuildingBase" Name="HeronClothDoorBase" Abstract="True">
+		  <ThingDef ParentName="HeronBuildingBase" Name="HeronClothDoorBase" Abstract="True">
 		    <thingClass>Building_Door</thingClass>
 		    <blueprintClass>Blueprint_Door</blueprintClass>
 		    <category>Building</category>
@@ -136,7 +136,7 @@
 	  </ThingDef>
 
 
-  <ThingDef ParentName="BuildingBase" Name="HeronDoorBase" Abstract="True">
+  <ThingDef ParentName="HeronBuildingBase" Name="HeronDoorBase" Abstract="True">
     <thingClass>Building_Door</thingClass>
     <blueprintClass>Blueprint_Door</blueprintClass>
     <category>Building</category>
@@ -191,7 +191,7 @@
 ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝                             
 -->
   
-  <ThingDef Name="BuildingBase" Abstract="True">
+  <ThingDef Name="HeronBuildingBase" Abstract="True">
     <category>Building</category>
     <thingClass>Building</thingClass>
     <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
