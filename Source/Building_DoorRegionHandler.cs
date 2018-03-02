@@ -96,7 +96,6 @@ namespace DoorsExpanded
             }
         }
         
-
         public override void ExposeData()
         {
             base.ExposeData();

@@ -69,7 +69,7 @@
 		    <rotatable>false</rotatable>
 		    <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
 		    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-		    <designationCategory>HeronDoors</designationCategory>
+		    <designationCategory>Structure</designationCategory>
 		    <holdsRoof>true</holdsRoof>
 		    <staticSunShadowHeight>1.0</staticSunShadowHeight>
 		    <blockLight>true</blockLight>
@@ -114,7 +114,7 @@
 	    <rotatable>true</rotatable>
 			<soundImpactDefault>BulletImpactMetal</soundImpactDefault>
 	    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-	    <designationCategory>HeronDoors</designationCategory>
+	    <designationCategory>Structure</designationCategory>
 	    <holdsRoof>true</holdsRoof>
 	    <staticSunShadowHeight>1.0</staticSunShadowHeight>
 	    <blockLight>true</blockLight>
@@ -161,7 +161,7 @@
     <rotatable>false</rotatable>
     <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
     <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-    <designationCategory>HeronDoors</designationCategory>
+    <designationCategory>Structure</designationCategory>
     <holdsRoof>true</holdsRoof>
     <staticSunShadowHeight>1.0</staticSunShadowHeight>
     <blockLight>true</blockLight>

@@ -360,14 +360,15 @@ namespace DoorsExpanded
 
             if (!p.HostileTo(this))
             {
-                this.FriendlyTouched();
+                this.FriendlyTouched(p);
             }
             
             if (this.PawnCanOpen(p))
             {
 
                 //base.Map.fogGrid.Notify_PawnEnteringDoor(this, p);
-                crossingPawns.Add(p);
+                if (!crossingPawns.Contains(p))
+                    crossingPawns.Add(p);
 
                 //Log.Message("PawnPawn!4");
 
@@ -376,7 +377,7 @@ namespace DoorsExpanded
                 {
                     //Log.Message("PawnPawn!5");
 
-                    this.DoorOpen(300);
+                    this.DoorOpen(120);
                     //Log.Message("PawnPawn!6");
 
                 }
@@ -473,11 +474,12 @@ namespace DoorsExpanded
         }
 
 
+        private readonly int friendlyTouchTicks = 97;
         private bool FriendlyTouchedRecently
         {
             get
             {
-                return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + 200;
+                return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + friendlyTouchTicks;
             }
         }
 
@@ -523,11 +525,14 @@ namespace DoorsExpanded
             }
         }
 
-
-
-
-        public void FriendlyTouched()
+        public void FriendlyTouched(Pawn p)
         {
+            if (crossingPawns.NullOrEmpty())
+            {
+                crossingPawns = new List<Pawn>();
+            }
+            if (!crossingPawns.Contains(p))
+                crossingPawns.Add(p);
             this.lastFriendlyTouchTick = Find.TickManager.TicksGame;
         }
 
@@ -538,6 +543,7 @@ namespace DoorsExpanded
         }
 
         List<Pawn> temp = new List<Pawn>();
+        private bool lastForbidSetting = false;
         public override void Tick()
         {
             base.Tick();
@@ -548,8 +554,17 @@ namespace DoorsExpanded
                 this.SpawnDoors();
             }
 
+            if (this.TryGetComp<CompForbiddable>() is CompForbiddable compForbiddable && compForbiddable.Forbidden != lastForbidSetting)
+            {
+                lastForbidSetting = compForbiddable.Forbidden;
+                foreach (var doorToForbid in this.invisDoors)
+                {
+                    doorToForbid.SetForbidden(compForbiddable.Forbidden);
+                }
+            }
+
             int closedTempLeakRate = Def?.tempLeakRate ?? 375;
-            if (crossingPawns.Count > 0)
+            if (Find.TickManager.TicksGame % friendlyTouchTicks == 0 && crossingPawns.Count > 0)
             {
                 temp.Clear();
                 temp = new List<Pawn>(crossingPawns);
@@ -652,7 +667,7 @@ namespace DoorsExpanded
         // RimWorld.Building_Door
         public void StartManualOpenBy(Pawn opener)
         {
-            if (PawnCanOpen(opener))
+            //if (PawnCanOpen(opener))
             this.DoorOpen(60);
         }
 

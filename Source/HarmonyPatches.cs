@@ -39,8 +39,17 @@ namespace DoorsExpanded
                 nameof(InvisDoorsDontWipe)), null);
             harmony.Patch(AccessTools.Method(typeof(GenPath), "ShouldNotEnterCell"), null, new HarmonyMethod(typeof(HarmonyPatches),
                 nameof(ShouldNotEnterCellInvisDoors)), null);
+            harmony.Patch(AccessTools.Method(typeof(CompForbiddable), "PostDraw"), new HarmonyMethod(typeof(HarmonyPatches),
+                nameof(DontDrawInvisDoorForbiddenIcons)), null);
         }
-        
+
+        public static bool DontDrawInvisDoorForbiddenIcons(CompForbiddable __instance)
+        {
+            if (__instance.parent is Building_DoorRegionHandler)
+                return false;
+            return true;
+        }
+
         public static void ShouldNotEnterCellInvisDoors(Pawn pawn, Map map, IntVec3 dest, ref bool __result )
         {
             if (__result)
