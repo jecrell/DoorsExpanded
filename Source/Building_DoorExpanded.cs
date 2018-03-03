@@ -551,7 +551,7 @@ namespace DoorsExpanded
                         break;
                 }
             }
-            if (p.health.capacities.GetLevel(PawnCapacityDefOf.Moving) is float val)
+            if (p.health.capacities.GetLevel(PawnCapacityDefOf.Moving) is float val && val < 1f)
             {
                 //Log.Message("Moving capacity is: " + val);
                 friendlyTouchTicksFactor += 1f - val;
