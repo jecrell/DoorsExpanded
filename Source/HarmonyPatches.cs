@@ -288,7 +288,7 @@ namespace DoorsExpanded
                     {
                         if (c != door.OccupiedRect().Cells.ToArray()[0])
                         {
-                            Log.Message("SetPassable");
+                            //Log.Message("SetPassable");
                             __result = RegionType.ImpassableFreeAirExchange;
                         }
                     }

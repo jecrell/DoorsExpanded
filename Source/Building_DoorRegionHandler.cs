@@ -77,7 +77,7 @@ namespace DoorsExpanded
             this.ticksUntilClose = ticks;
             if (!Open)
             {
-                Log.Message("Opened this door.");
+                //Log.Message("Opened this door.");
                 Traverse.Create(this).Field("openInt").SetValue(true);
                 if (this.DoorPowerOn)
                 {

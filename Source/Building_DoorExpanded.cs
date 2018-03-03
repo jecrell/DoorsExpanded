@@ -475,11 +475,12 @@ namespace DoorsExpanded
 
 
         private readonly int friendlyTouchTicks = 97;
+        private float friendlyTouchTicksFactor = 1f;
         private bool FriendlyTouchedRecently
         {
             get
             {
-                return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + friendlyTouchTicks;
+                return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + (int)(friendlyTouchTicks * friendlyTouchTicksFactor);
             }
         }
 
@@ -533,6 +534,28 @@ namespace DoorsExpanded
             }
             if (!crossingPawns.Contains(p))
                 crossingPawns.Add(p);
+            this.friendlyTouchTicksFactor = 1.0f;
+            if (p.CurJob != null)
+            {
+                switch (p.CurJob.locomotionUrgency)
+                {
+                    case LocomotionUrgency.None:
+                    case LocomotionUrgency.Amble:
+                        friendlyTouchTicksFactor += 1.5f;
+                        break;
+                    case LocomotionUrgency.Walk:
+                        friendlyTouchTicksFactor += 0.75f;
+                        break;
+                    case LocomotionUrgency.Jog:
+                    case LocomotionUrgency.Sprint:
+                        break;
+                }
+            }
+            if (p.health.capacities.GetLevel(PawnCapacityDefOf.Moving) is float val)
+            {
+                //Log.Message("Moving capacity is: " + val);
+                friendlyTouchTicksFactor += 1f - val;
+            }
             this.lastFriendlyTouchTick = Find.TickManager.TicksGame;
         }
 
@@ -550,17 +573,13 @@ namespace DoorsExpanded
             if (!this.Spawned || this.DestroyedOrNull())
                 return;
             if (this.invisDoors.NullOrEmpty())
-            {
                 this.SpawnDoors();
-            }
 
             if (this.TryGetComp<CompForbiddable>() is CompForbiddable compForbiddable && compForbiddable.Forbidden != lastForbidSetting)
             {
                 lastForbidSetting = compForbiddable.Forbidden;
                 foreach (var doorToForbid in this.invisDoors)
-                {
                     doorToForbid.SetForbidden(compForbiddable.Forbidden);
-                }
             }
 
             int closedTempLeakRate = Def?.tempLeakRate ?? 375;
@@ -569,38 +588,26 @@ namespace DoorsExpanded
                 temp.Clear();
                 temp = new List<Pawn>(crossingPawns);
                 foreach (Pawn p in temp)
-                {
                     if (!p.PositionHeld.IsInside(this))
-                    {
                         crossingPawns.Remove(p);
-                    }
-                }
             }
             else
-            {
                 this.DoorTryClose();
-            }
+            
             if (this.FreePassage != this.freePassageWhenClearedReachabilityCache)
-            {
                 this.ClearReachabilityCache(base.Map);
-            }
+            
             if (!this.openInt)
             {
                 if (this.visualTicksOpen > 0)
-                {
                     this.visualTicksOpen--;
-                }
                 if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
-                {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, false);
-                }
             }
             else if (this.openInt)
             {
                 if (this.visualTicksOpen < this.VisualTicksToOpen)
-                {
                     this.visualTicksOpen++;
-                }
                 if (!this.holdOpenInt)
                 {
                     bool isPawnPresent = false;

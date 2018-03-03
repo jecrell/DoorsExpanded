@@ -39,7 +39,7 @@
       </damageData>
     </graphicData>
     <uiIconPath>Things/Building/Door/DoorSimple_MenuIcon</uiIconPath>
-    <costStuffCount>25</costStuffCount>
+    <costStuffCount>50</costStuffCount>
     <designationHotKey>Misc1</designationHotKey>
     <doorType>Standard</doorType>	
   </DoorsExpanded.DoorExpandedDef>
@@ -68,6 +68,7 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
+    <costStuffCount>75</costStuffCount>
     <doorType>Standard</doorType>	
   </DoorsExpanded.DoorExpandedDef>
 
@@ -152,6 +153,7 @@
     </graphicData>
     <doorType>DoubleSwing</doorType>
     <fixedPerspective>true</fixedPerspective>
+	<costStuffCount>90</costStuffCount>
   </DoorsExpanded.DoorExpandedDef>
 
   <!--
@@ -250,8 +252,8 @@
     </statBases>
     <costStuffCount>300</costStuffCount>
     <costList>
-      <Steel>100</Steel>
-      <Component>10</Component>
+      <Steel>170</Steel>
+      <Component>14</Component>
     </costList>
     <blueprintGraphicData>
       <texPath>Things/Building/Door/DoorTripleThick_Blueprint</texPath>
