@@ -53,6 +53,57 @@
 
 
   <SoundDef>
+    <defName>HeronJailDoorOpen</defName>
+    <context>MapOnly</context>
+    <eventNames />
+    <maxSimultaneous>1</maxSimultaneous>
+    <subSounds>
+      <li>
+        <name>False</name>
+        <grains>
+          <li Class="AudioGrain_Clip">
+            <clipPath>Misc/JailDoor/JailDoorOpen</clipPath>
+          </li>
+        </grains>
+        <volumeRange>
+          <min>3</min>
+          <max>4</max>
+        </volumeRange>
+        <pitchRange>
+          <min>0.8852941</min>
+          <max>1.114706</max>
+        </pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <SoundDef>
+    <defName>HeronJailDoorClose</defName>
+    <context>MapOnly</context>
+    <eventNames />
+    <maxSimultaneous>1</maxSimultaneous>
+    <subSounds>
+      <li>
+        <name>False</name>
+        <grains>
+          <li Class="AudioGrain_Clip">
+            <clipPath>Misc/JailDoor/JailDoorClose</clipPath>
+          </li>
+        </grains>
+        <volumeRange>
+          <min>3</min>
+          <max>4</max>
+        </volumeRange>
+        <pitchRange>
+          <min>0.862353</min>
+          <max>1.137647</max>
+        </pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+
+  <SoundDef>
     <defName>HeronBlastDoorOpen</defName>
     <context>MapOnly</context>
     <eventNames />

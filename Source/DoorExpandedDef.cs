@@ -23,6 +23,7 @@ namespace DoorsExpanded
         public DoorType doorType = DoorType.Standard;
         public bool rotatesSouth = true;
         public int tempLeakRate = 375;
+        public float doorOpenMultiplier = 0.45f;
         public float doorOpenSpeedRate = 1.0f;
         public GraphicData doorFrame;
         public Vector3 doorFrameOffset = new Vector3(0,0,0);

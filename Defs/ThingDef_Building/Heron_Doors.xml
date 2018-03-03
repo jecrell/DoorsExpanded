@@ -8,8 +8,7 @@
     ██   ██ ██    ██ ██    ██ ██████  ███████
     ██   ██ ██    ██ ██    ██ ██   ██      ██
     ██████   ██████   ██████  ██   ██ ███████
-  -->
-
+  -->  
 
   <DoorsExpanded.DoorExpandedDef Name="HeronDoor" ParentName="HeronDoorBase">
     <defName>PH_DoorDouble</defName>
@@ -21,6 +20,7 @@
     </blueprintGraphicData>
     <description>Divides rooms. Must be manually opened and closed, which slows people down.</description>
     <statBases>
+	  <MaxHitPoints>125</MaxHitPoints>
       <WorkToBuild>850</WorkToBuild>
     </statBases>
 	<placeWorkers>
@@ -53,6 +53,10 @@
 	<placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
+    <statBases>
+	  <MaxHitPoints>150</MaxHitPoints>
+      <WorkToBuild>1600</WorkToBuild>
+    </statBases>
     <blueprintClass>Blueprint_Build</blueprintClass>
     <blueprintGraphicData>
       <texPath>Things/Building/Door/DoorTriple_Blueprint</texPath>
@@ -72,6 +76,54 @@
     <doorType>Standard</doorType>	
   </DoorsExpanded.DoorExpandedDef>
 
+  
+  <DoorsExpanded.DoorExpandedDef ParentName="HeronDoorBase">
+    <defName>PH_DoorJail</defName>
+    <label>jail door</label>
+	<description>Sliding jail cell door with strong bars.
+    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
+    <blueprintClass>Blueprint_Build</blueprintClass>
+    <blueprintGraphicData>
+      <texPath>Things/Building/Door/JailCell_Blueprint</texPath>
+    </blueprintGraphicData>
+    <statBases>
+      <MaxHitPoints>420</MaxHitPoints>
+      <WorkToBuild>1500</WorkToBuild>
+    </statBases>
+	<placeWorkers>
+      <li>JecsTools.PlaceWorker_Outline</li>
+    </placeWorkers>
+    <size>(1,1)</size>
+    <rotatable>true</rotatable>
+    <graphicData>
+      <texPath>Things/Building/Door/JailCell_Mover</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+	  <shaderType>CutoutComplex</shaderType>
+      <drawSize>(1,1)</drawSize>
+      <damageData>
+        <!--  no damage marks because they don't move with the door
+        <rect>(0,0.12,1,0.76)</rect>-->
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+	<building>
+      <isInert>true</isInert>
+      <canPlaceOverWall>true</canPlaceOverWall>
+      <soundDoorOpenManual>HeronJailDoorOpen</soundDoorOpenManual>
+      <soundDoorCloseManual>HeronJailDoorClose</soundDoorCloseManual>
+    </building>
+    <uiIconPath>Things/Building/Door/JailCell_Mover</uiIconPath>
+    <costStuffCount>100</costStuffCount>
+    <costList>
+      <Steel>30</Steel>
+      <Component>2</Component>
+    </costList>
+    <designationHotKey>Misc1</designationHotKey>
+    <doorType>Standard</doorType>
+    <singleDoor>true</singleDoor>
+	<doorOpenMultiplier>0.8</doorOpenMultiplier>
+	<rotatesSouth>false</rotatesSouth>
+  </DoorsExpanded.DoorExpandedDef>
 
   <!--
    ██████ ██    ██ ██████  ████████  █████  ██ ███    ██ ███████
@@ -136,8 +188,8 @@
       <texPath>Things/Building/Door/DoorDoubleThick_Blueprint</texPath>
     </blueprintGraphicData>
     <statBases>
-      <MaxHitPoints>350</MaxHitPoints>
-      <WorkToBuild>1300</WorkToBuild>
+      <MaxHitPoints>700</MaxHitPoints>
+      <WorkToBuild>1700</WorkToBuild>
 	  <Flammability>2.0</Flammability>
     </statBases>
     <uiIconPath>Things/Building/Door/Gate_MenuUI</uiIconPath>
@@ -153,7 +205,7 @@
     </graphicData>
     <doorType>DoubleSwing</doorType>
     <fixedPerspective>true</fixedPerspective>
-	<costStuffCount>90</costStuffCount>
+	<costStuffCount>180</costStuffCount>
   </DoorsExpanded.DoorExpandedDef>
 
   <!--
@@ -168,6 +220,7 @@
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
     <label>blast door (1x2)</label>
+	<description>A heavy pair of doors that are twice as strong against explosives, and three times more resiliant to standard blunt and sharpened weapons.</description>
     <size>(2,1)</size>
 	<building>
 	  <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
@@ -180,8 +233,8 @@
       <li>Metallic</li>
     </stuffCategories>
 	<statBases>
-      <MaxHitPoints>450</MaxHitPoints>
-      <WorkToBuild>1800</WorkToBuild>
+      <MaxHitPoints>2000</MaxHitPoints>
+      <WorkToBuild>2000</WorkToBuild>
     </statBases>
     <costStuffCount>200</costStuffCount>
     <costList>
@@ -234,6 +287,7 @@
   
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorThickBlastDoor</defName>
+	<description>A heavy pair of doors that are twice as strong against explosives, and three times more resiliant to standard blunt and sharpened weapons.</description>
     <label>blast door (2x3)</label>
     <size>(3,2)</size>
 	<building>
@@ -247,10 +301,10 @@
       <li>Metallic</li>
     </stuffCategories>
 	<statBases>
-      <MaxHitPoints>750</MaxHitPoints>
-      <WorkToBuild>1800</WorkToBuild>
+      <MaxHitPoints>4000</MaxHitPoints>
+      <WorkToBuild>2400</WorkToBuild>
     </statBases>
-    <costStuffCount>300</costStuffCount>
+    <costStuffCount>350</costStuffCount>
     <costList>
       <Steel>170</Steel>
       <Component>14</Component>

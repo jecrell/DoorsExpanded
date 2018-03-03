@@ -95,7 +95,7 @@ namespace DoorsExpanded
         {
             float num = Mathf.Clamp01((float)this.visualTicksOpen / (float)this.VisualTicksToOpen);
             float num2 = this.def.Size.x;
-            float d = (0f + 0.45f * num) * num2;
+            float d = (Def.doorOpenMultiplier * num) * num2;
             Rot4 rotation = base.Rotation;
             if (!Def.rotatesSouth && this.Rotation == Rot4.South) rotation = Rot4.North;
             for (int i = 0; i < 2; i++)

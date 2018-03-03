@@ -4,7 +4,7 @@
   <author>Jecrell</author>
   <targetVersion>0.18.0</targetVersion>
   <description>
-  V1.18.0.7
+  V1.18.0.8
   Adds new types and sizes of doors to RimWorld.
   
   Currently included:
@@ -13,6 +13,9 @@
   
   * Curtains (Tribal)
    -Fragile, flammible, and made of fabric, these curtains provide fast movement through buildings.
+  
+  * Jail Door
+    -Stronger door to keep prisoners inside.
   
   * Gates
    -Stylized doors perfect for meeting pre-industrial needs.
