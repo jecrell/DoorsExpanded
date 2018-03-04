@@ -80,7 +80,7 @@
   <DoorsExpanded.DoorExpandedDef ParentName="HeronDoorBase">
     <defName>PH_DoorJail</defName>
     <label>jail door</label>
-	<description>Sliding jail cell door with strong bars.
+	<description>Sliding jail cell door with strong bars.</description>
     <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
     <blueprintClass>Blueprint_Build</blueprintClass>
     <blueprintGraphicData>
