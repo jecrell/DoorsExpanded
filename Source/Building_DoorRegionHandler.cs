@@ -5,6 +5,7 @@ using System.Text;
 using Harmony;
 using RimWorld;
 using Verse;
+using Verse.AI;
 using Verse.Sound;
 
 namespace DoorsExpanded
@@ -52,6 +53,23 @@ namespace DoorsExpanded
         {
             base.Tick();
             if (!Spawned || Destroyed) return;
+            /*if (!this.Open && )
+            {
+                lastOpenInt = this.Open;
+                ++lastOpenCount;
+            }
+            if (Find.TickManager.TicksGame % 100 == 0)
+            {
+                if (lastOpenCount > 10)
+                {
+                    Log.Message("1");
+                    if (GenClosest.ClosestThing_Global(this.PositionHeld, this.MapHeld.mapPawns.AllPawnsSpawned, 99999f, x => x is Pawn, null)
+                        is Pawn p)
+                        this.ParentDoor.Notify_PawnApproaching(p);
+                    
+                }
+                lastOpenCount = 0;
+            }*/
             if (Find.TickManager.TicksGame % 2500 == 0)
             {
                 if (this.Faction != ParentDoor.Faction)

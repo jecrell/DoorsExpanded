@@ -262,7 +262,7 @@ namespace DoorsExpanded
             if (__instance is Building_DoorRegionHandler w)
             {
                 //w.ParentDoor.DoorTryClose();
-                if (!Traverse.Create(__instance).Field("holdOpenInt").GetValue<bool>() || __instance.BlockedOpenMomentary)
+                if (!Traverse.Create(__instance).Field("holdOpenInt").GetValue<bool>() || __instance.BlockedOpenMomentary || w.ParentDoor.Open)
                 {
                     return false;
                 }

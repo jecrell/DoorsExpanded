@@ -407,6 +407,7 @@ namespace DoorsExpanded
                 }
                 foreach (Building_DoorRegionHandler door in invisDoors)
                 {
+                    door.FriendlyTouched();
                     door.OpenMe(ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2);
                     //AccessTools.Method(typeof(Building_Door), "DoorOpen").Invoke(door, new object[] { ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2});
                 }
@@ -583,16 +584,25 @@ namespace DoorsExpanded
             }
 
             int closedTempLeakRate = Def?.tempLeakRate ?? 375;
-            if (Find.TickManager.TicksGame % friendlyTouchTicks == 0 && crossingPawns.Count > 0)
+            if (Find.TickManager.TicksGame % friendlyTouchTicks == 0)
             {
-                temp.Clear();
-                temp = new List<Pawn>(crossingPawns);
-                foreach (Pawn p in temp)
-                    if (!p.PositionHeld.IsInside(this))
-                        crossingPawns.Remove(p);
+                if(crossingPawns.Count > 0)
+                {
+                    temp = new List<Pawn>(crossingPawns);
+                    foreach (Pawn p in temp)
+                    {
+                        int curDist = p.PositionHeld.LengthHorizontalSquared;
+                        //Log.Message(curDist.ToString());
+                        if (curDist > Mathf.Max(this.def.Size.x, this.def.Size.z) + 1)
+                        {
+                            //Log.Message("Removed " + p.LabelShort);
+                            crossingPawns.Remove(p);      
+                        }
+                    }
+                }
+                else
+                    this.DoorTryClose();
             }
-            else
-                this.DoorTryClose();
             
             if (this.FreePassage != this.freePassageWhenClearedReachabilityCache)
                 this.ClearReachabilityCache(base.Map);
@@ -647,11 +657,12 @@ namespace DoorsExpanded
 
         public void DoorTryClose()
         {
-            if (!this.openInt || holdOpenInt || this.BlockedOpenMomentary || FriendlyTouchedRecently)
+            if (!this.openInt || holdOpenInt || this.BlockedOpenMomentary || FriendlyTouchedRecently || crossingPawns?.Count > 0)
             {
                 return;
             }
          
+            //Log.Message("Stop that!");
             foreach (Building_DoorRegionHandler handler in InvisDoors)
             {
                 if (handler.Open) AccessTools.Field(typeof(Building_Door), "openInt").SetValue(handler, false); //AccessTools.Method(typeof(Building_Door), "DoorTryClose").Invoke(handler, null);
