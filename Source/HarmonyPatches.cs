@@ -41,7 +41,23 @@ namespace DoorsExpanded
                 nameof(ShouldNotEnterCellInvisDoors)), null);
             harmony.Patch(AccessTools.Method(typeof(CompForbiddable), "PostDraw"), new HarmonyMethod(typeof(HarmonyPatches),
                 nameof(DontDrawInvisDoorForbiddenIcons)), null);
+            harmony.Patch(AccessTools.Method(typeof(Building_Door), "get_FreePassage"), new HarmonyMethod(typeof(HarmonyPatches),
+                nameof(get_FreePassage)), null);
+            //harmony.Patch(AccessTools.Method(typeof(Building_Door), "ShouldStartEscaping"), null, new HarmonyMethod(typeof(HarmonyPatches),
+            //    nameof(ShouldStartEscaping)), null);
         }
+        
+        //Building_Door
+        public static bool get_FreePassage(Building_Door __instance, ref bool __result)
+        {
+            if (__instance is Building_DoorRegionHandler b)
+            {
+                __result = b.ParentDoor.FreePassage;
+                return false;
+            }
+            return true;
+        }
+
 
         public static bool DontDrawInvisDoorForbiddenIcons(CompForbiddable __instance)
         {
@@ -289,7 +305,7 @@ namespace DoorsExpanded
                         if (c != door.OccupiedRect().Cells.ToArray()[0])
                         {
                             //Log.Message("SetPassable");
-                            __result = RegionType.ImpassableFreeAirExchange;
+                            __result = RegionType.Portal; //ImpassableFreeAirExchange;
                         }
                     }
                 }

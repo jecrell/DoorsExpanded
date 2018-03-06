@@ -434,15 +434,11 @@ namespace DoorsExpanded
                 {
                     return true;
                 }
-                if (this.holdOpenInt)
-                {
-                    return false;
-                }
                 if (this.ticksUntilClose > 0 && this.ticksUntilClose <= 60 && this.CanCloseAutomatically)
                 {
                     return true;
                 }
-                for (int i = 0; i < 5; i++)
+/*                for (int i = 0; i < 5; i++)
                 {
                     IntVec3 c = base.Position + GenAdj.CardinalDirectionsAndInside[i];
                     if (c.InBounds(base.Map))
@@ -460,8 +456,12 @@ namespace DoorsExpanded
                             }
                         }
                     }
+                }*/
+                if (this.holdOpenInt)
+                {
+                    return false;
                 }
-                return false;
+                return true;
             }
         }
 
