@@ -123,6 +123,7 @@
     <singleDoor>true</singleDoor>
 	<doorOpenMultiplier>0.8</doorOpenMultiplier>
 	<rotatesSouth>false</rotatesSouth>
+    <researchPrerequisites><li>ProjectHeron_PrisonDoors</li></researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
 
   <!--
@@ -167,6 +168,7 @@
 	<doorType>Stretch</doorType>
 	<singleDoor>true</singleDoor>
 	<doorOpenSpeedRate>0.24</doorOpenSpeedRate>
+    <researchPrerequisites><li>ProjectHeron_Curtains</li></researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
 
   <!--
@@ -206,6 +208,7 @@
     <doorType>DoubleSwing</doorType>
     <fixedPerspective>true</fixedPerspective>
 	<costStuffCount>180</costStuffCount>
+    <researchPrerequisites><li>ProjectHeron_Gates</li></researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
 
   <!--
@@ -283,6 +286,7 @@
     <doorType>Standard</doorType>
     <fixedPerspective>true</fixedPerspective>
     <rotatesSouth>false</rotatesSouth>
+    <researchPrerequisites><li>ProjectHeron_BlastDoors</li></researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
   
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
@@ -350,6 +354,7 @@
     <doorType>Standard</doorType>
     <fixedPerspective>true</fixedPerspective>
     <rotatesSouth>false</rotatesSouth>
+    <researchPrerequisites><li>ProjectHeron_BlastDoors</li></researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
 
 </Defs>

@@ -137,11 +137,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Building_DoorExpanded.cs" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Building_DoorExpanded.cs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Building_DoorExpanded.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="377">
-              <caret line="486" column="0" lean-forward="false" selection-start-line="486" selection-start-column="0" selection-end-line="486" selection-end-column="0" />
+            <state relative-caret-position="8911">
+              <caret line="481" column="15" lean-forward="false" selection-start-line="481" selection-start-column="15" selection-end-line="481" selection-end-column="15" />
               <folding>
                 <marker date="1520344669358" expanded="false" signature="6:259" ph="..." />
                 <marker date="1520344669358" expanded="true" signature="303:29585" ph="{...}" />
@@ -260,7 +260,7 @@
       <file leaf-file-name="TickManager.cs" pinned="false" current-in-tab="false">
         <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/1b/a32232a5/TickManager.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="494">
+            <state relative-caret-position="0">
               <caret line="26" column="31" lean-forward="false" selection-start-line="26" selection-start-column="31" selection-end-line="26" selection-end-column="31" />
               <folding />
             </state>
@@ -270,7 +270,7 @@
       <file leaf-file-name="LocomotionUrgency.cs" pinned="false" current-in-tab="false">
         <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/29/1dd4ed81/LocomotionUrgency.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="152">
+            <state relative-caret-position="0">
               <caret line="8" column="14" lean-forward="false" selection-start-line="8" selection-start-column="14" selection-end-line="8" selection-end-column="14" />
               <folding />
             </state>
@@ -280,7 +280,7 @@
       <file leaf-file-name="Building_Door.cs" pinned="false" current-in-tab="false">
         <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/c6/89e6df65/Building_Door.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4598">
+            <state relative-caret-position="0">
               <caret line="242" column="3" lean-forward="false" selection-start-line="242" selection-start-column="3" selection-end-line="242" selection-end-column="3" />
               <folding />
             </state>
@@ -301,11 +301,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DoorExpandedDef.cs" pinned="false" current-in-tab="false">
+      <file leaf-file-name="DoorExpandedDef.cs" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/DoorExpandedDef.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="361">
-              <caret line="25" column="47" lean-forward="false" selection-start-line="25" selection-start-column="47" selection-end-line="25" selection-end-column="47" />
+            <state relative-caret-position="127">
+              <caret line="27" column="37" lean-forward="false" selection-start-line="27" selection-start-column="37" selection-end-line="27" selection-end-column="37" />
               <folding>
                 <marker date="1520089094135" expanded="false" signature="6:133" ph="..." />
                 <marker date="1520089094135" expanded="true" signature="158:1123" ph="{...}" />
@@ -358,18 +358,18 @@
     </replaceStrings>
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/HeronDefOf.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Building_DoorRemote.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Building_DoorExpanded.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Building_DoorRegionHandler.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Building_DoorLockable.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/63/35ef2f8c/GenSpawn.cs" root0="SKIP_INSPECTION" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/c6/89e6df65/Building_Door.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/DoorExpandedDef.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Building_DoorCurtains.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/29/1dd4ed81/LocomotionUrgency.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/1b/a32232a5/TickManager.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Building_DoorRemote.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/HeronDefOf.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/HarmonyPatches.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/63/35ef2f8c/GenSpawn.cs" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/Building_DoorCurtains.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/DoorExpandedDef.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/c6/89e6df65/Building_Door.cs" root0="SKIP_INSPECTION" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/29/1dd4ed81/LocomotionUrgency.cs" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/Building_DoorLockable.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/1b/a32232a5/TickManager.cs" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/Building_DoorRegionHandler.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -391,11 +391,11 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
-    <option name="x" value="91" />
-    <option name="y" value="82" />
-    <option name="width" value="1684" />
-    <option name="height" value="924" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="476" />
+    <option name="y" value="55" />
+    <option name="width" value="1300" />
+    <option name="height" value="821" />
   </component>
   <component name="ProjectView">
     <navigator currentView="SolutionExplorer" proportions="" version="1">
@@ -412,7 +412,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="SolutionExplorer">
         <subPane>
           <expand>
@@ -420,12 +419,18 @@
               <item name="" type="13324e5d:SolutionExplorerViewPane$ProjectViewPaneTreeStructure$createRoot$1" />
               <item name="ProjectHeron (1 project)" type="977d5f41:SolutionExplorerNodeRider" />
             </path>
+            <path>
+              <item name="" type="13324e5d:SolutionExplorerViewPane$ProjectViewPaneTreeStructure$createRoot$1" />
+              <item name="ProjectHeron (1 project)" type="977d5f41:SolutionExplorerNodeRider" />
+              <item name="ProjectHeron" type="977d5f41:SolutionExplorerNodeRider" />
+            </path>
           </expand>
           <select />
         </subPane>
         <option name="show-file-system" value="false" />
         <option name="show-all-items" value="false" />
       </pane>
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -447,9 +452,9 @@
   <component name="RunManager" selected=".NET Executable.Deployer">
     <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" />
     <configuration name="Deployer" type="RunExe" factoryName=".NET Executable">
-      <option name="EXE_PATH" value="D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors-Expanded\RimworldModReleaseTool.exe" />
-      <option name="PROGRAM_PARAMETERS" value="D:\SteamLibrary\steamapps\common\RimWorld\Mods\Doors-Expanded" />
-      <option name="WORKING_DIRECTORY" value="D:\SteamLibrary\steamapps\common\RimWorld\ModsWorkspace\Doors-Expanded" />
+      <option name="EXE_PATH" value="C:\Program Files (x86)\Steam\steamapps\common\RimWorld\ModsWorkspace\Doors-Expanded\RimworldModReleaseTool.exe" />
+      <option name="PROGRAM_PARAMETERS" value="&quot;C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Doors-Expanded&quot;" />
+      <option name="WORKING_DIRECTORY" value="C:\Program Files (x86)\Steam\steamapps\common\RimWorld\ModsWorkspace\Doors-Expanded" />
       <option name="PASS_PARENT_ENVS" value="1" />
       <envs />
       <option name="USE_MONO" value="0" />
@@ -480,12 +485,15 @@
       <workItem from="1519995395253" duration="20405000" />
       <workItem from="1520250452857" duration="6299000" />
       <workItem from="1520337214111" duration="5900000" />
-      <workItem from="1521040370120" duration="206000" />
+      <workItem from="1521040370120" duration="787000" />
+      <workItem from="1523976579572" duration="823000" />
+      <workItem from="1524394089964" duration="630000" />
+      <workItem from="1525224104498" duration="2460000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="94840000" />
+    <option name="totallyTimeSpent" value="99334000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -497,22 +505,22 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-9" y="-9" width="1938" height="1048" extended-state="7" />
+    <frame x="476" y="55" width="1300" height="821" extended-state="0" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Errors In Solution" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Unit Tests" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23951435" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24577573" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="NuGet" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1546875" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25735295" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Build" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32718328" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -1745,7 +1753,7 @@
     </entry>
     <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/29/1dd4ed81/LocomotionUrgency.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="152">
+        <state relative-caret-position="0">
           <caret line="8" column="14" lean-forward="false" selection-start-line="8" selection-start-column="14" selection-end-line="8" selection-end-column="14" />
           <folding />
         </state>
@@ -1765,7 +1773,7 @@
     </entry>
     <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/c6/89e6df65/Building_Door.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4598">
+        <state relative-caret-position="0">
           <caret line="242" column="3" lean-forward="false" selection-start-line="242" selection-start-column="3" selection-end-line="242" selection-end-column="3" />
           <folding />
         </state>
@@ -1785,7 +1793,7 @@
     </entry>
     <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/765250CD-2B53-4903-8F57-1EFC3734D8FA/1b/a32232a5/TickManager.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="494">
+        <state relative-caret-position="0">
           <caret line="26" column="31" lean-forward="false" selection-start-line="26" selection-start-column="31" selection-end-line="26" selection-end-column="31" />
           <folding />
         </state>
@@ -1799,21 +1807,6 @@
             <marker date="1519826372604" expanded="false" signature="6:101" ph="..." />
             <marker date="1519826372604" expanded="true" signature="126:196" ph="{...}" />
             <marker date="1519826372604" expanded="true" signature="181:194" ph="{...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/DoorExpandedDef.cs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="25" column="47" lean-forward="false" selection-start-line="25" selection-start-column="47" selection-end-line="25" selection-end-column="47" />
-          <folding>
-            <marker date="1520089094135" expanded="false" signature="6:133" ph="..." />
-            <marker date="1520089094135" expanded="true" signature="158:1123" ph="{...}" />
-            <marker date="1520089094135" expanded="true" signature="186:278" ph="{...}" />
-            <marker date="1520089094135" expanded="true" signature="322:1120" ph="{...}" />
-            <marker date="1520089094135" expanded="true" signature="978:999" ph="{...}" />
-            <marker date="1520089094135" expanded="true" signature="1033:1114" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -1914,8 +1907,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Building_DoorExpanded.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="377">
-          <caret line="486" column="0" lean-forward="false" selection-start-line="486" selection-start-column="0" selection-end-line="486" selection-end-column="0" />
+        <state relative-caret-position="8911">
+          <caret line="481" column="15" lean-forward="false" selection-start-line="481" selection-start-column="15" selection-end-line="481" selection-end-column="15" />
           <folding>
             <marker date="1520344669358" expanded="false" signature="6:259" ph="..." />
             <marker date="1520344669358" expanded="true" signature="303:29585" ph="{...}" />
@@ -2026,6 +2019,21 @@
             <marker date="1520344669358" expanded="true" signature="27448:27908" ph="{...}" />
             <marker date="1520344669358" expanded="true" signature="27998:29530" ph="{...}" />
             <marker date="1520344669358" expanded="true" signature="28534:29520" ph="/* if (Scribe.mode == LoadSaveMode.Saving) ... */" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DoorExpandedDef.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="127">
+          <caret line="27" column="37" lean-forward="false" selection-start-line="27" selection-start-column="37" selection-end-line="27" selection-end-column="37" />
+          <folding>
+            <marker date="1520089094135" expanded="false" signature="6:133" ph="..." />
+            <marker date="1520089094135" expanded="true" signature="158:1123" ph="{...}" />
+            <marker date="1520089094135" expanded="true" signature="186:278" ph="{...}" />
+            <marker date="1520089094135" expanded="true" signature="322:1120" ph="{...}" />
+            <marker date="1520089094135" expanded="true" signature="978:999" ph="{...}" />
+            <marker date="1520089094135" expanded="true" signature="1033:1114" ph="{...}" />
           </folding>
         </state>
       </provider>
