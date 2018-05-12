@@ -31,8 +31,8 @@ namespace DoorsExpanded
             //    nameof(HeronDoorIsDoor)), null);
             harmony.Patch(AccessTools.Method(typeof(GhostDrawer), "DrawGhostThing"), new HarmonyMethod(typeof(HarmonyPatches),
                 nameof(HeronDoorGhostHandler)), null);
-            harmony.Patch(AccessTools.Method(typeof(GenSpawn), "SpawnBuildingAsPossible"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(HeronSpawnBuildingAsPossible)), null);
+            //harmony.Patch(AccessTools.Method(typeof(GenSpawn), "SpawnBuildingAsPossible"), new HarmonyMethod(typeof(HarmonyPatches),
+            //    nameof(HeronSpawnBuildingAsPossible)), null);
             harmony.Patch(AccessTools.Method(typeof(GenSpawn), "WipeExistingThings"), new HarmonyMethod(typeof(HarmonyPatches),
                 nameof(WipeExistingThings)), null);
             harmony.Patch(AccessTools.Method(typeof(GenSpawn), "SpawningWipes"), null, new HarmonyMethod(typeof(HarmonyPatches),
@@ -91,6 +91,9 @@ namespace DoorsExpanded
         public static bool WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map, DestroyMode mode)
         {
             //Log.Message("1");
+            var trueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(x => x.defName == thingDef.defName);
+            //if (trueDef != null && trueDef.thingClass == typeof(Building_DoorExpanded) && !thingPos.GetThingList(map).Any(x => x is Building_DoorExpanded))
+            //    return false;
             if (thingDef == HeronDefOf.HeronInvisibleDoor ||
                 thingDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
             {
@@ -102,15 +105,46 @@ namespace DoorsExpanded
         //GenSpawn
         public static void InvisDoorsDontWipe(BuildableDef newEntDef, BuildableDef oldEntDef, ref bool __result)
         {
+            var oldTrueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(x => x.defName == oldEntDef.defName);
+            var newTrueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(x => x.defName == newEntDef.defName);
+            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
+                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
+                __result = true;  //false, meaning, don't wipe the old thing when you spawn
+                return;
+            }
             if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName || oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
                 __result = false;  //false, meaning, don't wipe the old thing when you spawn
+                return;
+            }
+            
+            if (newTrueDef != null && newTrueDef.thingClass == typeof(Building_DoorExpanded) &&
+                oldTrueDef != null && oldTrueDef.thingClass == typeof(Building_DoorExpanded))
+            {
+                __result = true;
+                return;
+            }
+            if (oldTrueDef != null && oldTrueDef.thingClass == typeof(Building_DoorExpanded) &&
+                newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
+                __result = false;
+                return;
+            }
+            if (newTrueDef != null && newTrueDef.thingClass == typeof(Building_DoorExpanded) &&
+                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
+                __result = false;
+                return;
+            }
         }
 
         // Verse.GenSpawn
         public static bool HeronSpawnBuildingAsPossible(Building building, Map map, bool respawningAfterLoad = false)
         {
             //Log.Message("1");
-            if (building is Building_DoorRegionHandler ||
+            if (building is Building_DoorExpanded ||
+                building is Building_DoorRegionHandler ||
                 building.def == HeronDefOf.HeronInvisibleDoor ||
                 building.def.thingClass == typeof(Building_DoorRegionHandler)) 
             {

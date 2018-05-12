@@ -44,12 +44,36 @@ namespace DoorsExpanded
             InvisDoors.Clear();
             foreach (IntVec3 c in this.OccupiedRect().Cells)
             {
-                Building_DoorRegionHandler thing = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
-                thing.ParentDoor = this;
-                GenSpawn.Spawn(thing, c, MapHeld);
-                thing.SetFaction(this.Faction);
-                AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(thing, true);
-                InvisDoors.Add(thing);
+                if (c.GetThingList(this.MapHeld).FirstOrDefault(x => x.def == HeronDefOf.HeronInvisibleDoor) is Building_DoorRegionHandler invisDoor)
+                {
+                    //Spawn over another door? Let's erase that door and add our own invis doors.
+                    if (invisDoor.ParentDoor != this && (invisDoor.ParentDoor?.Spawned ?? false)) 
+                    {
+                        invisDoor.ParentDoor.DeSpawn();
+                        invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
+                        invisDoor.ParentDoor = this;
+                        GenSpawn.Spawn(invisDoor, c, MapHeld);
+                        invisDoor.SetFaction(this.Faction);
+                        AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(invisDoor, true);
+                        InvisDoors.Add(invisDoor);
+                        continue;
+                    }
+                    invisDoor.ParentDoor = this;
+                    invisDoor.SetFaction(this.Faction);
+                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(invisDoor, true);
+                    InvisDoors.Add(invisDoor);                    
+                }
+                else
+                {
+                    //Log.Message("Door not found");
+                    Building_DoorRegionHandler thing = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
+                    thing.ParentDoor = this;
+                    GenSpawn.Spawn(thing, c, MapHeld);
+                    thing.SetFaction(this.Faction);
+                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(thing, true);
+                    InvisDoors.Add(thing);
+                }
+                
             }
             this.ClearReachabilityCache(this.MapHeld);
             if (this.BlockedOpenMomentary)
@@ -62,7 +86,7 @@ namespace DoorsExpanded
 
             base.SpawnSetup(map, respawningAfterLoad);
             this.powerComp = base.GetComp<CompPowerTrader>();
-            
+                        
         }
 
         public override bool BlocksPawn(Pawn p)
@@ -738,7 +762,7 @@ namespace DoorsExpanded
         public override void ExposeData()
         {
             base.ExposeData();
-            //Scribe_Collections.Look<Building_DoorRegionHandler>(ref this.invisDoors, "invisDoors", LookMode.Reference);
+            Scribe_Collections.Look<Building_DoorRegionHandler>(ref this.invisDoors, "invisDoors", LookMode.Reference);
             Scribe_Collections.Look<Pawn>(ref this.crossingPawns, "crossingPawns", LookMode.Reference);
             Scribe_Values.Look<bool>(ref this.openInt, "open", false, false);
             Scribe_Values.Look<bool>(ref this.holdOpenInt, "holdOpen", false, false);

@@ -20,7 +20,7 @@
     </blueprintGraphicData>
     <description>Divides rooms. Must be manually opened and closed, which slows people down.</description>
     <statBases>
-	  <MaxHitPoints>125</MaxHitPoints>
+	  <MaxHitPoints>400</MaxHitPoints>
       <WorkToBuild>850</WorkToBuild>
     </statBases>
 	<placeWorkers>
@@ -54,7 +54,7 @@
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
     <statBases>
-	  <MaxHitPoints>150</MaxHitPoints>
+	  <MaxHitPoints>600</MaxHitPoints>
       <WorkToBuild>1600</WorkToBuild>
     </statBases>
     <blueprintClass>Blueprint_Build</blueprintClass>
@@ -236,7 +236,7 @@
       <li>Metallic</li>
     </stuffCategories>
 	<statBases>
-      <MaxHitPoints>2000</MaxHitPoints>
+      <MaxHitPoints>1000</MaxHitPoints>
       <WorkToBuild>2000</WorkToBuild>
     </statBases>
     <costStuffCount>200</costStuffCount>
@@ -305,7 +305,7 @@
       <li>Metallic</li>
     </stuffCategories>
 	<statBases>
-      <MaxHitPoints>4000</MaxHitPoints>
+      <MaxHitPoints>2000</MaxHitPoints>
       <WorkToBuild>2400</WorkToBuild>
     </statBases>
     <costStuffCount>350</costStuffCount>
