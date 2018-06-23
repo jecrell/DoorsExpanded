@@ -2,10 +2,10 @@
 <ModMetaData>
   <name>Doors Expanded</name>
   <author>Jecrell</author>
-  <targetVersion>0.18.0</targetVersion>
+  <targetVersion>1.0.0</targetVersion>
   <url>https://discord.gg/AaVFA7V</url>
   <description>
-  V1.18.0.14
+  V1.11.0.0
   Adds new types and sizes of doors to RimWorld.
   
   Currently included:
@@ -24,6 +24,6 @@
   * Blast Doors
    -Incredibly large and secure doors used to keep greater threats at bay.
   
-  Comissioned by CMDR Toss Antilles.
+  Commissioned by CMDR Toss Antilles.
 </description>
 </ModMetaData>

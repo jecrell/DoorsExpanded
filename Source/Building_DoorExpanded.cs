@@ -39,6 +39,16 @@ namespace DoorsExpanded
         
         public DoorExpandedDef Def => this.def as DoorExpandedDef;
 
+        public bool Forbidden
+        {
+            get
+            {
+                if (forbiddenComp == null)
+                    forbiddenComp = base.GetComp<CompForbiddable>();
+                return forbiddenComp.Forbidden;
+            }
+        }
+        
         public void SpawnDoors()
         {
             InvisDoors.Clear();
@@ -86,6 +96,13 @@ namespace DoorsExpanded
 
             base.SpawnSetup(map, respawningAfterLoad);
             this.powerComp = base.GetComp<CompPowerTrader>();
+            this.forbiddenComp = base.GetComp<CompForbiddable>();
+            lastForbidSetting = forbiddenComp.Forbidden;
+            if (invisDoors?.Count > 0)
+                foreach (var doorToForbid in this.invisDoors)
+                    doorToForbid.SetForbidden(forbiddenComp.Forbidden);
+            this.Map.edificeGrid.Register(this);
+            this.Map.reachability.ClearCache();
                         
         }
 
@@ -102,16 +119,18 @@ namespace DoorsExpanded
             }
         }
 
-        public override void DeSpawn()
+        public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
-            if (invisDoors?.Count > 0)
+            if (invisDoors != null && invisDoors?.Count > 0)
             {
                 foreach (Building_DoorRegionHandler door in invisDoors)
                 {
-                    door.Destroy(DestroyMode.Vanish);
+                    if (!door.Destroyed)
+                        door.Destroy(DestroyMode.Vanish);
                 }
+                invisDoors = null;
             }
-            base.DeSpawn();
+            base.DeSpawn(mode);
         }
         
         //[ReloadMethod]
@@ -368,7 +387,7 @@ namespace DoorsExpanded
         public virtual bool PawnCanOpen(Pawn p)
         {
             Lord lord = p.GetLord();
-            return Def.doorType == DoorType.FreePassage || (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
+            return !forbiddenComp.Forbidden && Def.doorType == DoorType.FreePassage || (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
                    (p.IsWildMan() && !p.mindState.wildManEverReachedOutside) || base.Faction == null || 
                    (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
         }
@@ -592,6 +611,8 @@ namespace DoorsExpanded
 
         List<Pawn> temp = new List<Pawn>();
         private bool lastForbidSetting = false;
+        private CompForbiddable forbiddenComp;
+
         public override void Tick()
         {
             base.Tick();
@@ -600,11 +621,12 @@ namespace DoorsExpanded
             if (this.invisDoors.NullOrEmpty())
                 this.SpawnDoors();
 
-            if (this.TryGetComp<CompForbiddable>() is CompForbiddable compForbiddable && compForbiddable.Forbidden != lastForbidSetting)
+            if (forbiddenComp.Forbidden != lastForbidSetting)
             {
-                lastForbidSetting = compForbiddable.Forbidden;
+                lastForbidSetting = forbiddenComp.Forbidden;
                 foreach (var doorToForbid in this.invisDoors)
-                    doorToForbid.SetForbidden(compForbiddable.Forbidden);
+                    doorToForbid.SetForbidden(forbiddenComp.Forbidden);
+                this.Map.reachability.ClearCache();
             }
 
             int closedTempLeakRate = Def?.tempLeakRate ?? 375;
@@ -677,7 +699,18 @@ namespace DoorsExpanded
         }
 
 
-        public bool BlockedOpenMomentary => !InvisDoors.NullOrEmpty() && Enumerable.Any(InvisDoors, r => r.BlockedOpenMomentary);
+        public bool BlockedOpenMomentary => InvisDoors != null && InvisDoors?.Count > 0 && InvisDoors.Any(x =>
+        {
+            var result = false;
+            try
+            {
+                result = x?.BlockedOpenMomentary ?? false;
+            }
+            catch (Exception e)
+            {
+            }
+            return result;
+        });
 
         public void DoorTryClose()
         {
@@ -685,7 +718,6 @@ namespace DoorsExpanded
             {
                 return;
             }
-         
             //Log.Message("Stop that!");
             foreach (Building_DoorRegionHandler handler in InvisDoors)
             {

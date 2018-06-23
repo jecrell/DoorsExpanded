@@ -14,10 +14,10 @@
     <defName>PH_DoorDouble</defName>
     <label>door (1x2)</label>
     <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
-    <blueprintClass>Blueprint_Build</blueprintClass>
-    <blueprintGraphicData>
-      <texPath>Things/Building/Door/DoorDouble_Blueprint</texPath>
-    </blueprintGraphicData>
+
+
+      
+
     <description>Divides rooms. Must be manually opened and closed, which slows people down.</description>
     <statBases>
 	  <MaxHitPoints>400</MaxHitPoints>
@@ -57,10 +57,7 @@
 	  <MaxHitPoints>600</MaxHitPoints>
       <WorkToBuild>1600</WorkToBuild>
     </statBases>
-    <blueprintClass>Blueprint_Build</blueprintClass>
-    <blueprintGraphicData>
-      <texPath>Things/Building/Door/DoorTriple_Blueprint</texPath>
-    </blueprintGraphicData>
+
     <rotatable>true</rotatable>
     <graphicData>
       <texPath>Things/Building/Door/DoorTriple_Mover</texPath>
@@ -82,10 +79,6 @@
     <label>jail door</label>
 	<description>Sliding jail cell door with strong bars.</description>
     <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
-    <blueprintClass>Blueprint_Build</blueprintClass>
-    <blueprintGraphicData>
-      <texPath>Things/Building/Door/JailCell_Blueprint</texPath>
-    </blueprintGraphicData>
     <statBases>
       <MaxHitPoints>420</MaxHitPoints>
       <WorkToBuild>1500</WorkToBuild>
@@ -116,7 +109,7 @@
     <costStuffCount>100</costStuffCount>
     <costList>
       <Steel>30</Steel>
-      <Component>2</Component>
+      <ComponentIndustrial>2</ComponentIndustrial>
     </costList>
     <designationHotKey>Misc1</designationHotKey>
     <doorType>Standard</doorType>
@@ -186,9 +179,7 @@
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
-    <blueprintGraphicData>
-      <texPath>Things/Building/Door/DoorDoubleThick_Blueprint</texPath>
-    </blueprintGraphicData>
+
     <statBases>
       <MaxHitPoints>700</MaxHitPoints>
       <WorkToBuild>1700</WorkToBuild>
@@ -223,7 +214,7 @@
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
     <label>blast door (1x2)</label>
-	<description>A heavy pair of doors that are twice as strong against explosives, and three times more resiliant to standard blunt and sharpened weapons.</description>
+	<description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons.</description>
     <size>(2,1)</size>
 	<building>
 	  <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
@@ -242,11 +233,8 @@
     <costStuffCount>200</costStuffCount>
     <costList>
       <Steel>100</Steel>
-      <Component>10</Component>
+      <ComponentIndustrial>10</ComponentIndustrial>
     </costList>
-    <blueprintGraphicData>
-      <texPath>Things/Building/Door/DoorTripleThick_Blueprint</texPath>
-    </blueprintGraphicData>
     <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
     <graphicData>
       <texPath>Things/Building/Door/DoorBlastDoor_Mover</texPath>
@@ -266,7 +254,7 @@
     </doorAsync>
 	<doorFrameSplitOffset>(0,0,1)</doorFrameSplitOffset>
     <doorFrame>
-      <texPath>Things/Building/Door/DoorBlastDoorFrame</texPath>
+      <texPath>Things/Building/Door/DoorBlastDoor_Frame</texPath>
       <graphicClass>Graphic_Multi</graphicClass>
       <shaderType>CutoutComplex</shaderType>
       <drawSize>(2,1)</drawSize>
@@ -275,7 +263,7 @@
       </damageData>
     </doorFrame>
     <doorFrameSplit>
-      <texPath>Things/Building/Door/DoorBlastDoorFrameAsync</texPath>
+      <texPath>Things/Building/Door/DoorBlastDoor_FrameAsync</texPath>
       <graphicClass>Graphic_Multi</graphicClass>
       <shaderType>CutoutComplex</shaderType>
       <drawSize>(2,1)</drawSize>
@@ -311,11 +299,9 @@
     <costStuffCount>350</costStuffCount>
     <costList>
       <Steel>170</Steel>
-      <Component>14</Component>
+      <ComponentIndustrial>14</ComponentIndustrial>
     </costList>
-    <blueprintGraphicData>
-      <texPath>Things/Building/Door/DoorTripleThick_Blueprint</texPath>
-    </blueprintGraphicData>
+
     <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
     <graphicData>
       <texPath>Things/Building/Door/DoorBlastDoor_Mover</texPath>
@@ -334,7 +320,7 @@
       </damageData>
     </doorAsync>
     <doorFrame>
-      <texPath>Things/Building/Door/DoorBlastDoorFrame</texPath>
+      <texPath>Things/Building/Door/DoorBlastDoor_Frame</texPath>
       <graphicClass>Graphic_Multi</graphicClass>
       <shaderType>CutoutComplex</shaderType>
       <drawSize>(3,2)</drawSize>
@@ -343,7 +329,7 @@
       </damageData>
     </doorFrame>
     <doorFrameSplit>
-      <texPath>Things/Building/Door/DoorBlastDoorFrameAsync</texPath>
+      <texPath>Things/Building/Door/DoorBlastDoor_FrameAsync</texPath>
       <graphicClass>Graphic_Multi</graphicClass>
       <shaderType>CutoutComplex</shaderType>
       <drawSize>(3,2)</drawSize>

@@ -2,6 +2,7 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -16,43 +17,225 @@ namespace DoorsExpanded
 
         static HarmonyPatches()
         {
-            HarmonyInstance harmony = HarmonyInstance.Create("rimworld.jecrell.doorsexpanded");
-            harmony.Patch(AccessTools.Method(typeof(Building_Door), "DoorOpen"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(InvisDoorOpen)), null);
-            harmony.Patch(AccessTools.Method(typeof(Building_Door), "DoorTryClose"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(InvisDoorTryClose)), null);
-            harmony.Patch(AccessTools.Method(typeof(Building_Door), "Notify_PawnApproaching"), null, new HarmonyMethod(typeof(HarmonyPatches),
-               nameof(InvisDoorNotifyApproaching)), null);
-            harmony.Patch(AccessTools.Method(typeof(Building_Door), "StartManualCloseBy"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(InvisDoorManualClose)), null);
-            harmony.Patch(AccessTools.Method(typeof(Building_Door), "StartManualOpenBy"), null, new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(InvisDoorManualOpen)), null);
-            //harmony.Patch(AccessTools.Method(typeof(ThingDef), "get_IsDoor"), null, new HarmonyMethod(typeof(HarmonyPatches),
-            //    nameof(HeronDoorIsDoor)), null);
-            harmony.Patch(AccessTools.Method(typeof(GhostDrawer), "DrawGhostThing"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(HeronDoorGhostHandler)), null);
-            //harmony.Patch(AccessTools.Method(typeof(GenSpawn), "SpawnBuildingAsPossible"), new HarmonyMethod(typeof(HarmonyPatches),
-            //    nameof(HeronSpawnBuildingAsPossible)), null);
-            harmony.Patch(AccessTools.Method(typeof(GenSpawn), "WipeExistingThings"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(WipeExistingThings)), null);
-            harmony.Patch(AccessTools.Method(typeof(GenSpawn), "SpawningWipes"), null, new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(InvisDoorsDontWipe)), null);
-            harmony.Patch(AccessTools.Method(typeof(GenPath), "ShouldNotEnterCell"), null, new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(ShouldNotEnterCellInvisDoors)), null);
-            harmony.Patch(AccessTools.Method(typeof(CompForbiddable), "PostDraw"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(DontDrawInvisDoorForbiddenIcons)), null);
-            harmony.Patch(AccessTools.Method(typeof(Building_Door), "get_FreePassage"), new HarmonyMethod(typeof(HarmonyPatches),
-                nameof(get_FreePassage)), null);
-            //harmony.Patch(AccessTools.Method(typeof(Building_Door), "ShouldStartEscaping"), null, new HarmonyMethod(typeof(HarmonyPatches),
-            //    nameof(ShouldStartEscaping)), null);
+            //Log.Message("This is working!");
+            HarmonyInstance harmony = HarmonyInstance.Create(id: "rimworld.jecrell.doorsexpanded");
+            
+            harmony.Patch(original: AccessTools.Method(type: typeof(EdificeGrid), name: "Register"), prefix: new HarmonyMethod(
+                type: typeof(HarmonyPatches),
+                name: nameof(RegisterDoorExpanded)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(Building_Door), name: "DoorOpen"), prefix: new HarmonyMethod(
+                type: typeof(HarmonyPatches),
+                name: nameof(InvisDoorOpen)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(Building_Door), name: "DoorTryClose"), prefix: new HarmonyMethod(
+                type: typeof(HarmonyPatches),
+                name: nameof(InvisDoorTryClose)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(Building_Door), name: "Notify_PawnApproaching"), prefix: null, postfix: new HarmonyMethod(
+                type: typeof(HarmonyPatches),
+                name: nameof(InvisDoorNotifyApproaching)), transpiler: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(Building_Door), name: nameof(Building_Door.StartManualCloseBy)),
+                prefix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(InvisDoorManualClose)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(Building_Door), name: nameof(Building_Door.StartManualOpenBy)), prefix: null,
+                postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(InvisDoorManualOpen)), transpiler: null);
+            harmony.Patch(original: AccessTools.Property(type: typeof(Building_Door), name: nameof(Building_Door.FreePassage)).GetGetMethod(),
+                prefix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(get_FreePassage)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(GhostDrawer), name: nameof(GhostDrawer.DrawGhostThing)),
+                prefix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(HeronDoorGhostHandler)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(GenSpawn), name: nameof(GenSpawn.SpawnBuildingAsPossible)),
+                prefix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(HeronSpawnBuildingAsPossible)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(GenSpawn), name: nameof(GenSpawn.WipeExistingThings)), prefix: new HarmonyMethod(
+                type: typeof(HarmonyPatches),
+                name: nameof(WipeExistingThings)), postfix: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(GenSpawn), name: nameof(GenSpawn.SpawningWipes)), prefix: null, postfix: new HarmonyMethod(
+                type: typeof(HarmonyPatches),
+                name: nameof(InvisDoorsDontWipe)), transpiler: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(GenPath), name: "ShouldNotEnterCell"), prefix: null, postfix: new HarmonyMethod(
+                type: typeof(HarmonyPatches),
+                name: nameof(ShouldNotEnterCellInvisDoors)), transpiler: null);
+            harmony.Patch(original: AccessTools.Method(type: typeof(CompForbiddable), name: nameof(CompForbiddable.PostDraw)),
+                prefix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(DontDrawInvisDoorForbiddenIcons)), postfix: null);
+            harmony.Patch(
+                original: AccessTools.Method(type: typeof(PawnPathUtility), name: nameof(PawnPathUtility.TryFindLastCellBeforeBlockingDoor)),
+                prefix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(ManhunterJobGiverFix)), postfix: null);
+            harmony.Patch(
+                original: AccessTools.Method(type: typeof(ForbidUtility), name: nameof(ForbidUtility.IsForbiddenToPass)),
+                prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(IsForbiddenToPass_PostFix)));
+            harmony.Patch(
+                original: AccessTools.Method(type: typeof(PathFinder), name: nameof(PathFinder.GetBuildingCost)),
+                prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(GetBuildingCost_PostFix)));
+            harmony.Patch(
+                original: AccessTools.Method(type: typeof(PawnPathUtility), name: nameof(PawnPathUtility.FirstBlockingBuilding)),
+                prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(FirstBlockingBuilding_PostFix)));
+        }
+
+
+        //public static class PawnPathUtility
+        public static void FirstBlockingBuilding_PostFix(this PawnPath path, ref IntVec3 cellBefore, Pawn pawn, ref Thing __result)
+        {
+            if (!path.Found)
+            {
+                cellBefore = IntVec3.Invalid;
+                __result = null;
+            }
+            List<IntVec3> nodesReversed = path.NodesReversed;
+            if (nodesReversed.NullOrEmpty() || nodesReversed.Count <= 1)
+            {
+                return;
+            }
+            Building building = null;
+            IntVec3 intVec = IntVec3.Invalid;
+            for (int i = nodesReversed.Count - 2; i >= 0; i--)
+            {
+                //Building edifice = nodesReversed[i].GetEdifice(pawn.Map);
+                var edifice = nodesReversed[index: i].GetThingList(pawn.Map).FirstOrDefault(x => x.def.thingClass == typeof(Building_DoorExpanded) ||
+                                                                                                 x.def.thingClass == typeof(Building_DoorRegionHandler)); 
+                if (edifice != null)
+                {
+                    if ((edifice is Building_DoorExpanded building_Door && !building_Door.FreePassage &&
+                         (pawn == null || !building_Door.PawnCanOpen(pawn))) ||
+                        edifice.def.passability == Traversability.Impassable)
+                    {
+                        cellBefore = nodesReversed[i + 1];
+                        __result = edifice;
+                    }
+                    var building_DoorReg = edifice as Building_DoorRegionHandler;
+                    if (building_DoorReg == null || building_DoorReg.ParentDoor == null) continue;
+                    if ((!building_DoorReg.FreePassage &&
+                         (pawn == null || !building_DoorReg.PawnCanOpen(pawn))) ||
+                        edifice.def.passability == Traversability.Impassable)
+                    {
+                        cellBefore = nodesReversed[i + 1];
+                        __result = building_DoorReg.ParentDoor;
+                    }
+                }
+            }
+        }
+
+        //PathFinder
+        public static void GetBuildingCost_PostFix(Building b, TraverseParms traverseParms, Pawn pawn, ref int __result)
+        {
+            if (__result >= int.MaxValue) return;
+            if (b is Building_DoorRegionHandler reg)
+            {
+                switch (traverseParms.mode)
+                {
+                    case TraverseMode.ByPawn:
+                    {
+                        if (!traverseParms.canBash && reg.IsForbiddenToPass(pawn))
+                        {
+                            if (DebugViewSettings.drawPaths)
+                            {
+                                Traverse.Create(typeof(PathFinder)).Method("DebugFlash",
+                                    new object[] {b.Position, b.Map, 0.77f, "forbid"});
+                                //PathFinder.DebugFlash(b.Position, b.Map, 0.77f, "forbid");
+                            }
+                            __result = int.MaxValue;
+                        }
+                        break;
+                    }
+                }
+            }
+            else if (b is Building_DoorExpanded ex)
+            {
+                switch (traverseParms.mode)
+                {
+                    case TraverseMode.ByPawn:
+                    {
+                        if (!traverseParms.canBash && ex.IsForbidden(pawn))
+                        {
+                            if (DebugViewSettings.drawPaths)
+                            {
+                                Traverse.Create(typeof(PathFinder)).Method("DebugFlash",
+                                    new object[] {b.Position, b.Map, 0.77f, "forbid"});
+                            }
+                            __result = int.MaxValue;
+                        }
+                        break;
+                    }
+                }               
+            }
+        }
+
+        //ForbidUtility
+        public static void IsForbiddenToPass_PostFix(this Thing t, Pawn pawn, ref bool __result)
+        {
+            if (t is Building_DoorRegionHandler reg)
+            {
+                //Log.Message("reg called");
+                __result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorRegionHandler)) || t.IsForbidden(pawn.Faction)); 
+                //Log.Message("Result is " + __result.ToString());
+            }
+            if (t is Building_DoorExpanded ex)
+            {
+                //Log.Message("ex called");
+                __result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorExpanded)) || t.IsForbidden(pawn.Faction)); 
+                //Log.Message("Result is " + __result.ToString());                
+            }
+             
+        }
+        
+        //PawnPathUtility
+        //Adds an extra check.
+        public static bool ManhunterJobGiverFix(PawnPath path, Pawn pawn, ref IntVec3 result, ref bool __result)
+        {
+            if (path?.NodesReversed?.Count == 1)
+            {
+                result = path.NodesReversed[index: 0];
+                __result = false;
+                Log.Message("Nodes less or equal to 1");
+                return false;
+            }
+            List<IntVec3> nodesReversed = path.NodesReversed;
+            if (nodesReversed != null)
+            {
+                for (var i = nodesReversed.Count - 2; i >= 1; i--)
+                {
+                    //pawn.Map.debugDrawer.FlashCell(nodesReversed[i]);
+                    var edifice = nodesReversed[index: i].GetThingList(pawn.Map)
+                        .FirstOrDefault(x => x.def.thingClass == typeof(Building_DoorExpanded) || x.def.thingClass == typeof(Building_DoorRegionHandler)); //GetEdifice(map: pawn.Map);
+                    //var edifice = nodesReversed[i].GetEdifice(pawn.Map);
+                    if (edifice is Building_DoorExpanded building_DoorExpanded)
+                    {
+                        if (!building_DoorExpanded?.InvisDoors?.Any(predicate: x => !x.CanPhysicallyPass(p: pawn)) ??
+                            false)
+                        {
+                            //Log.Message(text: "DoorsExpanded :: Manhunter Check Passed");
+                            result = nodesReversed[index: i + 1];
+                            __result = true;
+                            return false;
+                        }
+                    }
+                    if (edifice is Building_DoorRegionHandler building_DoorReg &&
+                             (!building_DoorReg.CanPhysicallyPass(pawn)))
+                    {
+                        //Log.Message(text: "DoorsExpanded :: Manhunter Check Passed");
+                        result = nodesReversed[index: i + 1];
+                        __result = true;
+                        return false;
+                    }
+                }
+                //Log.Message("No objects detected in path");
+                result = nodesReversed[index: 0];
+            }
+            __result = false;
+            return true;
         }
         
         //Building_Door
         public static bool get_FreePassage(Building_Door __instance, ref bool __result)
         {
-            if (__instance is Building_DoorRegionHandler b)
+            if (__instance is Building_DoorRegionHandler b && b.ParentDoor != null)
             {
-                __result = b.ParentDoor.FreePassage;
+                __result = b.ParentDoor.FreePassage && !b.ParentDoor.Forbidden;
                 return false;
             }
             return true;
@@ -70,20 +253,32 @@ namespace DoorsExpanded
         {
             if (__result)
                 return;
-            Building edifice = dest.GetEdifice(map);
-            if (edifice != null)
+            Building edifice = dest.GetEdifice(map: map);
+            if (edifice == null)
             {
-                Building_DoorExpanded building_doorEx = edifice as Building_DoorExpanded;
-                if (building_doorEx != null)
+                //Log.Message("No edifice. So let's go!");
+                return;
+            }
+            if (edifice is Building_DoorExpanded building_doorEx)
+            {
+                if (building_doorEx.IsForbidden(pawn: pawn) || 
+                    !building_doorEx.PawnCanOpen(p: pawn) ||
+                    building_doorEx.Forbidden)
                 {
-                    if (building_doorEx.IsForbidden(pawn))
-                    {
-                        __result = true;
-                    }
-                    if (!building_doorEx.PawnCanOpen(pawn))
-                    {
-                        __result = true;
-                    }
+                    Log.Message(building_doorEx.ToString() + "is forbidden");
+                    __result = true;
+                }
+            }
+            if (edifice is Building_DoorRegionHandler building_doorReg)
+            {
+                if (building_doorReg.IsForbidden(pawn: pawn) ||
+                    !building_doorReg.PawnCanOpen(p: pawn) ||
+                    building_doorReg.ParentDoor.IsForbidden(pawn) ||
+                    !building_doorReg.ParentDoor.PawnCanOpen(pawn) ||
+                    building_doorReg.ParentDoor.Forbidden)
+                {
+                    Log.Message(building_doorReg.ToString() + "is forbidden");
+                    __result = true;
                 }
             }
         }
@@ -91,7 +286,7 @@ namespace DoorsExpanded
         public static bool WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map, DestroyMode mode)
         {
             //Log.Message("1");
-            var trueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(x => x.defName == thingDef.defName);
+            var trueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == thingDef.defName);
             //if (trueDef != null && trueDef.thingClass == typeof(Building_DoorExpanded) && !thingPos.GetThingList(map).Any(x => x is Building_DoorExpanded))
             //    return false;
             if (thingDef == HeronDefOf.HeronInvisibleDoor ||
@@ -105,8 +300,8 @@ namespace DoorsExpanded
         //GenSpawn
         public static void InvisDoorsDontWipe(BuildableDef newEntDef, BuildableDef oldEntDef, ref bool __result)
         {
-            var oldTrueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(x => x.defName == oldEntDef.defName);
-            var newTrueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(x => x.defName == newEntDef.defName);
+            var oldTrueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == oldEntDef.defName);
+            var newTrueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == newEntDef.defName);
             if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
                 oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
             {
@@ -148,6 +343,7 @@ namespace DoorsExpanded
                 building.def == HeronDefOf.HeronInvisibleDoor ||
                 building.def.thingClass == typeof(Building_DoorRegionHandler)) 
             {
+                GenSpawn.Spawn(newThing: building, loc: building.Position, map: map, rot: building.Rotation, wipeMode: WipeMode.Vanish, respawningAfterLoad: respawningAfterLoad);
                 return false;
             }
             return true;
@@ -167,31 +363,77 @@ namespace DoorsExpanded
             return Quaternion.identity;
         }
 
+        public static bool isExceptionForEdificeRegistration(Building ed)
+        {
+            return ed.def.thingClass.IsAssignableFrom(typeof(Building_DoorExpanded)) ||
+                   ed.def.thingClass.IsAssignableFrom(typeof(Building_DoorRegionHandler)) ||
+                   ed.def.thingClass == typeof(Building_DoorRegionHandler) ||
+                   ed.def.thingClass == typeof(Building_DoorExpanded);
+        }
+        
+        //EdificeGrid
+        //TODO Make transpiler
+        public static bool RegisterDoorExpanded(EdificeGrid __instance, Building ed)
+        {
+            //Log.Message("Register");
+            //Log.Message(ed.Label);
+            //Log.Message(ed.def.thingClass.ToString());
+            if (isExceptionForEdificeRegistration(ed))
+            {
+                //<VanillaCodeSequence>
+                CellIndices cellIndices = Traverse.Create(__instance).Field("map").GetValue<Map>().cellIndices;
+                CellRect cellRect = ed.OccupiedRect();
+                for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
+                {
+                    for (int j = cellRect.minX; j <= cellRect.maxX; j++)
+                    {
+                        IntVec3 intVec = new IntVec3(j, 0, i);
+                        var oldBuilding = __instance[intVec];
+                        if (UnityData.isDebugBuild && oldBuilding != null && !oldBuilding.Destroyed && !isExceptionForEdificeRegistration(oldBuilding))
+                        {
+                            Log.Error(string.Concat(new object[]
+                            {
+                                "Added edifice ",
+                                ed.LabelCap,
+                                " over edifice ",
+                                oldBuilding.LabelCap,
+                                " at ",
+                                intVec,
+                                ". Destroying old edifice, despite DoorsExpanded code."
+                            }));
+                            oldBuilding.Destroy(DestroyMode.Vanish);
+                            return false;
+                        }
+                        Traverse.Create(__instance).Field("innerArray").GetValue<Building[]>()[cellIndices.CellToIndex(intVec)] = ed;
+                    }
+                }
+                //</VanillaCodeSequence>
+                return false;
+            }
+            return true;
+        }
+
 
         // Verse.GhostDrawer
         public static bool HeronDoorGhostHandler(IntVec3 center, Rot4 rot, ThingDef thingDef, Graphic baseGraphic, Color ghostCol, AltitudeLayer drawAltitude)
         {
             if (thingDef is DoorExpandedDef def && def.fixedPerspective)
             {
-                    //Log.Message("1");
-                    Graphic graphic = (Graphic)AccessTools.Method(typeof(GhostDrawer), "GhostGraphicFor").Invoke(null, new object[] { thingDef.graphic, thingDef, ghostCol });
-                    //Log.Message("2");
-                    Vector3 loc = Gen.TrueCenter(center, rot, thingDef.Size, Altitudes.AltitudeFor(drawAltitude));
-
+                    Graphic graphic = GhostUtility.GhostGraphicFor(baseGraphic, thingDef, ghostCol);
+                    //Graphic graphic = Traverse.Create(typeof(GhostDrawer)).Method("GhostGraphicFor", new object[] { thingDef.graphic, thingDef, ghostCol }).GetValue<Graphic>();
+                    Vector3 loc = GenThing.TrueCenter(center, rot, thingDef.Size, drawAltitude.AltitudeFor());
+                    
                     for (int i = 0; i < 2; i++)
                     {
                         bool flipped = (i != 0) ? true : false;
-                        Mesh mesh;
-                        Matrix4x4 matrix;
-                        Building_DoorExpanded.DrawParams(def, loc, rot, out mesh, out matrix, 0, flipped);
-                        Graphics.DrawMesh(mesh, matrix, graphic.MatAt(rot, null), 0);
-                    }
-                    
-                    if (thingDef.PlaceWorkers != null)
+                        Building_DoorExpanded.DrawParams(def, loc, rot, out var mesh, out var matrix, mod: 0, flipped: flipped);
+                        Graphics.DrawMesh(mesh: mesh, matrix: matrix, material: graphic.MatAt(rot: rot, thing: null), layer: 0);
+                    }                    
+                    if (thingDef?.PlaceWorkers?.Count > 0)
                     {
                         for (int i = 0; i < thingDef.PlaceWorkers.Count; i++)
                         {
-                            thingDef.PlaceWorkers[i].DrawGhost(thingDef, center, rot);
+                            thingDef.PlaceWorkers[index: i].DrawGhost(def: thingDef, center: center, rot: rot, ghostCol: ghostCol);
                         }
                     }
                 return false;
@@ -224,12 +466,12 @@ namespace DoorsExpanded
                 for (int i = 0; i < 5; i++)
                 {
                     IntVec3 c = __instance.Position + GenAdj.CardinalDirectionsAndInside[i];
-                    if (c.InBounds(__instance.Map))
+                    if (c.InBounds(map: __instance.Map))
                     {
-                        List<Thing> thingList = c.GetThingList(__instance.Map);
+                        List<Thing> thingList = c.GetThingList(map: __instance.Map);
                         for (int j = 0; j < thingList.Count; j++)
                         {
-                            Building_DoorExpanded b = thingList[j] as Building_DoorExpanded;
+                            Building_DoorExpanded b = thingList[index: j] as Building_DoorExpanded;
                             if (b != null)
                             {
                                 __result = false;
@@ -257,20 +499,20 @@ namespace DoorsExpanded
         {
             if (__instance is Building_DoorRegionHandler w)
             {
-                if (w.ParentDoor.PawnCanOpen(opener))
+                if (w.ParentDoor.PawnCanOpen(p: opener))
                 {
-                    w.ParentDoor.StartManualOpenBy(opener);
-                    if (w.ParentDoor.InvisDoors.ToList().FindAll(x => x != __instance) is List<Building_DoorRegionHandler> otherDoors && !otherDoors.NullOrEmpty())
+                    w.ParentDoor.StartManualOpenBy(opener: opener);
+                    if (w.ParentDoor.InvisDoors.ToList().FindAll(match: x => x != __instance) is List<Building_DoorRegionHandler> otherDoors && !otherDoors.NullOrEmpty())
                     {
                         foreach (Building_DoorRegionHandler door in otherDoors)
                         {
                             if (!door.Open)
                             {
-                                int math = (int)(1200 * Math.Max(w.ParentDoor.Graphic.drawSize.x, w.ParentDoor.Graphic.drawSize.y));
+                                int math = (int)(1200 * Math.Max(val1: w.ParentDoor.Graphic.drawSize.x, val2: w.ParentDoor.Graphic.drawSize.y));
                                 //this.ticksUntilClose = ticksToClose;
-                                Traverse.Create(door).Field("ticksUntilClose").SetValue(math);
+                                Traverse.Create(root: door).Field(name: "ticksUntilClose").SetValue(value: math);
                                 //this.openInt = true;
-                                Traverse.Create(door).Field("openInt").SetValue(true);
+                                Traverse.Create(root: door).Field(name: "openInt").SetValue(value: true);
                             }
                         }
                     }   
@@ -284,7 +526,7 @@ namespace DoorsExpanded
         {
             if (__instance is Building_DoorRegionHandler w)
             {
-                w.ParentDoor.Notify_PawnApproaching(p);
+                w.ParentDoor?.Notify_PawnApproaching(p: p);
             }
         }
 
@@ -294,13 +536,13 @@ namespace DoorsExpanded
         {
             if (__instance is Building_DoorRegionHandler w)
             {
-                Traverse.Create(__instance).Field("ticksUntilClose").SetValue(ticksToClose);
-                if (!Traverse.Create(__instance).Field("openInt").GetValue<bool>())
+                Traverse.Create(root: __instance).Field(name: "ticksUntilClose").SetValue(value: ticksToClose);
+                if (!Traverse.Create(root: __instance).Field(name: "openInt").GetValue<bool>())
                 {
-                    AccessTools.Field(typeof(Building_Door), "openInt").SetValue(__instance, true);
+                    AccessTools.Field(type: typeof(Building_Door), name: "openInt").SetValue(obj: __instance, value: true);
                     //Traverse.Create(__instance).Field("openInt"). SetValue(true);
                 }
-                w.ParentDoor.DoorOpen(ticksToClose);
+                w.ParentDoor.DoorOpen(ticksToClose: ticksToClose);
                 return false;
             }
             return true;
@@ -312,7 +554,7 @@ namespace DoorsExpanded
             if (__instance is Building_DoorRegionHandler w)
             {
                 //w.ParentDoor.DoorTryClose();
-                if (!Traverse.Create(__instance).Field("holdOpenInt").GetValue<bool>() || __instance.BlockedOpenMomentary || w.ParentDoor.Open)
+                if (!Traverse.Create(root: __instance).Field(name: "holdOpenInt").GetValue<bool>() || __instance.BlockedOpenMomentary || w.ParentDoor.Open)
                 {
                     return false;
                 }
@@ -331,10 +573,10 @@ namespace DoorsExpanded
         {
             if (__result == RegionType.Normal)
             {
-                List<Thing> thingList = c.GetThingList(map);
+                List<Thing> thingList = c.GetThingList(map: map);
                 for (int i = 0; i < thingList.Count; i++)
                 {
-                    if (thingList[i] is Building_DoorExpanded door)
+                    if (thingList[index: i] is Building_DoorExpanded door)
                     {
                         if (c != door.OccupiedRect().Cells.ToArray()[0])
                         {

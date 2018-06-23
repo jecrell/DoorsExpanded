@@ -3,10 +3,13 @@
 
   <ResearchProjectDef Name="ProjectHeronResearch" Abstract="True">
 	<tab>Heron_ResearchTab</tab>
+  <!-- No longer possible to use string tags to flag research for other mods
   <tags>
       <li>ta-ignore</li>
   </tags>
+  -->
   </ResearchProjectDef>
+  
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_Curtains</defName>

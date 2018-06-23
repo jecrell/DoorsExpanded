@@ -23,6 +23,8 @@ namespace DoorsExpanded
     /// </summary>
     public class Building_DoorRegionHandler : Building_Door
     {
+        
+        
         private Building_DoorExpanded parentDoor;
         public Building_DoorExpanded ParentDoor
         {
@@ -48,6 +50,11 @@ namespace DoorsExpanded
             set => this.ticksUntilClose = value;
         }
 
+
+        public override bool PawnCanOpen(Pawn p)
+        {
+            return base.PawnCanOpen(p) && (p.Faction == this.Faction && !this.IsForbidden(p));
+        }
 
         public override void Tick()
         {
@@ -75,6 +82,12 @@ namespace DoorsExpanded
                 if (this.Faction != ParentDoor.Faction)
                     this.SetFaction(ParentDoor.Faction);
             }
+        }
+
+        public override void SpawnSetup(Map map, bool respawningAfterLoad)
+        {
+            base.SpawnSetup(map, respawningAfterLoad);
+            this.Map.edificeGrid.Register(this);
         }
 
         public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)

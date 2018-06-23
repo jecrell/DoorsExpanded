@@ -7,7 +7,6 @@
 			<defName>HeronInvisibleDoor</defName>
 			<label>invisible door</label>
 	    <thingClass>DoorsExpanded.Building_DoorRegionHandler</thingClass>
-      <blueprintClass>Blueprint_Door</blueprintClass>
 			<category>Building</category>
 			<graphicData>
 				<texPath>BlankTex</texPath>
@@ -26,7 +25,7 @@
 			<isAutoAttackableMapObject>false</isAutoAttackableMapObject>
 	    <tickerType>Normal</tickerType>
 	    <rotatable>false</rotatable>
-	    <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
+	    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
 	    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
 	    <blockLight>false</blockLight>
 	    <drawerType>RealtimeOnly</drawerType>
@@ -47,11 +46,7 @@
 
 		  <ThingDef ParentName="HeronBuildingBase" Name="HeronClothDoorBase" Abstract="True">
 		    <thingClass>Building_Door</thingClass>
-		    <blueprintClass>Blueprint_Door</blueprintClass>
 		    <category>Building</category>
-		    <blueprintGraphicData>
-		      <texPath>Things/Building/Door/Door_Blueprint</texPath>
-		    </blueprintGraphicData>
 		    <altitudeLayer>DoorMoveable</altitudeLayer>
 		    <fillPercent>1</fillPercent>
 		    <useHitPoints>true</useHitPoints>
@@ -67,7 +62,7 @@
 		    <selectable>true</selectable>
 		    <tickerType>Normal</tickerType>
 		    <rotatable>false</rotatable>
-		    <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
+		    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
 		    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
 		    <designationCategory>Structure</designationCategory>
 		    <holdsRoof>true</holdsRoof>
@@ -77,10 +72,10 @@
 		    <building>
 					<isInert>true</isInert>
 					<canPlaceOverWall>true</canPlaceOverWall>
-		      <soundDoorOpenPowered>DoorOpenPowered</soundDoorOpenPowered>
-		      <soundDoorClosePowered>DoorClosePowered</soundDoorClosePowered>
-		      <soundDoorOpenManual>DoorOpenManual</soundDoorOpenManual>
-		      <soundDoorCloseManual>DoorCloseManual</soundDoorCloseManual>
+		      <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
+		      <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
+		      <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
+		      <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
 		    </building>
 		    <comps>
 		      <li Class="CompProperties_Forbiddable"/>
@@ -93,11 +88,7 @@
 
 	  <ThingDef ParentName="BuildingBase" Name="HeronMetalDoorBase" Abstract="True">
 	    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
-	    <blueprintClass>Blueprint_Build</blueprintClass>
 	    <category>Building</category>
-	    <blueprintGraphicData>
-	      <texPath>Things/Building/Door/Door_Blueprint</texPath>
-	    </blueprintGraphicData>
 	    <altitudeLayer>DoorMoveable</altitudeLayer>
 	    <fillPercent>1</fillPercent>
 	    <useHitPoints>true</useHitPoints>
@@ -112,7 +103,7 @@
 	    <selectable>true</selectable>
 	    <tickerType>Normal</tickerType>
 	    <rotatable>true</rotatable>
-			<soundImpactDefault>BulletImpactMetal</soundImpactDefault>
+			<soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
 	    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
 	    <designationCategory>Structure</designationCategory>
 	    <holdsRoof>true</holdsRoof>
@@ -122,10 +113,10 @@
 	    <building>
 				<isInert>true</isInert>
 				<canPlaceOverWall>true</canPlaceOverWall>
-	      <soundDoorOpenPowered>DoorOpenPowered</soundDoorOpenPowered>
-	      <soundDoorClosePowered>DoorClosePowered</soundDoorClosePowered>
-	      <soundDoorOpenManual>DoorOpenManual</soundDoorOpenManual>
-	      <soundDoorCloseManual>DoorCloseManual</soundDoorCloseManual>
+	      <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
+	      <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
+	      <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
+	      <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
 	    </building>
 	    <comps>
 	      <li Class="CompProperties_Forbiddable"/>
@@ -138,11 +129,7 @@
 
   <ThingDef ParentName="HeronBuildingBase" Name="HeronDoorBase" Abstract="True">
     <thingClass>Building_Door</thingClass>
-    <blueprintClass>Blueprint_Door</blueprintClass>
     <category>Building</category>
-    <blueprintGraphicData>
-      <texPath>Things/Building/Door/Door_Blueprint</texPath>
-    </blueprintGraphicData>
     <altitudeLayer>DoorMoveable</altitudeLayer>
     <fillPercent>1</fillPercent>
     <useHitPoints>true</useHitPoints>
@@ -159,7 +146,7 @@
     <selectable>true</selectable>
     <tickerType>Normal</tickerType>
     <rotatable>false</rotatable>
-    <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
+    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
     <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
     <designationCategory>Structure</designationCategory>
     <holdsRoof>true</holdsRoof>
@@ -169,10 +156,10 @@
     <building>
 			<isInert>true</isInert>
 			<canPlaceOverWall>true</canPlaceOverWall>
-      <soundDoorOpenPowered>DoorOpenPowered</soundDoorOpenPowered>
-      <soundDoorClosePowered>DoorClosePowered</soundDoorClosePowered>
-      <soundDoorOpenManual>DoorOpenManual</soundDoorOpenManual>
-      <soundDoorCloseManual>DoorCloseManual</soundDoorCloseManual>
+      <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
+      <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
+      <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
+      <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
     </building>
     <comps>
       <li Class="CompProperties_Forbiddable"/>
@@ -194,13 +181,13 @@
   <ThingDef Name="HeronBuildingBase" Abstract="True">
     <category>Building</category>
     <thingClass>Building</thingClass>
-    <soundImpactDefault>BulletImpactMetal</soundImpactDefault>
+    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
     <selectable>true</selectable>
     <drawerType>MapMeshAndRealTime</drawerType>
     <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
     <repairEffect>Repair</repairEffect>
     <leaveResourcesWhenKilled>true</leaveResourcesWhenKilled>
-    <filthLeaving>BuildingRubble</filthLeaving>
+    <filthLeaving>Filth_RubbleBuilding</filthLeaving>
 		<statBases>
 			<SellPriceFactor>0.70</SellPriceFactor>
 		</statBases>
