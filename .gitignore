@@ -46,3 +46,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 Source/Dependencies/Assembly-CSharp.dll
+Source/Dependencies/0Harmony.dll
+Source/Dependencies/UnityEngine.dll
