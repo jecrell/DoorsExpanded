@@ -3,50 +3,12 @@
 
 
 
-	  <ThingDef ParentName="HeronBuildingBase">
-			<defName>HeronInvisibleDoor</defName>
-			<label>invisible door</label>
-	    <thingClass>DoorsExpanded.Building_DoorRegionHandler</thingClass>
-			<category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
-			<graphicData>
-				<texPath>BlankTex</texPath>
-				<graphicClass>Graphic_Single</graphicClass>
-				<damageData>
-					<enabled>false</enabled>
-				</damageData>
-			</graphicData>
-	    <altitudeLayer>FloorEmplacement</altitudeLayer>
-	    <fillPercent>1</fillPercent>
-	    <useHitPoints>false</useHitPoints>
-			<scatterableOnMapGen>false</scatterableOnMapGen>
-	    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
-	    <selectable>false</selectable>
-			<neverMultiSelect>true</neverMultiSelect>
-			<isAutoAttackableMapObject>false</isAutoAttackableMapObject>
-	    <tickerType>Normal</tickerType>
-	    <rotatable>false</rotatable>
-	    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
-	    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-	    <blockLight>false</blockLight>
-	    <drawerType>RealtimeOnly</drawerType>
-			<building>
-				<isInert>true</isInert>
-				<canPlaceOverWall>true</canPlaceOverWall>
-	    </building>
-	    <comps>
-	      <li Class="CompProperties_Forbiddable"/>
-	    </comps>
-			<placeWorkers>
-				<li>PlaceWorker_DoorLearnOpeningSpeed</li>
-			</placeWorkers>
-	  </ThingDef>
-
   <!--========================= Doors =============================-->
 
 
 		  <ThingDef ParentName="HeronBuildingBase" Name="HeronClothDoorBase" Abstract="True">
 		    <thingClass>Building_Door</thingClass>
-		    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
+		    <category>Building</category>
 		    <altitudeLayer>DoorMoveable</altitudeLayer>
 		    <fillPercent>1</fillPercent>
 		    <useHitPoints>true</useHitPoints>
@@ -86,11 +48,11 @@
 		  </ThingDef>
 
 
-	  <ThingDef ParentName="BuildingBase" Name="HeronMetalDoorBase" Abstract="True">
+	  <ThingDef ParentName="HeronBuildingBase" Name="HeronMetalDoorBase" Abstract="True">
 	    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
-	    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
+	    <category>Building</category>
 	    <altitudeLayer>DoorMoveable</altitudeLayer>
-	    <fillPercent>1</fillPercent>
+	    <fillPercent>0</fillPercent>
 	    <useHitPoints>true</useHitPoints>
 	    <stuffCategories>
 	      <li>Metallic</li>
@@ -129,9 +91,8 @@
 
   <ThingDef ParentName="HeronBuildingBase" Name="HeronDoorBase" Abstract="True">
     <thingClass>Building_Door</thingClass>
-    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
     <altitudeLayer>DoorMoveable</altitudeLayer>
-    <fillPercent>1</fillPercent>
+    <fillPercent>0</fillPercent>
     <useHitPoints>true</useHitPoints>
     <stuffCategories>
       <li>Metallic</li>
@@ -139,6 +100,7 @@
       <li>Stony</li>
     </stuffCategories>
     <statBases>
+	  <Mass>40</Mass>
       <MaxHitPoints>250</MaxHitPoints>
       <Flammability>1.0</Flammability>
     </statBases>
@@ -169,29 +131,11 @@
 		</placeWorkers>
   </ThingDef>
 
-  <!--
-██████╗  █████╗ ███████╗███████╗
-██╔══██╗██╔══██╗██╔════╝██╔════╝
-██████╔╝███████║███████╗█████╗  
-██╔══██╗██╔══██║╚════██║██╔══╝  
-██████╔╝██║  ██║███████║███████╗
-╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝                             
--->
-  
-  <ThingDef Name="HeronBuildingBase" Abstract="True">
-    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
-    <thingClass>Buildings</thingClass>
-    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
-    <selectable>true</selectable>
-    <drawerType>MapMeshAndRealTime</drawerType>
-    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-    <repairEffect>Repair</repairEffect>
-    <leaveResourcesWhenKilled>true</leaveResourcesWhenKilled>
-    <filthLeaving>Filth_RubbleBuilding</filthLeaving>
-		<statBases>
-			<SellPriceFactor>0.70</SellPriceFactor>
-		</statBases>
+  <ThingDef Name="HeronBuildingBase" ParentName="BuildingBase" Abstract="True">
+  	<thingCategories>
+	  <li>Buildings</li>
+	</thingCategories>
+    <minifiedDef>MinifiedThing</minifiedDef>
   </ThingDef>
-
-
+  
 </Defs>
