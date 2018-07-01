@@ -7,7 +7,7 @@
 			<defName>HeronInvisibleDoor</defName>
 			<label>invisible door</label>
 	    <thingClass>DoorsExpanded.Building_DoorRegionHandler</thingClass>
-			<category>Building</category>
+			<category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
 			<graphicData>
 				<texPath>BlankTex</texPath>
 				<graphicClass>Graphic_Single</graphicClass>
@@ -46,7 +46,7 @@
 
 		  <ThingDef ParentName="HeronBuildingBase" Name="HeronClothDoorBase" Abstract="True">
 		    <thingClass>Building_Door</thingClass>
-		    <category>Building</category>
+		    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
 		    <altitudeLayer>DoorMoveable</altitudeLayer>
 		    <fillPercent>1</fillPercent>
 		    <useHitPoints>true</useHitPoints>
@@ -88,7 +88,7 @@
 
 	  <ThingDef ParentName="BuildingBase" Name="HeronMetalDoorBase" Abstract="True">
 	    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
-	    <category>Building</category>
+	    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
 	    <altitudeLayer>DoorMoveable</altitudeLayer>
 	    <fillPercent>1</fillPercent>
 	    <useHitPoints>true</useHitPoints>
@@ -129,7 +129,7 @@
 
   <ThingDef ParentName="HeronBuildingBase" Name="HeronDoorBase" Abstract="True">
     <thingClass>Building_Door</thingClass>
-    <category>Building</category>
+    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
     <altitudeLayer>DoorMoveable</altitudeLayer>
     <fillPercent>1</fillPercent>
     <useHitPoints>true</useHitPoints>
@@ -179,8 +179,8 @@
 -->
   
   <ThingDef Name="HeronBuildingBase" Abstract="True">
-    <category>Building</category>
-    <thingClass>Building</thingClass>
+    <category>Buildings</category><thingCategories><li>Buildings</li></thingCategories>
+    <thingClass>Buildings</thingClass>
     <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
     <selectable>true</selectable>
     <drawerType>MapMeshAndRealTime</drawerType>
