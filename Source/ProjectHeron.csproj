@@ -34,9 +34,9 @@
     <Reference Include="0Harmony">
       <HintPath>.\Dependencies\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>.\Dependencies\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Assembly-CSharp, Version=1.0.6775.37850, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+        <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

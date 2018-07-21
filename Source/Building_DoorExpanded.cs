@@ -437,20 +437,19 @@ namespace DoorsExpanded
                 if (this.DoorPowerOn)
                 {
                     var buildingSoundDoorOpenPowered = this.def?.building?.soundDoorOpenPowered;
-                    if (buildingSoundDoorOpenPowered != null)
-                        buildingSoundDoorOpenPowered.PlayOneShot(new TargetInfo(base.Position, base.Map,
-                            false));
+                    buildingSoundDoorOpenPowered?.PlayOneShot(new TargetInfo(base.Position, base.Map,
+                        false));
                 }
                 else
                 {
                     var buildingSoundDoorOpenManual = this.def?.building?.soundDoorOpenManual;
-                    if (buildingSoundDoorOpenManual != null)
-                        buildingSoundDoorOpenManual.PlayOneShot(
-                            new TargetInfo(base.Position, base.Map, false));
+                    buildingSoundDoorOpenManual?.PlayOneShot(
+                        new TargetInfo(base.Position, base.Map, false));
                 }
                 foreach (Building_DoorRegionHandler door in invisDoors)
                 {
-                    door.FriendlyTouched();
+                    Traverse.Create(door).Field("lastFriendlyTouchTick").SetValue(Find.TickManager.TicksGame);
+                    //door.CheckFriendlyTouched(); //FriendlyTouched();
                     door.OpenMe(ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2);
                     //AccessTools.Method(typeof(Building_Door), "DoorOpen").Invoke(door, new object[] { ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2});
                 }
