@@ -388,7 +388,7 @@ namespace DoorsExpanded
         {
             Lord lord = p.GetLord();
             return !forbiddenComp.Forbidden && Def.doorType == DoorType.FreePassage || (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
-                   (p.IsWildMan() && !p.mindState.wildManEverReachedOutside) || base.Faction == null || 
+                   (p.IsWildMan() && !p.mindState.WildManEverReachedOutside) || base.Faction == null || 
                    (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
         }
 
