@@ -53,7 +53,7 @@ namespace DoorsExpanded
 
         public override bool PawnCanOpen(Pawn p)
         {
-            return base.PawnCanOpen(p) && (p.Faction == this.Faction && !this.IsForbidden(p));
+            return base.PawnCanOpen(p) && ((p.Faction == this.Faction || !p.Faction.HostileTo(this.Faction)) && !this.IsForbidden(p));
         }
 
         public override void Tick()

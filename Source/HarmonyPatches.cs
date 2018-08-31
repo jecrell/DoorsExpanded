@@ -54,7 +54,7 @@ namespace DoorsExpanded
                 type: typeof(HarmonyPatches),
                 name: nameof(InvisDoorsDontWipe)), transpiler: null);
             harmony.Patch(original: AccessTools.Method(type: typeof(GenPath), name: "ShouldNotEnterCell"), prefix: null, postfix: new HarmonyMethod(
-                type: typeof(HarmonyPatches),
+               type: typeof(HarmonyPatches),
                 name: nameof(ShouldNotEnterCellInvisDoors)), transpiler: null);
             harmony.Patch(original: AccessTools.Method(type: typeof(CompForbiddable), name: nameof(CompForbiddable.PostDraw)),
                 prefix: new HarmonyMethod(type: typeof(HarmonyPatches),
@@ -75,9 +75,21 @@ namespace DoorsExpanded
                 original: AccessTools.Method(type: typeof(PawnPathUtility), name: nameof(PawnPathUtility.FirstBlockingBuilding)),
                 prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
                     name: nameof(FirstBlockingBuilding_PostFix)));
+            harmony.Patch(
+                original: AccessTools.Method(typeof(GenGrid), "CanBeSeenOver", new []{typeof(Building)} ),
+                prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(CanBeSeenOver)));
+            
         }
 
-
+        //GenGrid
+        public static void CanBeSeenOver(Building b, ref bool __result)
+        {
+            //Ignores fillage
+            Building_DoorExpanded building_DoorEx = b as Building_DoorExpanded;
+            __result = building_DoorEx != null && building_DoorEx.Open;
+        }
+        
         //public static class PawnPathUtility
         public static void FirstBlockingBuilding_PostFix(this PawnPath path, ref IntVec3 cellBefore, Pawn pawn, ref Thing __result)
         {
@@ -251,8 +263,18 @@ namespace DoorsExpanded
 
         public static void ShouldNotEnterCellInvisDoors(Pawn pawn, Map map, IntVec3 dest, ref bool __result )
         {
-            if (__result)
+            if (__result || pawn == null)
                 return;
+            if (map.pathGrid.PerceivedPathCostAt(dest) > 30)
+            {
+                __result = true;
+                return;
+            }
+            if (!dest.Walkable(map))
+            {
+                __result = true;
+                return;
+            }
             Building edifice = dest.GetEdifice(map: map);
             if (edifice == null)
             {
@@ -261,23 +283,26 @@ namespace DoorsExpanded
             }
             if (edifice is Building_DoorExpanded building_doorEx)
             {
-                if (building_doorEx.IsForbidden(pawn: pawn) || 
-                    !building_doorEx.PawnCanOpen(p: pawn) ||
-                    building_doorEx.Forbidden)
+                if (building_doorEx.IsForbidden(pawn))
                 {
-                    Log.Message(building_doorEx.ToString() + "is forbidden");
                     __result = true;
+                    return;
+                }
+                if (!building_doorEx.PawnCanOpen(pawn))
+                {
+                    __result = true;
+                    return;
                 }
             }
             if (edifice is Building_DoorRegionHandler building_doorReg)
             {
-                if (building_doorReg.IsForbidden(pawn: pawn) ||
-                    !building_doorReg.PawnCanOpen(p: pawn) ||
-                    building_doorReg.ParentDoor.IsForbidden(pawn) ||
-                    !building_doorReg.ParentDoor.PawnCanOpen(pawn) ||
-                    building_doorReg.ParentDoor.Forbidden)
+                if (building_doorReg.IsForbidden(pawn))
                 {
-                    Log.Message(building_doorReg.ToString() + "is forbidden");
+                    __result = true;
+                    return;
+                }
+                if (!building_doorReg.PawnCanOpen(p: pawn))
+                {
                     __result = true;
                 }
             }

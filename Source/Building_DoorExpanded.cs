@@ -88,6 +88,7 @@ namespace DoorsExpanded
             this.ClearReachabilityCache(this.MapHeld);
             if (this.BlockedOpenMomentary)
                 this.DoorOpen(60);
+            
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
