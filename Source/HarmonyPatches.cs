@@ -87,7 +87,10 @@ namespace DoorsExpanded
         {
             //Ignores fillage
             Building_DoorExpanded building_DoorEx = b as Building_DoorExpanded;
-            __result = building_DoorEx != null && building_DoorEx.Open;
+            if (building_DoorEx != null)
+            {
+                __result = building_DoorEx != null && building_DoorEx.Open;
+            }
         }
         
         //public static class PawnPathUtility
