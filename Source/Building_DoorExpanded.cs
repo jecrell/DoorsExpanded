@@ -388,9 +388,11 @@ namespace DoorsExpanded
         public virtual bool PawnCanOpen(Pawn p)
         {
             Lord lord = p.GetLord();
-            return !forbiddenComp.Forbidden && Def.doorType == DoorType.FreePassage || (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
+            var result = !forbiddenComp.Forbidden || Def.doorType == DoorType.FreePassage || (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
                    (p.IsWildMan() && !p.mindState.WildManEverReachedOutside) || base.Faction == null || 
                    (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
+            if (!result && p.AnimalOrWildMan()) Console.WriteLine(p.def.ToString() + " cannot open " + this.def.ToString());
+            return result;
         }
 
 

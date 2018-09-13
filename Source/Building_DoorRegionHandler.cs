@@ -6,6 +6,7 @@ using Harmony;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 using Verse.Sound;
 
 namespace DoorsExpanded
@@ -23,19 +24,12 @@ namespace DoorsExpanded
     /// </summary>
     public class Building_DoorRegionHandler : Building_Door
     {
-        
-        
         private Building_DoorExpanded parentDoor;
+
         public Building_DoorExpanded ParentDoor
         {
-            get
-            {
-                return parentDoor;
-            }
-            set
-            {
-                parentDoor = value;
-            }
+            get { return parentDoor; }
+            set { parentDoor = value; }
         }
 
         public override string LabelMouseover => "";
@@ -53,7 +47,12 @@ namespace DoorsExpanded
 
         public override bool PawnCanOpen(Pawn p)
         {
-            return base.PawnCanOpen(p) && ((p.Faction == this.Faction || !p.Faction.HostileTo(this.Faction)) && !this.IsForbidden(p));
+            Lord lord = p.GetLord();
+            if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p) ||
+                (WildManUtility.WildManShouldReachOutsideNow(p) || this.Faction == null ||
+                 p.guest != null && p.guest.Released) || p.AnimalOrWildMan() && p.playerSettings != null)
+                return true;
+            return GenAI.MachinesLike(this.Faction, p);
         }
 
         public override void Tick()
@@ -102,7 +101,7 @@ namespace DoorsExpanded
             get => Traverse.Create(this).Field("openInt").GetValue<bool>();
             set => Traverse.Create(this).Field("openInt").SetValue(value);
         }
-        
+
         public void OpenMe(int ticks)
         {
             this.ticksUntilClose = ticks;
@@ -126,7 +125,7 @@ namespace DoorsExpanded
                 }
             }
         }
-        
+
         public override void ExposeData()
         {
             base.ExposeData();
