@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO.IsolatedStorage;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -98,6 +100,11 @@ namespace DoorsExpanded
                 original: AccessTools.Method(typeof(GenGrid), "CanBeSeenOver", new[] {typeof(Building)}),
                 prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
                     name: nameof(CanBeSeenOver)));
+            
+            harmony.Patch(
+                AccessTools.Method(typeof(JobGiver_Manhunter), "TryGiveJob"),
+                null, null, new HarmonyMethod(type: typeof(HarmonyPatches),
+                    name: nameof(JobGiver_Manhunter_TryGiveJob_Transpiler)));
             harmony.Patch(
                 AccessTools.Method(typeof(JobGiver_SeekAllowedArea), "TryGiveJob"),
                 new HarmonyMethod(type: typeof(HarmonyPatches),
@@ -112,6 +119,37 @@ namespace DoorsExpanded
             //        name: nameof(RegionAllows)));
         }
         
+        //JobGiver_Manhunter.TryGiveJob
+        public static IEnumerable<CodeInstruction> JobGiver_Manhunter_TryGiveJob_Transpiler(
+            IEnumerable<CodeInstruction> instructions, ILGenerator ilg)
+        {
+            List<CodeInstruction> instructionList = instructions.ToList();
+
+            MethodInfo postureInfo =
+                AccessTools.Method(type: typeof(Log), name: nameof(Log.Error));
+
+            var indexNum = 0;
+            
+            for (int index = 0; index < instructionList.Count; index++)
+            {
+                CodeInstruction instruction = instructionList[index: index];
+
+                if (instruction.opcode == OpCodes.Call && instruction.operand == postureInfo)
+                {
+                    Log.Message("Removed Log Error from Manhunter Job");
+                    indexNum = index;
+                    break;
+                    //instruction = new CodeInstruction(OpCodes.Call, operand: AccessTools.Method(typeof(Log), "Warning"));
+                }
+                //yield return instruction;
+            }
+            instructionList.RemoveRange(indexNum - 6, 7);
+            foreach (var ins in instructionList)
+                yield return ins;
+        }
+        
+        
+
         public static bool CanPhysicallyPass(Building_Door __instance, Pawn p, ref bool __result)
         {
             if (!p.AnimalOrWildMan()) return true;
@@ -276,11 +314,6 @@ namespace DoorsExpanded
                             __result = reg.TicksToOpenNow;
                             return;
                         }
-                        if (reg.CanPhysicallyPass(pawn))
-                        {
-                            __result = 0;
-                            return;
-                        }
                         if (!traverseParms.canBash && reg.IsForbidden(pawn))
                         {
                             if (DebugViewSettings.drawPaths)
@@ -333,21 +366,21 @@ namespace DoorsExpanded
                 //Log.Message("reg called");
                 //__result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorRegionHandler)) || t.IsForbidden(pawn.Faction)); 
                 //ForbidUtility.CaresAboutForbidden(pawn, false) && t.IsForbidden(pawn.Faction);
-                __result = __result && ((t.Spawned && t.Position.IsForbidden(pawn)) || t.IsForbidden(pawn.Faction));
+                __result = (pawn.HostileTo(t) || (t.Spawned && t.Position.IsForbidden(pawn)) || t.IsForbidden(pawn.Faction));
                 //if (__result == false && pawn.AnimalOrWildMan()) Log.Message(pawn.LabelShort + " rejected from expanded door");
                 //Log.Message("Result is " + __result.ToString());
             }
 
-//            if (t is Building_DoorExpanded ex)
-//            {
-//                Log.Message("ex called");
-//                //__result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorExpanded)) || t.IsForbidden(pawn.Faction)); 
-//                __result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorExpanded)) || t.IsForbidden(pawn.Faction)); 
-//                //Log.Message("Result is " + __result.ToString());                
-//            }
+            if (t is Building_DoorExpanded ex)
+            {
+                Log.Message("ex called");
+                //__result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorExpanded)) || t.IsForbidden(pawn.Faction)); 
+                __result = (pawn.HostileTo(t) || ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorExpanded)) || t.IsForbidden(pawn.Faction))); 
+                //Log.Message("Result is " + __result.ToString());                
+            }
         }
 
-        //PawnPathUtility
+        //PawnPathUtility.TryFindLastCellBeforeBlockingDoor
         //Adds an extra check.
         public static bool ManhunterJobGiverFix(PawnPath path, Pawn pawn, ref IntVec3 result, ref bool __result)
         {
@@ -369,26 +402,36 @@ namespace DoorsExpanded
                         .FirstOrDefault(x =>
                             x.def.thingClass == typeof(Building_DoorExpanded) ||
                             x.def.thingClass == typeof(Building_DoorRegionHandler)); //GetEdifice(map: pawn.Map);
+                    
                     //var edifice = nodesReversed[i].GetEdifice(pawn.Map);
                     if (edifice is Building_DoorExpanded building_DoorExpanded)
                     {
-                        if (!building_DoorExpanded?.InvisDoors?.Any(predicate: x => !x.CanPhysicallyPass(p: pawn)) ??
+                        if (!building_DoorExpanded?.InvisDoors?.Any(predicate: x => !x.CanPhysicallyPass(p: pawn) && !x.PawnCanOpen(pawn)) ??
                             false)
                         {
-                            //Log.Message(text: "DoorsExpanded :: Manhunter Check Passed");
+                            Log.Message(text: "DoorsExpanded :: Manhunter Check Passed (doorExpanded)");
                             result = nodesReversed[index: i + 1];
                             __result = true;
                             return false;
                         }
                     }
 
-                    if (edifice is Building_DoorRegionHandler building_DoorReg &&
-                        (!building_DoorReg.CanPhysicallyPass(pawn)))
+                    if (edifice is Building_DoorRegionHandler building_DoorReg)
                     {
-                        //Log.Message(text: "DoorsExpanded :: Manhunter Check Passed");
-                        result = nodesReversed[index: i + 1];
-                        __result = true;
-                        return false;
+                        if (!building_DoorReg.CanPhysicallyPass(pawn))
+                        {
+                            //Log.Message(text: "DoorsExpanded :: Manhunter Check Passed (doorRegionHandler) (CanPhysicallyPass)");
+                            result = nodesReversed[index: i + 1];
+                            __result = true;
+                            return false;
+                        }
+                        if (!building_DoorReg.PawnCanOpen(pawn))
+                        {
+                            //Log.Message(text: "DoorsExpanded :: Manhunter Check Passed (doorRegionHandler) (PawnCanOpen)");
+                            result = nodesReversed[index: i + 1];
+                            __result = true;
+                            return false;
+                        }
                     }
                 }
 

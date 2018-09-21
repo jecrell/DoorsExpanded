@@ -11,6 +11,7 @@ using Verse.AI;
 using System.Diagnostics;
 using System.Globalization;
 using Harmony;
+
 //using Reloader;
 
 
@@ -32,11 +33,12 @@ namespace DoorsExpanded
     public class Building_DoorExpanded : Building
     {
         private List<Building_DoorRegionHandler> invisDoors;
-        
-        public List<Building_DoorRegionHandler> InvisDoors => invisDoors ?? (invisDoors = new List<Building_DoorRegionHandler>());
+
+        public List<Building_DoorRegionHandler> InvisDoors =>
+            invisDoors ?? (invisDoors = new List<Building_DoorRegionHandler>());
 
         public List<Pawn> crossingPawns;
-        
+
         public DoorExpandedDef Def => this.def as DoorExpandedDef;
 
         public bool Forbidden
@@ -48,47 +50,52 @@ namespace DoorsExpanded
                 return forbiddenComp.Forbidden;
             }
         }
-        
+
         public void SpawnDoors()
         {
             InvisDoors.Clear();
             foreach (IntVec3 c in this.OccupiedRect().Cells)
             {
-                if (c.GetThingList(this.MapHeld).FirstOrDefault(x => x.def == HeronDefOf.HeronInvisibleDoor) is Building_DoorRegionHandler invisDoor)
+                if (c.GetThingList(this.MapHeld).FirstOrDefault(x => x.def == HeronDefOf.HeronInvisibleDoor) is
+                    Building_DoorRegionHandler invisDoor)
                 {
                     //Spawn over another door? Let's erase that door and add our own invis doors.
-                    if (invisDoor.ParentDoor != this && (invisDoor.ParentDoor?.Spawned ?? false)) 
+                    if (invisDoor.ParentDoor != this && (invisDoor.ParentDoor?.Spawned ?? false))
                     {
                         invisDoor.ParentDoor.DeSpawn();
-                        invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
+                        invisDoor = (Building_DoorRegionHandler) ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
                         invisDoor.ParentDoor = this;
                         GenSpawn.Spawn(invisDoor, c, MapHeld);
                         invisDoor.SetFaction(this.Faction);
-                        AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(invisDoor, true);
+                        AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt")
+                            .SetValue(invisDoor, this.holdOpenInt);
                         InvisDoors.Add(invisDoor);
                         continue;
                     }
+
                     invisDoor.ParentDoor = this;
                     invisDoor.SetFaction(this.Faction);
-                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(invisDoor, true);
-                    InvisDoors.Add(invisDoor);                    
+                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt")
+                        .SetValue(invisDoor, this.holdOpenInt);
+                    InvisDoors.Add(invisDoor);
                 }
                 else
                 {
                     //Log.Message("Door not found");
-                    Building_DoorRegionHandler thing = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
+                    Building_DoorRegionHandler thing =
+                        (Building_DoorRegionHandler) ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
                     thing.ParentDoor = this;
                     GenSpawn.Spawn(thing, c, MapHeld);
                     thing.SetFaction(this.Faction);
-                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(thing, true);
+                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt")
+                        .SetValue(thing, this.holdOpenInt);
                     InvisDoors.Add(thing);
                 }
-                
             }
+
             this.ClearReachabilityCache(this.MapHeld);
             if (this.BlockedOpenMomentary)
                 this.DoorOpen(60);
-            
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
@@ -104,7 +111,6 @@ namespace DoorsExpanded
                     doorToForbid.SetForbidden(forbiddenComp.Forbidden);
             this.Map.edificeGrid.Register(this);
             this.Map.reachability.ClearCache();
-                        
         }
 
         public override bool BlocksPawn(Pawn p)
@@ -114,10 +120,7 @@ namespace DoorsExpanded
 
         public bool Open
         {
-            get
-            {
-                return Def.doorType == DoorType.FreePassage || this.openInt;
-            }
+            get { return Def.doorType == DoorType.FreePassage || this.openInt; }
         }
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
@@ -129,15 +132,17 @@ namespace DoorsExpanded
                     if (!door.Destroyed)
                         door.Destroy(DestroyMode.Vanish);
                 }
+
                 invisDoors = null;
             }
+
             base.DeSpawn(mode);
         }
-        
+
         //[ReloadMethod]
         public override void Draw()
         {
-            float num = Mathf.Clamp01((float)this.visualTicksOpen / (float)this.VisualTicksToOpen);
+            float num = Mathf.Clamp01((float) this.visualTicksOpen / (float) this.VisualTicksToOpen);
             float num2 = this.def.Size.x;
             float d = (Def.doorOpenMultiplier * num) * num2;
             Rot4 rotation = base.Rotation;
@@ -160,11 +165,15 @@ namespace DoorsExpanded
                         DrawParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped);
                         break;
                 }
-                Material matToDraw = (!flipped && Def.doorAsync is GraphicData dA) ? dA.GraphicColoredFor(this).MatAt(rotation) : this.Graphic.MatAt(rotation);
+
+                Material matToDraw = (!flipped && Def.doorAsync is GraphicData dA)
+                    ? dA.GraphicColoredFor(this).MatAt(rotation)
+                    : this.Graphic.MatAt(rotation);
                 Graphics.DrawMesh(mesh, matrix, matToDraw, 0);
                 if (Def.singleDoor)
                     break;
             }
+
             if (Def.doorFrame is GraphicData f)
             {
                 Mesh fMesh;
@@ -174,16 +183,18 @@ namespace DoorsExpanded
                 //Rot4 currRot = (Def.fixedPerspective && this.Rotation == Rot4.West) ? Rot4.East : base.Rotation;
                 Graphics.DrawMesh(fMesh, fMatrix, Def.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
                 if (Def.doorFrameSplit is GraphicData ff)
-                { 
+                {
                     DrawFrameParams(Def, this.DrawPos, rotation, true, out fMesh, out fMatrix);
                     Graphics.DrawMesh(fMesh, fMatrix, Def.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
                 }
             }
+
             base.Comps_PostDraw();
         }
-        
+
         //[ReloadMethod]
-        public void DrawFrameParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, bool split, out Mesh mesh, out Matrix4x4 matrix)
+        public void DrawFrameParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, bool split, out Mesh mesh,
+            out Matrix4x4 matrix)
         {
             float d = (0f + 0.45f * 1) * thingDef.Size.x;
             bool verticalRotation = rotation.IsHorizontal;
@@ -209,19 +220,29 @@ namespace DoorsExpanded
 
             Vector3 graphicVector = drawPos;
             graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.Blueprint);
-            if (rotation == Rot4.North || rotation == Rot4.South) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.PawnState);
+            if (rotation == Rot4.North || rotation == Rot4.South)
+                graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.PawnState);
             if (!verticalRotation) graphicVector.x += d;
-            if (rotation == Rot4.East) { graphicVector.z -= d; if (split) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable); }
-            if (rotation == Rot4.West) { graphicVector.z += d; if (split) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable); }
+            if (rotation == Rot4.East)
+            {
+                graphicVector.z -= d;
+                if (split) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
+            }
+
+            if (rotation == Rot4.West)
+            {
+                graphicVector.z += d;
+                if (split) graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
+            }
 
 
             graphicVector += rotationVector * d;
 
 
             float persMod = (thingDef.fixedPerspective) ? 2f : 1f;
-            Vector3 scaleVector = (verticalRotation) ?
-                new Vector3(thingDef.doorFrame.drawSize.x * persMod, 1f, thingDef.doorFrame.drawSize.y * persMod) :
-                new Vector3(thingDef.doorFrame.drawSize.x, 1f, thingDef.doorFrame.drawSize.y);
+            Vector3 scaleVector = (verticalRotation)
+                ? new Vector3(thingDef.doorFrame.drawSize.x * persMod, 1f, thingDef.doorFrame.drawSize.y * persMod)
+                : new Vector3(thingDef.doorFrame.drawSize.x, 1f, thingDef.doorFrame.drawSize.y);
 
             Vector3 offset = thingDef.doorFrameOffset;
             if (thingDef.doorFrameSplit != null)
@@ -234,14 +255,16 @@ namespace DoorsExpanded
                     offset = thingDef.doorFrameSplitOffset;
                 }
             }
+
             graphicVector += offset;
-            
-            
+
+
             matrix = default(Matrix4x4);
             matrix.SetTRS(graphicVector, rotQuat, scaleVector);
         }
-        
-        public static void DrawParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+
+        public static void DrawParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh,
+            out Matrix4x4 matrix, float mod = 1, bool flipped = false)
         {
             bool verticalRotation = rotation.IsHorizontal;
             Vector3 rotationVector = default(Vector3);
@@ -252,7 +275,6 @@ namespace DoorsExpanded
             }
             else
             {
-
                 rotationVector = new Vector3(1f, 0f, 0f);
                 mesh = MeshPool.plane10Flip;
             }
@@ -266,9 +288,9 @@ namespace DoorsExpanded
 
             //Vector3 scaleVector = new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
             float persMod = (thingDef.fixedPerspective) ? 2f : 1f;
-            Vector3 scaleVector = (verticalRotation) ?
-                new Vector3(thingDef.graphicData.drawSize.x * persMod, 1f, thingDef.graphicData.drawSize.y * persMod) :
-                new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
+            Vector3 scaleVector = (verticalRotation)
+                ? new Vector3(thingDef.graphicData.drawSize.x * persMod, 1f, thingDef.graphicData.drawSize.y * persMod)
+                : new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
 
 
             matrix = default(Matrix4x4);
@@ -276,7 +298,8 @@ namespace DoorsExpanded
         }
 
         //[ReloadMethod]
-        public void DrawStretchParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+        public void DrawStretchParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh,
+            out Matrix4x4 matrix, float mod = 1, bool flipped = false)
         {
             base.Rotation = Building_Door.DoorRotationAt(base.Position, base.Map);
             bool verticalRotation = base.Rotation.IsHorizontal;
@@ -291,18 +314,20 @@ namespace DoorsExpanded
                 rotationVector = new Vector3(0f, 0f, 1f);
                 mesh = MeshPool.plane10Flip;
             }
+
             rotation.Rotate(RotationDirection.Clockwise);
             rotationVector = rotation.AsQuat * rotationVector;
-            
+
             Vector3 graphicVector = drawPos;
             graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
             graphicVector += rotationVector * (mod * 1.15f);
 
             //Vector3 scaleVector = new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
             float persMod = (thingDef.fixedPerspective) ? 2f : 1f;
-            Vector3 scaleVector = (verticalRotation) ?
-                new Vector3((thingDef.graphicData.drawSize.x * persMod)- mod * 1.3f, 1f, thingDef.graphicData.drawSize.y * persMod) :
-                new Vector3((thingDef.graphicData.drawSize.x)- mod * 1.3f, 1f, thingDef.graphicData.drawSize.y);
+            Vector3 scaleVector = (verticalRotation)
+                ? new Vector3((thingDef.graphicData.drawSize.x * persMod) - mod * 1.3f, 1f,
+                    thingDef.graphicData.drawSize.y * persMod)
+                : new Vector3((thingDef.graphicData.drawSize.x) - mod * 1.3f, 1f, thingDef.graphicData.drawSize.y);
 
 
             matrix = default(Matrix4x4);
@@ -310,7 +335,8 @@ namespace DoorsExpanded
         }
 
 
-        public static void DrawDoubleSwingParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+        public static void DrawDoubleSwingParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation,
+            out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
         {
             bool verticalRotation = rotation.IsHorizontal;
             rotation = (rotation == Rot4.South) ? Rot4.North : rotation;
@@ -334,11 +360,11 @@ namespace DoorsExpanded
             Quaternion rotQuat = rotation.AsQuat;
             if (verticalRotation)
             {
-                rotQuat = (!flipped) ?
-                    Quaternion.AngleAxis(rotation.AsAngle + (mod * -100f), Vector3.up) :
-                    Quaternion.AngleAxis(rotation.AsAngle + (mod * 100f), Vector3.up);
-
+                rotQuat = (!flipped)
+                    ? Quaternion.AngleAxis(rotation.AsAngle + (mod * -100f), Vector3.up)
+                    : Quaternion.AngleAxis(rotation.AsAngle + (mod * 100f), Vector3.up);
             }
+
             rotationVector = rotQuat * rotationVector;
 
 
@@ -347,7 +373,7 @@ namespace DoorsExpanded
             if (verticalRotation)
             {
                 if (!flipped && rotation == Rot4.East
-                   || flipped && rotation == Rot4.West)
+                    || flipped && rotation == Rot4.West)
                     graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.BuildingOnTop);
             }
 
@@ -355,16 +381,17 @@ namespace DoorsExpanded
             //if (verticalRotation) mod *= 2f;
             graphicVector += rotationVector * mod;
 
-            float persMod = (thingDef.fixedPerspective) ? 2f : 1f; 
-            Vector3 scaleVector = (verticalRotation) ?
-                new Vector3(thingDef.graphicData.drawSize.x * persMod, 1f, thingDef.graphicData.drawSize.y * persMod) :
-                new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
+            float persMod = (thingDef.fixedPerspective) ? 2f : 1f;
+            Vector3 scaleVector = (verticalRotation)
+                ? new Vector3(thingDef.graphicData.drawSize.x * persMod, 1f, thingDef.graphicData.drawSize.y * persMod)
+                : new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
 
             matrix = default(Matrix4x4);
             matrix.SetTRS(graphicVector, rotQuat, scaleVector);
         }
 
         #region Building_Door Copy
+
         private bool openInt;
         private bool holdOpenInt;
         protected int ticksUntilClose;
@@ -385,14 +412,12 @@ namespace DoorsExpanded
 
 
         // RimWorld.Building_Door
-        public virtual bool PawnCanOpen(Pawn p)
+        public bool PawnCanOpen(Pawn p)
         {
             Lord lord = p.GetLord();
-            var result = !forbiddenComp.Forbidden || Def.doorType == DoorType.FreePassage || (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || 
-                   (p.IsWildMan() && !p.mindState.WildManEverReachedOutside) || base.Faction == null || 
+            return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) ||
+                   WildManUtility.WildManShouldReachOutsideNow(p) || base.Faction == null ||
                    (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
-            if (!result && p.AnimalOrWildMan()) Console.WriteLine(p.def.ToString() + " cannot open " + this.def.ToString());
-            return result;
         }
 
 
@@ -408,10 +433,9 @@ namespace DoorsExpanded
             {
                 this.FriendlyTouched(p);
             }
-            
+
             if (this.PawnCanOpen(p))
             {
-
                 //base.Map.fogGrid.Notify_PawnEnteringDoor(this, p);
                 if (!crossingPawns.Contains(p))
                     crossingPawns.Add(p);
@@ -425,7 +449,6 @@ namespace DoorsExpanded
 
                     this.DoorOpen(120);
                     //Log.Message("PawnPawn!6");
-
                 }
             }
         }
@@ -449,6 +472,7 @@ namespace DoorsExpanded
                     buildingSoundDoorOpenManual?.PlayOneShot(
                         new TargetInfo(base.Position, base.Map, false));
                 }
+
                 foreach (Building_DoorRegionHandler door in invisDoors)
                 {
                     Traverse.Create(door).Field("lastFriendlyTouchTick").SetValue(Find.TickManager.TicksGame);
@@ -461,10 +485,7 @@ namespace DoorsExpanded
 
         private bool CanCloseAutomatically
         {
-            get
-            {
-                return this.DoorPowerOn && this.FriendlyTouchedRecently;
-            }
+            get { return this.DoorPowerOn && this.FriendlyTouchedRecently; }
         }
 
         public bool WillCloseSoon
@@ -475,14 +496,17 @@ namespace DoorsExpanded
                 {
                     return true;
                 }
+
                 if (!this.openInt)
                 {
                     return true;
                 }
+
                 if (this.ticksUntilClose > 0 && this.ticksUntilClose <= 60 && this.CanCloseAutomatically)
                 {
                     return true;
                 }
+
 /*                for (int i = 0; i < 5; i++)
                 {
                     IntVec3 c = base.Position + GenAdj.CardinalDirectionsAndInside[i];
@@ -506,6 +530,7 @@ namespace DoorsExpanded
                 {
                     return false;
                 }
+
                 return true;
             }
         }
@@ -515,30 +540,29 @@ namespace DoorsExpanded
         {
             get
             {
-                return Def.doorType == DoorType.FreePassage || this.openInt && (this.holdOpenInt || !this.WillCloseSoon);
+                return Def.doorType == DoorType.FreePassage ||
+                       this.openInt && (this.holdOpenInt || !this.WillCloseSoon);
             }
         }
 
 
         private readonly int friendlyTouchTicks = 97;
         private float friendlyTouchTicksFactor = 1f;
+
         private bool FriendlyTouchedRecently
         {
             get
             {
-                return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + (int)(friendlyTouchTicks * friendlyTouchTicksFactor);
+                return Find.TickManager.TicksGame <
+                       this.lastFriendlyTouchTick + (int) (friendlyTouchTicks * friendlyTouchTicksFactor);
             }
         }
 
         public bool DoorPowerOn
         {
-            get
-            {
-                return this.powerComp != null && this.powerComp.PowerOn;
-            }
+            get { return this.powerComp != null && this.powerComp.PowerOn; }
         }
-        
-       
+
 
         public override void PostMake()
         {
@@ -555,21 +579,20 @@ namespace DoorsExpanded
                 {
                     num *= 0.25f;
                 }
+
                 num *= Def.doorOpenSpeedRate;
                 if (Def.doorType == DoorType.FreePassage)
                 {
                     num *= 0.01f;
                 }
+
                 return Mathf.RoundToInt(num);
             }
         }
 
         public int VisualTicksToOpen
         {
-            get
-            {
-                return this.TicksToOpenNow;
-            }
+            get { return this.TicksToOpenNow; }
         }
 
         public void FriendlyTouched(Pawn p)
@@ -578,6 +601,7 @@ namespace DoorsExpanded
             {
                 crossingPawns = new List<Pawn>();
             }
+
             if (!crossingPawns.Contains(p))
                 crossingPawns.Add(p);
             this.friendlyTouchTicksFactor = 1.0f;
@@ -597,11 +621,13 @@ namespace DoorsExpanded
                         break;
                 }
             }
+
             if (p.health.capacities.GetLevel(PawnCapacityDefOf.Moving) is float val && val < 1f)
             {
                 //Log.Message("Moving capacity is: " + val);
                 friendlyTouchTicksFactor += 1f - val;
             }
+
             this.lastFriendlyTouchTick = Find.TickManager.TicksGame;
         }
 
@@ -634,7 +660,7 @@ namespace DoorsExpanded
             int closedTempLeakRate = Def?.tempLeakRate ?? 375;
             if (Find.TickManager.TicksGame % friendlyTouchTicks == 0)
             {
-                if(crossingPawns.Count > 0)
+                if (crossingPawns.Count > 0)
                 {
                     temp = new List<Pawn>(crossingPawns);
                     foreach (Pawn p in temp)
@@ -644,17 +670,17 @@ namespace DoorsExpanded
                         if (curDist > Mathf.Max(this.def.Size.x, this.def.Size.z) + 1)
                         {
                             //Log.Message("Removed " + p.LabelShort);
-                            crossingPawns.Remove(p);      
+                            crossingPawns.Remove(p);
                         }
                     }
                 }
                 else
                     this.DoorTryClose();
             }
-            
+
             if (this.FreePassage != this.freePassageWhenClearedReachabilityCache)
                 this.ClearReachabilityCache(base.Map);
-            
+
             if (!this.openInt)
             {
                 if (this.visualTicksOpen > 0)
@@ -676,6 +702,7 @@ namespace DoorsExpanded
                         door.TicksUntilClose = 60;
                         isPawnPresent = true;
                     }
+
                     if (!isPawnPresent)
                     {
                         this.ticksUntilClose--;
@@ -693,6 +720,7 @@ namespace DoorsExpanded
                         this.ticksUntilClose = 60;
                     }
                 }
+
                 if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % 22 == 0)
                 {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, false);
@@ -711,20 +739,27 @@ namespace DoorsExpanded
             catch (Exception e)
             {
             }
+
             return result;
         });
 
         public void DoorTryClose()
         {
-            if (!this.openInt || holdOpenInt || this.BlockedOpenMomentary || FriendlyTouchedRecently || crossingPawns?.Count > 0)
+            if (!this.openInt || holdOpenInt || this.BlockedOpenMomentary || FriendlyTouchedRecently ||
+                crossingPawns?.Count > 0)
             {
                 return;
             }
+
             //Log.Message("Stop that!");
             foreach (Building_DoorRegionHandler handler in InvisDoors)
             {
-                if (handler.Open) AccessTools.Field(typeof(Building_Door), "openInt").SetValue(handler, false); //AccessTools.Method(typeof(Building_Door), "DoorTryClose").Invoke(handler, null);
+                if (handler.Open)
+                    AccessTools.Field(typeof(Building_Door), "openInt")
+                        .SetValue(handler,
+                            false); //AccessTools.Method(typeof(Building_Door), "DoorTryClose").Invoke(handler, null);
             }
+
             this.openInt = false;
             if (this.DoorPowerOn)
             {
@@ -760,6 +795,7 @@ namespace DoorsExpanded
             {
                 yield return g;
             }
+
             if (base.Faction == Faction.OfPlayer)
             {
                 yield return new Command_Toggle
@@ -769,10 +805,7 @@ namespace DoorsExpanded
                     hotKey = KeyBindingDefOf.Misc3,
                     icon = TexCommand.HoldOpen,
                     isActive = (() => this.holdOpenInt),
-                    toggleAction = delegate
-                    {
-                        this.holdOpenInt = !this.holdOpenInt;
-                    }
+                    toggleAction = delegate { this.holdOpenInt = !this.holdOpenInt; }
                 };
                 if (DebugSettings.godMode)
                 {
@@ -783,11 +816,8 @@ namespace DoorsExpanded
                         hotKey = KeyBindingDefOf.Misc3,
                         icon = TexCommand.HoldOpen,
                         isActive = (() => this.openInt),
-                        toggleAction = delegate
-                        {
-                            this.openInt = !this.openInt;
-                        }
-                    };   
+                        toggleAction = delegate { this.openInt = !this.openInt; }
+                    };
                 }
             }
         }
@@ -828,7 +858,7 @@ namespace DoorsExpanded
                     this.visualTicksOpen = this.VisualTicksToOpen;
             }*/
         }
+
         #endregion Building_Door Copy
-        
     }
 }

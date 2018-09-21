@@ -50,9 +50,10 @@ namespace DoorsExpanded
             Lord lord = p.GetLord();
             if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p) ||
                 (WildManUtility.WildManShouldReachOutsideNow(p) || this.Faction == null ||
-                 p.guest != null && p.guest.Released) || p.AnimalOrWildMan() && p.playerSettings != null)
+                 p.guest != null && p.guest.Released) || p.AnimalOrWildMan() && p.playerSettings != null ||
+                !p.HostileTo(this))
                 return true;
-            return GenAI.MachinesLike(this.Faction, p);
+            return false; //GenAI.MachinesLike(this.Faction, p);
         }
 
         public override void Tick()
