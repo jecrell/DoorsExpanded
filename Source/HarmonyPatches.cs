@@ -154,12 +154,12 @@ namespace DoorsExpanded
         {
             if (!p.AnimalOrWildMan()) return true;
             if (p.playerSettings == null) return true;
-            StringBuilder s = new StringBuilder();
-            s.AppendLine(p.LabelShort + " - FreePassage: " + __instance.FreePassage);
+            //StringBuilder s = new StringBuilder();
+            //s.AppendLine(p.LabelShort + " - FreePassage: " + __instance.FreePassage);
             var pawnCanOpen = (__instance is Building_DoorRegionHandler reg) ? reg.PawnCanOpen(p) : __instance.PawnCanOpen(p);
-            s.AppendLine(p.LabelShort + " - PawnCanOpen: " + pawnCanOpen);
-            s.AppendLine((p.LabelShort + " - Open: " + __instance.Open));
-            s.AppendLine((p.LabelShort + " - Hostile: " + p.HostileTo(__instance)));
+            //s.AppendLine(p.LabelShort + " - PawnCanOpen: " + pawnCanOpen);
+            //s.AppendLine((p.LabelShort + " - Open: " + __instance.Open));
+            //s.AppendLine((p.LabelShort + " - Hostile: " + p.HostileTo(__instance)));
             //Log.Message(s.ToString());
             __result = __instance.FreePassage || pawnCanOpen || (__instance.Open && p.HostileTo(__instance));
             return false; 
@@ -366,17 +366,9 @@ namespace DoorsExpanded
                 //Log.Message("reg called");
                 //__result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorRegionHandler)) || t.IsForbidden(pawn.Faction)); 
                 //ForbidUtility.CaresAboutForbidden(pawn, false) && t.IsForbidden(pawn.Faction);
-                __result = (pawn.HostileTo(t) || (t.Spawned && t.Position.IsForbidden(pawn)) || t.IsForbidden(pawn.Faction));
+                __result = ((t.Spawned && t.Position.IsForbidden(pawn) && !pawn.Drafted) || (t.IsForbidden(pawn.Faction) || pawn.HostileTo(t)));
                 //if (__result == false && pawn.AnimalOrWildMan()) Log.Message(pawn.LabelShort + " rejected from expanded door");
                 //Log.Message("Result is " + __result.ToString());
-            }
-
-            if (t is Building_DoorExpanded ex)
-            {
-                Log.Message("ex called");
-                //__result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorExpanded)) || t.IsForbidden(pawn.Faction)); 
-                __result = (pawn.HostileTo(t) || ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorExpanded)) || t.IsForbidden(pawn.Faction))); 
-                //Log.Message("Result is " + __result.ToString());                
             }
         }
 

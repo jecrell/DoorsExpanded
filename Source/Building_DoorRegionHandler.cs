@@ -45,16 +45,20 @@ namespace DoorsExpanded
         }
 
 
-        public override bool PawnCanOpen(Pawn p)
-        {
-            Lord lord = p.GetLord();
-            if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p) ||
-                (WildManUtility.WildManShouldReachOutsideNow(p) || this.Faction == null ||
-                 p.guest != null && p.guest.Released) || p.AnimalOrWildMan() && p.playerSettings != null ||
-                !p.HostileTo(this))
-                return true;
-            return false; //GenAI.MachinesLike(this.Faction, p);
-        }
+//        public override bool PawnCanOpen(Pawn p)
+//        {
+//            Lord lord = p.GetLord();
+//            return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) ||
+//                   WildManUtility.WildManShouldReachOutsideNow(p) || base.Faction == null ||
+//                   (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
+////            Lord lord = p.GetLord();
+////            if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p) ||
+////                (WildManUtility.WildManShouldReachOutsideNow(p) || this.Faction == null ||
+////                 p.guest != null && p.guest.Released) || p.AnimalOrWildMan() && p.playerSettings != null ||
+////                !p.HostileTo(this))
+////                return true;
+////            return false; //GenAI.MachinesLike(this.Faction, p);
+//        }
 
         public override void Tick()
         {

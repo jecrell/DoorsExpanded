@@ -125,14 +125,15 @@ namespace DoorsExpanded
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
-            if (invisDoors != null && invisDoors?.Count > 0)
+            if (invisDoors?.Count > 0)
             {
-                foreach (Building_DoorRegionHandler door in invisDoors)
+                var tempDoors = new List<Building_DoorRegionHandler>(invisDoors);
+                foreach (var door in invisDoors)
                 {
-                    if (!door.Destroyed)
-                        door.Destroy(DestroyMode.Vanish);
+                    if (door != null && door.Spawned)
+                        tempDoors?.FirstOrDefault(z => z == door)?.DeSpawn();
                 }
-
+                tempDoors = null;
                 invisDoors = null;
             }
 
@@ -414,10 +415,12 @@ namespace DoorsExpanded
         // RimWorld.Building_Door
         public bool PawnCanOpen(Pawn p)
         {
-            Lord lord = p.GetLord();
-            return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) ||
-                   WildManUtility.WildManShouldReachOutsideNow(p) || base.Faction == null ||
-                   (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
+            if (invisDoors?.Count > 0)
+            {
+                if (invisDoors.Any(x => x.PawnCanOpen(p)))
+                    return true;
+            }
+            return false;
         }
 
 
