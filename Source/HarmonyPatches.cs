@@ -87,6 +87,7 @@ namespace DoorsExpanded
                     name: nameof(ForbidUtility.IsForbiddenToPass)),
                 prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
                     name: nameof(IsForbiddenToPass_PostFix)));
+            
             harmony.Patch(
                 original: AccessTools.Method(type: typeof(PathFinder), name: nameof(PathFinder.GetBuildingCost)),
                 prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
@@ -105,10 +106,10 @@ namespace DoorsExpanded
                 AccessTools.Method(typeof(JobGiver_Manhunter), "TryGiveJob"),
                 null, null, new HarmonyMethod(type: typeof(HarmonyPatches),
                     name: nameof(JobGiver_Manhunter_TryGiveJob_Transpiler)));
-            harmony.Patch(
-                AccessTools.Method(typeof(JobGiver_SeekAllowedArea), "TryGiveJob"),
-                new HarmonyMethod(type: typeof(HarmonyPatches),
-                    name: nameof(SeekAllowedArea_TryGiveJob)), null);
+            //harmony.Patch(
+            //    AccessTools.Method(typeof(JobGiver_SeekAllowedArea), "TryGiveJob"),
+            //    new HarmonyMethod(type: typeof(HarmonyPatches),
+            //        name: nameof(SeekAllowedArea_TryGiveJob)), null);
             harmony.Patch(
                 AccessTools.Method(typeof(Building_Door), "CanPhysicallyPass"),
                 new HarmonyMethod(type: typeof(HarmonyPatches),
@@ -170,6 +171,7 @@ namespace DoorsExpanded
         {
             if (!pawn.AnimalOrWildMan()) return true;
             if (pawn.playerSettings == null) return true;
+            StringBuilder res = new StringBuilder();
             if (!pawn.Position.IsForbidden(pawn))
             {
                 __result = null;
@@ -194,7 +196,34 @@ namespace DoorsExpanded
             RegionEntryPredicate entryCondition = (Region from, Region r) =>
             {
                 allows = r.Allows(traverseParms, false);
-                if (allows) return true;
+                if (allows)
+                {
+                    return true;
+                }
+
+                Log.Message("Entry barred");
+                if (r.door == null)
+                {
+                    Log.Message("Door Null");
+                    Log.Message("Return True");
+                }
+                ByteGrid avoidGrid = traverseParms.pawn.GetAvoidGrid(true);
+                if (avoidGrid != null && avoidGrid[r.door.Position] == 255)
+                {
+                    Log.Message("Door Position == 255");
+
+                    Log.Message("Return False");
+                }
+                if (traverseParms.pawn.HostileTo(r.door))
+                {
+                    Log.Message("Door Position == 255");
+                    Log.Message("CanPhysicallyPass: " + r.door.CanPhysicallyPass(traverseParms.pawn).ToString());
+                    Log.Message("CanBash: " + traverseParms.canBash.ToString());
+                }
+                Log.Message("door.CanPhysicallyPass(tp.pawn) == " + r.door.CanPhysicallyPass(traverseParms.pawn));
+                Log.Message("!r.door.IsForbiddenToPass(traverseParms.pawn); == " + !r.door.IsForbiddenToPass(traverseParms.pawn));
+                Log.Message("Return " + (r.door.CanPhysicallyPass(traverseParms.pawn) && !r.door.IsForbiddenToPass(traverseParms.pawn)));
+                //return this.door.CanPhysicallyPass(tp.pawn) && !this.door.IsForbiddenToPass(tp.pawn);
                 return false;
             };
             Region reg = null;
@@ -202,7 +231,7 @@ namespace DoorsExpanded
             {
                 if (r.IsDoorway && r?.ListerThings?.AllThings?.Any(x => x is Building_DoorRegionHandler) == false)
                 {
-                    //Log.Message("Doorway disallowed");
+                    Log.Message("Doorway disallowed");
                     return false;
                 }
 
@@ -218,7 +247,7 @@ namespace DoorsExpanded
                 RegionType.Set_Passable);
             if (reg == null)
             {
-                //Log.Message(pawn.LabelShort + " No region found");
+                Log.Message(pawn.LabelShort + " No region found");
                 __result = null;
                 return false;
             }
@@ -226,7 +255,7 @@ namespace DoorsExpanded
             IntVec3 c;
             if (!reg.TryFindRandomCellInRegionUnforbidden(pawn, null, out c))
             {
-                //Log.Message(pawn.LabelShort + " Failed to find random cell in region unforbidden");
+                Log.Message(pawn.LabelShort + " Failed to find random cell in region unforbidden");
                 __result = null;
                 return false;
             }
@@ -366,7 +395,41 @@ namespace DoorsExpanded
                 //Log.Message("reg called");
                 //__result = __result && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_DoorRegionHandler)) || t.IsForbidden(pawn.Faction)); 
                 //ForbidUtility.CaresAboutForbidden(pawn, false) && t.IsForbidden(pawn.Faction);
-                __result = ((t.Spawned && t.Position.IsForbidden(pawn) && !pawn.Drafted) || (t.IsForbidden(pawn.Faction) || pawn.HostileTo(t)));
+                //__result = reg.ParentDoor
+                //    .IsForbidden(
+                //        pawn); 
+
+
+                //if (!pawn.AnimalOrWildMan()) return;
+                //if (pawn.playerSettings == null) return;
+
+                /*
+                StringBuilder s = new StringBuilder();
+                s.AppendLine("t.Spawned == " + t.Spawned);
+                s.AppendLine("t.Position.IsForbidden(pawn) ==" + t.Position.IsForbidden(pawn));
+                s.AppendLine(" !pawn.Drafted ==" + !pawn.Drafted);
+
+                s.AppendLine("||");
+
+                s.AppendLine("t.IsForbidden(pawn.Faction) == " + t.IsForbidden(pawn.Faction));
+                s.AppendLine("pawn.HostileTo(t) == " + pawn.HostileTo(t));
+
+                s.AppendLine("t is " + t.ToString());
+
+                var c = t.Position;
+                s.AppendLine("ForbidUtility.CaresAboutForbidden(pawn, true) == " + ForbidUtility.CaresAboutForbidden(pawn, true));
+                s.AppendLine("!c.InAllowedArea(pawn) == " + !c.InAllowedArea(pawn));
+                s.AppendLine("pawn.mindState.maxDistToSquadFlag > 0f == " + (pawn.mindState.maxDistToSquadFlag > 0f));
+                s.AppendLine("!c.InHorDistOf(pawn.DutyLocation(), pawn.mindState.maxDistToSquadFlag)) == " + !c.InHorDistOf(pawn.DutyLocation(), pawn.mindState.maxDistToSquadFlag));
+                s.AppendLine("Result = " + (ForbidUtility.CaresAboutForbidden(pawn, true) && (!c.InAllowedArea(pawn) || (pawn.mindState.maxDistToSquadFlag > 0f && !c.InHorDistOf(pawn.DutyLocation(), pawn.mindState.maxDistToSquadFlag)))));
+                s.AppendLine("Supercool Result = " + (ForbidUtility.CaresAboutForbidden(pawn, true) && (pawn.mindState.maxDistToSquadFlag > 0f && !c.InHorDistOf(pawn.DutyLocation(), pawn.mindState.maxDistToSquadFlag))));
+                s.AppendLine("Final result: " + __result);
+                Log.Message(s.ToString());
+                
+                 */
+
+                var tPositionIsForbidden_withoutLocationCheck = (ForbidUtility.CaresAboutForbidden(pawn, true) && (pawn.mindState.maxDistToSquadFlag > 0f && !t.Position.InHorDistOf(pawn.DutyLocation(), pawn.mindState.maxDistToSquadFlag)));
+                __result = ((t.Spawned && tPositionIsForbidden_withoutLocationCheck) || (t.IsForbidden(pawn.Faction) || pawn.HostileTo(t)));
                 //if (__result == false && pawn.AnimalOrWildMan()) Log.Message(pawn.LabelShort + " rejected from expanded door");
                 //Log.Message("Result is " + __result.ToString());
             }
@@ -440,7 +503,7 @@ namespace DoorsExpanded
         {
             if (__instance is Building_DoorRegionHandler b && b.ParentDoor != null)
             {
-                __result = b.ParentDoor.FreePassage && !b.ParentDoor.Forbidden;
+                __result = b.ParentDoor.FreePassage;// && !b.ParentDoor.Forbidden;
                 return false;
             }
 
