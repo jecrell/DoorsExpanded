@@ -2,51 +2,40 @@
 <Defs>
 
   <ResearchProjectDef Name="ProjectHeronResearch" Abstract="True">
-	<tab>Heron_ResearchTab</tab>
-  <!-- No longer possible to use string tags to flag research for other mods
+    <tab>Heron_ResearchTab</tab>
+    <!-- No longer possible to use string tags to flag research for other mods
   <tags>
       <li>ta-ignore</li>
   </tags>
   -->
   </ResearchProjectDef>
-  
+
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_Curtains</defName>
     <label>Simple Curtains</label>
     <description>Unlocks simple construction techniques to make rings, simple hooks, and poles for the production of curtains, which open far faster than standard doors, but slowly vent temperatures between rooms.</description>
-	<techLevel>Neolithic</techLevel>
+    <techLevel>Neolithic</techLevel>
     <baseCost>200</baseCost>
-	<researchViewX>0</researchViewX>
-	<researchViewY>3</researchViewY>
-	<tags>
-		<li>ClassicStart</li>
-		<li>TribalStart</li>
-	</tags>
+    <researchViewX>0</researchViewX>
+    <researchViewY>3</researchViewY>
+    <tags>
+      <li>ClassicStart</li>
+      <li>TribalStart</li>
+    </tags>
   </ResearchProjectDef>
 
-  <ResearchProjectDef ParentName="ProjectHeronResearch">
-    <defName>ProjectHeron_PrisonDoors</defName>
-    <label>Prisoner Containment</label>
-    <description>Basic</description>
-    <baseCost>500</baseCost>
-	<techLevel>Neolithic</techLevel>
-	<researchViewX>0</researchViewX>
-	<researchViewY>4</researchViewY>
-  </ResearchProjectDef>
-  
-  
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_Gates</defName>
     <label>Hinges and Gates</label>
     <description>Hinges and fastening techniques allow for the construction of swinging doors, such as large gates.</description>
     <baseCost>200</baseCost>
-	<techLevel>Neolithic</techLevel>
-	<researchViewX>1</researchViewX>
-	<researchViewY>3</researchViewY>
-	<tags>
-		<li>ClassicStart</li>
-	</tags>
+    <techLevel>Medieval</techLevel>
+    <researchViewX>1</researchViewX>
+    <researchViewY>3</researchViewY>
+    <tags>
+      <li>ClassicStart</li>
+    </tags>
   </ResearchProjectDef>
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
@@ -54,9 +43,23 @@
     <label>Blast Doors</label>
     <description>Allows for the production of blast absorbing pressurized blast doors.</description>
     <baseCost>3000</baseCost>
-	<techLevel>Industrial</techLevel>
-	<researchViewX>2</researchViewX>
-	<researchViewY>3</researchViewY>
+    <techLevel>Industrial</techLevel>
+    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
+    <prerequisites>
+      <li>Electricity</li>
+    </prerequisites>
+    <researchViewX>2</researchViewX>
+    <researchViewY>3</researchViewY>
   </ResearchProjectDef>
-  
+
+  <ResearchProjectDef ParentName="ProjectHeronResearch">
+    <defName>ProjectHeron_PrisonDoors</defName>
+    <label>Prisoner Containment</label>
+    <description>Basic</description>
+    <baseCost>500</baseCost>
+    <techLevel>Industrial</techLevel>
+    <researchViewX>0</researchViewX>
+    <researchViewY>4</researchViewY>
+  </ResearchProjectDef>
+
 </Defs>
