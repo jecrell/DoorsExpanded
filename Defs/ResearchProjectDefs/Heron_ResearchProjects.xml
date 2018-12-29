@@ -45,9 +45,6 @@
     <baseCost>3000</baseCost>
     <techLevel>Industrial</techLevel>
     <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
-    <prerequisites>
-      <li>Electricity</li>
-    </prerequisites>
     <researchViewX>2</researchViewX>
     <researchViewY>3</researchViewY>
   </ResearchProjectDef>
