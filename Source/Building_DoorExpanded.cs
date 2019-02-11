@@ -111,6 +111,10 @@ namespace DoorsExpanded
                     doorToForbid.SetForbidden(forbiddenComp.Forbidden);
             this.Map.edificeGrid.Register(this);
             this.Map.reachability.ClearCache();
+            foreach (IntVec3 c in this.OccupiedRect().Cells)
+            {
+                this.Map.GetComponent<MapGrid_DoorsExpanded>().Notify_UpdateDoorReference(c);
+            }
         }
 
         public override bool BlocksPawn(Pawn p)
@@ -137,6 +141,10 @@ namespace DoorsExpanded
                 invisDoors = null;
             }
 
+            foreach (IntVec3 c in this.OccupiedRect().Cells)
+            {
+                this.Map.GetComponent<MapGrid_DoorsExpanded>().Notify_UpdateDoorReference(c);
+            }
             base.DeSpawn(mode);
         }
 

@@ -4,7 +4,7 @@
   <author>Jecrell</author>
   <targetVersion>1.0.2059</targetVersion>
   <url>https://discord.gg/AaVFA7V</url>
-  <description>1.20.0.1 (10-27-2018)
+  <description>1.20.0.2 (02-10-2019)
 
   Adds new types and sizes of doors to RimWorld.
   
@@ -34,6 +34,10 @@ Maaxar, Shibby Says, TheJagermeister, Cory Bonifay, Kiya Nicoll, Matt Harris, Pa
 ========================
 Changelog
 ========================
+1.20.0.2 (02-10-2019)
+========================
+Crossing through blast doors should be faster now.
+
 1.20.0.1 (10-27-2018)
 ========================
 This should fix the issue where animals do not want to walk through the doors for whatever reason.

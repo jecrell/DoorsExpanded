@@ -18,8 +18,23 @@ namespace DoorsExpanded
     {
         static HarmonyPatches()
         {
-            //Log.Message("This is working!");
             HarmonyInstance harmony = HarmonyInstance.Create(id: "rimworld.jecrell.doorsexpanded");
+
+            // What?: Reduce movement penalty for moving through expanded doors.
+            // Why?: Movement penalty while crossing bulky doors is frustrating to players.
+            // How? Patches Verse.CostToMoveIntoCell(Pawn pawn, IntVec3 c)
+            harmony.Patch(original:
+                AccessTools.Method(
+                    type: typeof(Pawn_PathFollower), 
+                    name: "CostToMoveIntoCell", 
+                    parameters: new Type[] { typeof(Pawn), typeof(IntVec3) }),
+                    prefix: null,
+                    postfix:
+                        new HarmonyMethod(
+                        type: typeof(HarmonyPatches),
+                        name: nameof(CostToMoveIntoCell_PostFix_ChangeDoorPathCost)
+                        )
+            );
 
             harmony.Patch(original: AccessTools.Method(type: typeof(EdificeGrid), name: "Register"),
                 prefix: new HarmonyMethod(
@@ -119,7 +134,26 @@ namespace DoorsExpanded
             //    prefix: null, postfix: new HarmonyMethod(type: typeof(HarmonyPatches),
             //        name: nameof(RegionAllows)));
         }
-        
+
+        public static void CostToMoveIntoCell_PostFix_ChangeDoorPathCost(Pawn_PathFollower __instance, Pawn pawn, IntVec3 c, ref int __result)
+        {
+            //Edge cases
+            var curMap = pawn.MapHeld;
+            if (curMap == null) return;
+
+            var curMapGridForDoors = curMap.GetComponent<MapGrid_DoorsExpanded>();
+            if (curMapGridForDoors == null) return;
+
+            //Method
+            if (curMapGridForDoors.HasDoorAtLocation(c))
+            {
+                int adjustedPathCost = (int)(__result * 0.5f);
+                //Log.Message($"DoorsExpanded: Newcost: {adjustedPathCost} - Oldcost: {__result}");
+                __result = Mathf.Max(adjustedPathCost, 1);
+                
+            }
+        }
+
         //JobGiver_Manhunter.TryGiveJob
         public static IEnumerable<CodeInstruction> JobGiver_Manhunter_TryGiveJob_Transpiler(
             IEnumerable<CodeInstruction> instructions, ILGenerator ilg)
