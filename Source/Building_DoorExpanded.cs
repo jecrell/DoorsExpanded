@@ -320,7 +320,7 @@ namespace DoorsExpanded
         /// <param name="mod"></param>
         /// <param name="flipped"></param>
         /// <param name="verticalStretch">This allows for vertical stretching doors, such as garage doors.</param>
-        [Reloader.ReloadMethod]
+        //[Reloader.ReloadMethod]
         public void DrawStretchParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh,
             out Matrix4x4 matrix, float mod = 1, bool flipped = false, bool verticalStretch = false)
         {

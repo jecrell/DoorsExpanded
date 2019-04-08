@@ -234,7 +234,7 @@
         <basePowerConsumption>15</basePowerConsumption>
       </li>
     </comps>
-    <uiIconPath>Things/Building/Door/DoorRemote_icon</uiIconPath>
+    <uiIconPath>Things/Building/Door/DoorDoubleRemoteUI_icon</uiIconPath>
     <costStuffCount>100</costStuffCount>
     <stuffCategories Inherit="False">
       <li>Metallic</li>
