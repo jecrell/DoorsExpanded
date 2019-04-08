@@ -14,7 +14,8 @@ namespace DoorsExpanded
         Standard = 0,
         Stretch,
         DoubleSwing,
-        FreePassage
+        FreePassage,
+        StretchVertical
     }
     public class DoorExpandedDef : ThingDef
     {

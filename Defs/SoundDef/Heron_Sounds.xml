@@ -2,6 +2,56 @@
 <Defs>
 
   <SoundDef>
+    <defName>HeronGarageOpen</defName>
+    <context>MapOnly</context>
+    <eventNames />
+    <maxSimultaneous>1</maxSimultaneous>
+    <subSounds>
+      <li>
+        <name>False</name>
+        <grains>
+          <li Class="AudioGrain_Clip">
+            <clipPath>Misc/RemoteDoor/GarageOpen</clipPath>
+          </li>
+        </grains>
+        <volumeRange>
+          <min>3</min>
+          <max>4</max>
+        </volumeRange>
+        <pitchRange>
+          <min>0.8852941</min>
+          <max>1.114706</max>
+        </pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <SoundDef>
+    <defName>HeronGarageClose</defName>
+    <context>MapOnly</context>
+    <eventNames />
+    <maxSimultaneous>1</maxSimultaneous>
+    <subSounds>
+      <li>
+        <name>False</name>
+        <grains>
+          <li Class="AudioGrain_Clip">
+            <clipPath>Misc/RemoteDoor/GarageClose</clipPath>
+          </li>
+        </grains>
+        <volumeRange>
+          <min>3</min>
+          <max>4</max>
+        </volumeRange>
+        <pitchRange>
+          <min>0.862353</min>
+          <max>1.137647</max>
+        </pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <SoundDef>
     <defName>HeronCurtainOpen</defName>
     <context>MapOnly</context>
     <eventNames />

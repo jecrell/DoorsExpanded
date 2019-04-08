@@ -90,7 +90,7 @@
   
   <DoorsExpanded.DoorExpandedDef ParentName="HeronDoor">
     <defName>PH_DoorTriple</defName>
-    <label>door (1x3)</label>
+    <label>door (3x1)</label>
     <size>(3,1)</size>
     <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
 	<placeWorkers>
@@ -294,7 +294,7 @@
 
   <DoorsExpanded.DoorExpandedDef ParentName="HeronDoor">
     <defName>PH_GateDoubleThick</defName>
-    <label>gate (1x2)</label>
+    <label>gate (2x1)</label>
     <size>(2,1)</size>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
@@ -334,7 +334,7 @@
   
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
-    <label>blast door (1x2)</label>
+    <label>blast door (2x1)</label>
 	<description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons.</description>
     <size>(2,1)</size>
 	<building>
@@ -402,7 +402,7 @@
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorThickBlastDoor</defName>
 	<description>A heavy pair of doors that are twice as strong against explosives, and three times more resiliant to standard blunt and sharpened weapons.</description>
-    <label>blast door (2x3)</label>
+    <label>blast door (3x2)</label>
     <size>(3,2)</size>
 	<building>
 	  <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>

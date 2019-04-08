@@ -12,7 +12,7 @@ namespace DoorsExpanded
     {
         //Keep track of doors on the map
         Dictionary<IntVec3, bool> _doors = new Dictionary<IntVec3, bool>();
-
+        
         public MapGrid_DoorsExpanded(Map map) : base(map) {}
 
         /// <summary>

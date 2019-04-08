@@ -23,17 +23,17 @@ namespace DoorsExpanded
             // What?: Reduce movement penalty for moving through expanded doors.
             // Why?: Movement penalty while crossing bulky doors is frustrating to players.
             // How? Patches Verse.CostToMoveIntoCell(Pawn pawn, IntVec3 c)
-            harmony.Patch(original:
-                AccessTools.Method(
+            harmony.Patch(
+                original: AccessTools.Method(
                     type: typeof(Pawn_PathFollower), 
                     name: "CostToMoveIntoCell", 
-                    parameters: new Type[] { typeof(Pawn), typeof(IntVec3) }),
-                    prefix: null,
-                    postfix:
-                        new HarmonyMethod(
-                        type: typeof(HarmonyPatches),
-                        name: nameof(CostToMoveIntoCell_PostFix_ChangeDoorPathCost)
-                        )
+                    parameters: new Type[] { typeof(Pawn), typeof(IntVec3) }
+                ),
+                prefix: null,
+                postfix:  new HarmonyMethod(
+                    type: typeof(HarmonyPatches),
+                    name: nameof(CostToMoveIntoCell_PostFix_ChangeDoorPathCost)
+                )
             );
 
             harmony.Patch(original: AccessTools.Method(type: typeof(EdificeGrid), name: "Register"),
@@ -135,11 +135,15 @@ namespace DoorsExpanded
             //        name: nameof(RegionAllows)));
         }
 
+        
         public static void CostToMoveIntoCell_PostFix_ChangeDoorPathCost(Pawn_PathFollower __instance, Pawn pawn, IntVec3 c, ref int __result)
         {
             //Edge cases
             var curMap = pawn.MapHeld;
             if (curMap == null) return;
+
+            if (pawn == null || pawn.Faction != Faction.OfPlayerSilentFail)
+                return;
 
             var curMapGridForDoors = curMap.GetComponent<MapGrid_DoorsExpanded>();
             if (curMapGridForDoors == null) return;
@@ -365,7 +369,6 @@ namespace DoorsExpanded
         //PathFinder
         public static void GetBuildingCost_PostFix(Building b, TraverseParms traverseParms, Pawn pawn, ref int __result)
         {
-           // if (__result >= int.MaxValue) return;
             if (b is Building_DoorRegionHandler reg)
             {
                 switch (traverseParms.mode)
@@ -373,21 +376,24 @@ namespace DoorsExpanded
                     case TraverseMode.ByPawn:
                     {
                         if (reg.PawnCanOpen(pawn) && !reg.FreePassage)
-                        {
-                            __result = reg.TicksToOpenNow;
-                            return;
-                        }
-                        if (!traverseParms.canBash && reg.IsForbidden(pawn))
-                        {
-                            if (DebugViewSettings.drawPaths)
                             {
-                                Traverse.Create(typeof(PathFinder)).Method("DebugFlash",
-                                    new object[] {b.Position, b.Map, 0.77f, "forbid"});
-                                //PathFinder.DebugFlash(b.Position, b.Map, 0.77f, "forbid");
-                            }
-
-                            __result = int.MaxValue;
+                                __result = reg.TicksToOpenNow;
+                                //Log.Message($"OpenPassageInvis {__result}");
+                                return;
                         }
+                            if (!traverseParms.canBash && reg.IsForbidden(pawn))
+                            {
+                                if (DebugViewSettings.drawPaths)
+                                {
+                                    //Log.Message("ForbiddenInvis");
+                                    Traverse.Create(typeof(PathFinder)).Method("DebugFlash",
+                                    new object[] { b.Position, b.Map, 0.77f, "forbid" });
+                                    //PathFinder.DebugFlash(b.Position, b.Map, 0.77f, "forbid");
+                                }
+
+                                __result = int.MaxValue;
+                            }
+                            else { __result = 0; }
                         
                         break;
                     }
@@ -400,20 +406,23 @@ namespace DoorsExpanded
                     case TraverseMode.ByPawn:
                     {
                         if (ex.PawnCanOpen(pawn) && !ex.FreePassage)
-                        {
-                            __result = ex.TicksToOpenNow;
-                            return;
-                        }
-                        if (!traverseParms.canBash && ex.IsForbidden(pawn))
-                        {
-                            if (DebugViewSettings.drawPaths)
                             {
-                                Traverse.Create(typeof(PathFinder)).Method("DebugFlash",
-                                    new object[] {b.Position, b.Map, 0.77f, "forbid"});
-                            }
-
-                            __result = int.MaxValue;
+                                __result = ex.TicksToOpenNow;
+                                //Log.Message($"OpenPassage {__result}");
+                                return;
                         }
+                            if (!traverseParms.canBash && ex.IsForbidden(pawn))
+                            {
+                                if (DebugViewSettings.drawPaths)
+                                {
+                                    //Log.Message("Forbidden");
+                                    Traverse.Create(typeof(PathFinder)).Method("DebugFlash",
+                                        new object[] { b.Position, b.Map, 0.77f, "forbid" });
+                                }
+
+                                __result = int.MaxValue;
+                            }
+                            else __result = 0;
 
                         break;
                     }
@@ -498,7 +507,7 @@ namespace DoorsExpanded
                         if (!building_DoorExpanded?.InvisDoors?.Any(predicate: x => !x.CanPhysicallyPass(p: pawn) && !x.PawnCanOpen(pawn)) ??
                             false)
                         {
-                            Log.Message(text: "DoorsExpanded :: Manhunter Check Passed (doorExpanded)");
+                            //Log.Message(text: "DoorsExpanded :: Manhunter Check Passed (doorExpanded)");
                             result = nodesReversed[index: i + 1];
                             __result = true;
                             return false;

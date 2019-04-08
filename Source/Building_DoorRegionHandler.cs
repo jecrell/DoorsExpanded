@@ -83,6 +83,9 @@ namespace DoorsExpanded
             }*/
             if (Find.TickManager.TicksGame % 2500 == 0)
             {
+                if (ParentDoor == null)
+                    this.Destroy();
+
                 if (this.Faction != ParentDoor.Faction)
                     this.SetFaction(ParentDoor.Faction);
             }

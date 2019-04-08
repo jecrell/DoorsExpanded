@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+using Verse;
+
+namespace DoorsExpanded
+{
+    [StaticConstructorOnStartup]
+    internal class TexButton
+    {
+        public static readonly Texture2D ConnectToButton = ContentFinder<Texture2D>.Get("UI/Buttons/ConnectToButton", true);
+        public static readonly Texture2D SecuredRemotely = ContentFinder<Texture2D>.Get("UI/Buttons/SecuredRemotely", true);
+
+    }
+}

@@ -164,6 +164,9 @@ namespace DoorsExpanded
 
                 switch (Def.doorType)
                 {
+                    case DoorType.StretchVertical:
+                        DrawStretchParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped, true);
+                        break;
                     case DoorType.Stretch:
                         DrawStretchParams(Def, this.DrawPos, rotation, out mesh, out matrix, d, flipped);
                         break;
@@ -305,24 +308,36 @@ namespace DoorsExpanded
             matrix = default(Matrix4x4);
             matrix.SetTRS(graphicVector, rotQuat, scaleVector);
         }
-
-        //[ReloadMethod]
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="thingDef"></param>
+        /// <param name="drawPos"></param>
+        /// <param name="rotation"></param>
+        /// <param name="mesh"></param>
+        /// <param name="matrix"></param>
+        /// <param name="mod"></param>
+        /// <param name="flipped"></param>
+        /// <param name="verticalStretch">This allows for vertical stretching doors, such as garage doors.</param>
+        [Reloader.ReloadMethod]
         public void DrawStretchParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh,
-            out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+            out Matrix4x4 matrix, float mod = 1, bool flipped = false, bool verticalStretch = false)
         {
             base.Rotation = Building_Door.DoorRotationAt(base.Position, base.Map);
             bool verticalRotation = base.Rotation.IsHorizontal;
             Vector3 rotationVector = default(Vector3);
             if (!flipped)
             {
-                rotationVector = new Vector3(0f, 0f, -1f);
+                rotationVector = new Vector3(-1.5f, 0f, 0f);
                 mesh = MeshPool.plane10;
             }
             else
             {
-                rotationVector = new Vector3(0f, 0f, 1f);
+                rotationVector = new Vector3(1.5f, 0f, 0f);
                 mesh = MeshPool.plane10Flip;
             }
+
 
             rotation.Rotate(RotationDirection.Clockwise);
             rotationVector = rotation.AsQuat * rotationVector;
@@ -331,16 +346,26 @@ namespace DoorsExpanded
             graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
             graphicVector += rotationVector * (mod * 1.15f);
 
-            //Vector3 scaleVector = new Vector3(thingDef.graphicData.drawSize.x, 1f, thingDef.graphicData.drawSize.y);
             float persMod = (thingDef.fixedPerspective) ? 2f : 1f;
-            Vector3 scaleVector = (verticalRotation)
-                ? new Vector3((thingDef.graphicData.drawSize.x * persMod) - mod * 1.3f, 1f,
-                    thingDef.graphicData.drawSize.y * persMod)
-                : new Vector3((thingDef.graphicData.drawSize.x) - mod * 1.3f, 1f, thingDef.graphicData.drawSize.y);
-
+            Vector3 scaleVector;
+            if (verticalStretch)
+            {
+                scaleVector = (verticalRotation)
+                    ? new Vector3((thingDef.graphicData.drawSize.x * persMod), 1f,
+                        ((thingDef.graphicData.drawSize.y * persMod) - mod * 1.3f))
+                    : new Vector3((thingDef.graphicData.drawSize.x), 1f, (thingDef.graphicData.drawSize.y) - mod * 1.3f);
+            }
+            else
+            {
+                scaleVector = (verticalRotation)
+                    ? new Vector3((thingDef.graphicData.drawSize.x * persMod) - mod * 1.3f, 1f,
+                        thingDef.graphicData.drawSize.y * persMod)
+                    : new Vector3((thingDef.graphicData.drawSize.x) - mod * 1.3f, 1f, thingDef.graphicData.drawSize.y);
+            }
 
             matrix = default(Matrix4x4);
             matrix.SetTRS(graphicVector, base.Rotation.AsQuat, scaleVector);
+
         }
 
 
@@ -421,7 +446,7 @@ namespace DoorsExpanded
 
 
         // RimWorld.Building_Door
-        public bool PawnCanOpen(Pawn p)
+        public virtual bool PawnCanOpen(Pawn p)
         {
             if (invisDoors?.Count > 0)
             {
@@ -465,7 +490,7 @@ namespace DoorsExpanded
         }
 
 
-        public void DoorOpen(int ticksToClose = 60)
+        public virtual void DoorOpen(int ticksToClose = 60)
         {
             this.ticksUntilClose = ticksToClose;
             if (!this.openInt)
@@ -499,7 +524,7 @@ namespace DoorsExpanded
             get { return this.DoorPowerOn && this.FriendlyTouchedRecently; }
         }
 
-        public bool WillCloseSoon
+        public virtual bool WillCloseSoon
         {
             get
             {
@@ -560,7 +585,7 @@ namespace DoorsExpanded
         private readonly int friendlyTouchTicks = 97;
         private float friendlyTouchTicksFactor = 1f;
 
-        private bool FriendlyTouchedRecently
+        public virtual bool FriendlyTouchedRecently
         {
             get
             {
@@ -671,7 +696,7 @@ namespace DoorsExpanded
             int closedTempLeakRate = Def?.tempLeakRate ?? 375;
             if (Find.TickManager.TicksGame % friendlyTouchTicks == 0)
             {
-                if (crossingPawns.Count > 0)
+                if (ShouldKeepDoorOpen())
                 {
                     temp = new List<Pawn>(crossingPawns);
                     foreach (Pawn p in temp)
@@ -754,10 +779,9 @@ namespace DoorsExpanded
             return result;
         });
 
-        public void DoorTryClose()
+        public virtual void DoorTryClose()
         {
-            if (!this.openInt || holdOpenInt || this.BlockedOpenMomentary || FriendlyTouchedRecently ||
-                crossingPawns?.Count > 0)
+            if (ShouldKeepDoorOpen())
             {
                 return;
             }
@@ -784,6 +808,11 @@ namespace DoorsExpanded
                 if (buildingSoundDoorCloseManual != null)
                     buildingSoundDoorCloseManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
             }
+        }
+
+        public virtual bool ShouldKeepDoorOpen()
+        {
+            return !this.openInt || holdOpenInt || this.BlockedOpenMomentary || FriendlyTouchedRecently || crossingPawns?.Count > 0;
         }
 
         // RimWorld.Building_Door
