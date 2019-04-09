@@ -1,3 +1,7 @@
+1.20.0.4 (04-09-2019)
+========================
+Adds remote doors, buttons, and levers to Doors Expanded.
+
 1.20.0.3 (04-07-2019)
 ========================
 Added remote doors, buttons, and levers
