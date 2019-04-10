@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <PH_ButtonConnect>ボタンに接続</PH_ButtonConnect>
+  <PH_ButtonConnectDesc>離れていても操作できるように遠隔ドアをドアボタンやドアレバーに接続します。</PH_ButtonConnectDesc>
+  <PH_ButtonConnectSuccess>新しい操作ボタン(座標：{0})に設定しました</PH_ButtonConnectSuccess>
+  <PH_ButtonConnectFailed>新しい操作ボタン(座標:{0})に設定できませんでした</PH_ButtonConnectFailed>
+  <PH_ButtonUnlinked>以前に接続していた操作ボタン(座標：{0})との接続を解除</PH_ButtonUnlinked>
+  <PH_ButtonUnlinkedUnspawned>以前に接続された操作ボタンと接続を解除</PH_ButtonUnlinkedUnspawned>
+  <PH_ButtonPress>{0}を押す</PH_ButtonPress>
+  <PH_ButtonPressManipulationFailure>{0}は操作できません。</PH_ButtonPressManipulationFailure>
+  <PH_ButtonPressNoConnection>遠隔操作するドアに接続する必要があります</PH_ButtonPressNoConnection>
+  <PH_ButtonPressNoPower>電源に接続する必要があります</PH_ButtonPressNoPower>
+  <PH_RemoteDoorSecuredRemotely>遠隔ドアを施錠</PH_RemoteDoorSecuredRemotely>
+  <PH_RemoteDoorSecuredRemotelyDesc>この設定がオンの場合、ドアは対応するボタンを押すことによってのみ遠隔操作で開くことができます。閉じられている間、ドアはロックされた状態、つまり出入り口とはならない状態になります。この設定がオフの場合、ポーン(人間や動物)は通常のドアのようにドアを自由に開閉できます。</PH_RemoteDoorSecuredRemotelyDesc>
+
+</LanguageData>
