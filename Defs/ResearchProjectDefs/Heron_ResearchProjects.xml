@@ -28,11 +28,21 @@
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_PrisonDoors</defName>
     <label>Prisoner Containment</label>
-    <description>Basic</description>
+    <description>Provides simple prison doors to keep inmates safe, well, mostly.</description>
     <baseCost>500</baseCost>
 	<techLevel>Neolithic</techLevel>
 	<researchViewX>0</researchViewX>
 	<researchViewY>4</researchViewY>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef ParentName="ProjectHeronResearch">
+    <defName>ProjectHeron_RemoteDoors</defName>
+    <label>Remote doors</label>
+    <description>Unlocks remote doors for remote containment as well as buttons and levers to manipulate them.</description>
+    <baseCost>800</baseCost>
+	<techLevel>Industrial</techLevel>
+	<researchViewX>0</researchViewX>
+	<researchViewY>5</researchViewY>
   </ResearchProjectDef>
   
   

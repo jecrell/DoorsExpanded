@@ -73,9 +73,9 @@
       </li>
     </comps>
     <designationCategory>Structure</designationCategory>
-   <!-- <researchPrerequisites>
-      <li>PassiveCooler</li>
-    </researchPrerequisites> -->
+   <researchPrerequisites>
+      <li>ProjectHeron_RemoteDoors</li>
+    </researchPrerequisites>
   </ThingDef>
   
 
@@ -143,9 +143,9 @@
       </li>
     </comps>
     <designationCategory>Structure</designationCategory>
-   <!-- <researchPrerequisites>
-      <li>PassiveCooler</li>
-    </researchPrerequisites> -->
+   <researchPrerequisites>
+      <li>ProjectHeron_RemoteDoors</li>
+    </researchPrerequisites>
   </ThingDef>
   
 
@@ -197,6 +197,9 @@
     <doorType>StretchVertical</doorType>		
     <singleDoor>true</singleDoor>
 	  <doorOpenSpeedRate>2</doorOpenSpeedRate>
+   <researchPrerequisites>
+      <li>ProjectHeron_RemoteDoors</li>
+    </researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
 
   <DoorsExpanded.DoorExpandedDef Name="HeronDoorDoubleRemote" ParentName="HeronDoorBase">
@@ -247,6 +250,9 @@
     <doorType>StretchVertical</doorType>		
     <singleDoor>true</singleDoor>
 	  <doorOpenSpeedRate>2</doorOpenSpeedRate>
+   <researchPrerequisites>
+      <li>ProjectHeron_RemoteDoors</li>
+    </researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
 
 </Defs>
