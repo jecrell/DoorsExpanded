@@ -633,6 +633,12 @@ namespace DoorsExpanded
         //GenSpawn
         public static void InvisDoorsDontWipe(BuildableDef newEntDef, BuildableDef oldEntDef, ref bool __result)
         {
+            if (newEntDef.defName.StartsWith("Fragment_") &&
+                oldEntDef.defName.StartsWith("Fragment_"))
+            {
+                return;
+            }
+            
             var oldTrueDef =
                 DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == oldEntDef.defName);
             var newTrueDef =
