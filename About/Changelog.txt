@@ -1,3 +1,7 @@
+1.20.0.5 (04-11-2019)
+========================
+Adds research for remote buttons and doors as well. Updates Japanese translation.
+
 1.20.0.4 (04-09-2019)
 ========================
 Adds remote doors, buttons, and levers to Doors Expanded.
