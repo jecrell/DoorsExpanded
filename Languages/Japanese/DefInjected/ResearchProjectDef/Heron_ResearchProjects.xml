@@ -7,6 +7,9 @@
   <ProjectHeron_PrisonDoors.label>囚人の隔離</ProjectHeron_PrisonDoors.label>
   <ProjectHeron_PrisonDoors.description>基本的な隔離技術です。</ProjectHeron_PrisonDoors.description>
 
+  <ProjectHeron_RemoteDoors.label>ドアの遠隔操作</ProjectHeron_RemoteDoors.label>
+  <ProjectHeron_RemoteDoors.description>遠隔操作でドアの鍵をかける封じ込めのための遠隔ドアと、それらを手動操作するためのドアボタンとドアレバーの建築できるようになります。</ProjectHeron_RemoteDoors.description>
+
   <ProjectHeron_Gates.label>ちょうつがいとゲート</ProjectHeron_Gates.label>
   <ProjectHeron_Gates.description>ちょうつがいと留め金具の技術は、大きなゲートのような開き戸の建設を可能にします。</ProjectHeron_Gates.description>
 
