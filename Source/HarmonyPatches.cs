@@ -638,6 +638,20 @@ namespace DoorsExpanded
             {
                 return;
             }
+            
+            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
+                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
+                __result = true; //false, meaning, don't wipe the old thing when you spawn
+                return;
+            }
+
+            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName ||
+                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
+                __result = false; //false, meaning, don't wipe the old thing when you spawn
+                return;
+            }
 
             ThingDef oldTrueDef = null;
             ThingDef newTrueDef = null;
@@ -656,20 +670,6 @@ namespace DoorsExpanded
                 {
                     newTrueDef = thingDef;
                 }
-            }
-            
-            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
-                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                __result = true; //false, meaning, don't wipe the old thing when you spawn
-                return;
-            }
-
-            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName ||
-                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                __result = false; //false, meaning, don't wipe the old thing when you spawn
-                return;
             }
 
             if (newTrueDef != null && newTrueDef.thingClass == typeof(Building_DoorExpanded) &&
