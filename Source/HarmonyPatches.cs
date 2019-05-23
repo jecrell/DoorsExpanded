@@ -638,11 +638,26 @@ namespace DoorsExpanded
             {
                 return;
             }
+
+            ThingDef oldTrueDef = null;
+            ThingDef newTrueDef = null;
+
+            foreach (var thingDef in DefDatabase<ThingDef>.AllDefs)
+            {
+                if (oldTrueDef != null && newTrueDef != null) 
+                    break;
+                
+                if (thingDef.defName == oldEntDef.defName)
+                {
+                    oldTrueDef = thingDef;
+                }
+                
+                if (thingDef.defName == oldEntDef.defName)
+                {
+                    newTrueDef = thingDef;
+                }
+            }
             
-            var oldTrueDef =
-                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == oldEntDef.defName);
-            var newTrueDef =
-                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == newEntDef.defName);
             if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
                 oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
             {
