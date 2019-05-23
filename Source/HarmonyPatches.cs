@@ -617,17 +617,9 @@ namespace DoorsExpanded
         public static bool WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map,
             DestroyMode mode)
         {
-            //Log.Message("1");
-            var trueDef = DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == thingDef.defName);
-            //if (trueDef != null && trueDef.thingClass == typeof(Building_DoorExpanded) && !thingPos.GetThingList(map).Any(x => x is Building_DoorExpanded))
-            //    return false;
-            if (thingDef == HeronDefOf.HeronInvisibleDoor ||
-                thingDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                return false;
-            }
-
-            return true;
+            // allow vanilla to run if this is not an invisible door
+            return thingDef.defName != HeronDefOf.HeronInvisibleDoor.defName 
+                   || thingDef != HeronDefOf.HeronInvisibleDoor;
         }
 
         //GenSpawn
