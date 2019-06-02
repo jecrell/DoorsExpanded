@@ -631,23 +631,24 @@ namespace DoorsExpanded
                 return;
             }
             
-            var oldTrueDef =
-                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == oldEntDef.defName);
-            var newTrueDef =
-                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == newEntDef.defName);
-            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
-                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                __result = true; //false, meaning, don't wipe the old thing when you spawn
-                return;
-            }
-
             if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName ||
                 oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
             {
                 __result = false; //false, meaning, don't wipe the old thing when you spawn
                 return;
             }
+            
+            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
+                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
+            {
+                __result = true;
+                return;
+            }
+
+            var oldTrueDef =
+                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == oldEntDef.defName);
+            var newTrueDef =
+                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == newEntDef.defName);
 
             if (newTrueDef != null && newTrueDef.thingClass == typeof(Building_DoorExpanded) &&
                 oldTrueDef != null && oldTrueDef.thingClass == typeof(Building_DoorExpanded))
