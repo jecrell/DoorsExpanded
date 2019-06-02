@@ -645,10 +645,8 @@ namespace DoorsExpanded
                 return;
             }
 
-            var oldTrueDef =
-                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == oldEntDef.defName);
-            var newTrueDef =
-                DefDatabase<ThingDef>.AllDefs.FirstOrDefault(predicate: x => x.defName == newEntDef.defName);
+            var oldTrueDef = DefDatabase<ThingDef>.GetNamed(oldEntDef.defName);
+            var newTrueDef = DefDatabase<ThingDef>.GetNamed(newEntDef.defName);
 
             if (newTrueDef != null && newTrueDef.thingClass == typeof(Building_DoorExpanded) &&
                 oldTrueDef != null && oldTrueDef.thingClass == typeof(Building_DoorExpanded))
