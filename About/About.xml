@@ -6,7 +6,7 @@
     <li>1.0</li>
   </supportedVersions>
   <url>https://discord.gg/AaVFA7V</url>
-  <description>1.20.0.6 (06-02-2019)
+  <description>1.20.0.7 (06-03-2019)
 
   Adds new types and sizes of doors to RimWorld.
   
@@ -36,6 +36,10 @@ Maaxar, Shibby Says, TheJagermeister, Cory Bonifay, Kiya Nicoll, Matt Harris, Pa
 ========================
 Changelog
 ========================
+1.20.0.7 (06-03-2019)
+========================
+Fixes explosion slowdowns that occur while playing the CE mod coupled with Doors Expanded. The fix was engineered by JonnyNova.
+
 1.20.0.6 (06-02-2019)
 ========================
 Remote doors can be secured and locked properly. Also pathing fixes.
