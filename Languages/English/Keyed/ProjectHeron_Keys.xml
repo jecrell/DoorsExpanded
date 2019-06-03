@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
 
-  <PH_ButtonConnect>Connect to a button</PH_ButtonConnect>
+  <PH_ButtonDisconnect>Disconnect button or lever</PH_ButtonDisconnect>
+  <PH_ButtonDisconnectDesc>Disconnects any connected button or lever.</PH_ButtonDisconnectDesc>
+  <PH_CannotOpenRemotelyWithoutPower>{0} requires power to be opened remotely.</PH_CannotOpenRemotelyWithoutPower>
+  <PH_PowerSourceRequired>A power source is required.</PH_PowerSourceRequired>
+  <PH_NeedsLinkedDoorsFirst>A linked remote door is required.</PH_NeedsLinkedDoorsFirst>
+  <PH_UseButtonOrLever>Use button or lever</PH_UseButtonOrLever>
+  <PH_UseButtonOrLeverDesc>Toggles whether or not a colonist should make their way over to activate or deactivate the button or lever.</PH_UseButtonOrLeverDesc>
+  <PH_PowerNeeded>Connect a power source to secure remotely.</PH_PowerNeeded>
+  <PH_ButtonNeeded>Connect a button or lever to secure remotely.</PH_ButtonNeeded>
+  <PH_ButtonConnect>Connect to a button or lever</PH_ButtonConnect>
   <PH_ButtonConnectDesc>Instantly links the remote door to a button</PH_ButtonConnectDesc>
   <PH_ButtonConnectSuccess>Successfully set new button at {0}</PH_ButtonConnectSuccess>
   <PH_ButtonConnectFailed>Failed to set new button from {0}</PH_ButtonConnectFailed>

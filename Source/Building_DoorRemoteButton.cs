@@ -15,6 +15,10 @@ namespace DoorsExpanded
         private List<Building_DoorRemote> linkedDoors = new List<Building_DoorRemote>();
         private CompPowerTrader cpt = null;
         private bool buttonOn = false;
+
+        private bool needsToBeSwitched = false;
+        public bool NeedsToBeSwitched { get => needsToBeSwitched; set => needsToBeSwitched = value; }
+
         public override Graphic Graphic => !buttonOn ? base.Graphic : def.building.fullGraveGraphicData.Graphic; //base is off, grave is on
 
         private bool IsPowered
@@ -50,6 +54,7 @@ namespace DoorsExpanded
 
         public void PushButton()
         {
+            if (this.NeedsToBeSwitched) NeedsToBeSwitched = false;
             SoundDefOf.RadioButtonClicked.PlayOneShot(this);
             buttonOn = !buttonOn;
             linkedDoors?.RemoveAll(door => !door.Spawned);
@@ -64,6 +69,40 @@ namespace DoorsExpanded
         {
             var job = new Job(DefDatabase<JobDef>.GetNamed("PH_PushButton"), this);
             pawn.jobs.TryTakeOrderedJob(job);
+        }
+
+        private void ToggleAction()
+        {
+            NeedsToBeSwitched = !NeedsToBeSwitched;
+        }
+        private string GetDisabledReason()
+        {
+            if (linkedDoors == null || linkedDoors?.Count() == 0)
+            {
+                return "PH_NeedsLinkedDoorsFirst".Translate();
+            }
+            if (this.PowerComp != null && !this.IsPowered)
+            {
+                return "PH_PowerSourceRequired".Translate();
+            }
+            return "";
+        }
+
+        public override IEnumerable<Gizmo> GetGizmos()
+        {
+            foreach (Gizmo g in base.GetGizmos())
+                yield return g;
+
+            yield return new Command_Toggle()
+            {
+                defaultLabel = "PH_UseButtonOrLever".Translate(),
+                defaultDesc = "PH_UseButtonOrLeverDesc".Translate(),
+                icon = TexButton.UseButtonOrLever,
+                disabled = linkedDoors == null || linkedDoors?.Count() == 0 || (this.PowerComp != null && !this.IsPowered),
+                disabledReason = GetDisabledReason(),
+                toggleAction = ToggleAction,
+                isActive = (() => NeedsToBeSwitched)
+            };
         }
 
         public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn selPawn)
@@ -124,6 +163,8 @@ namespace DoorsExpanded
         {
             base.ExposeData();
             Scribe_Collections.Look(ref this.linkedDoors, "linkedDoors", LookMode.Reference);
+            Scribe_Values.Look(ref this.needsToBeSwitched, "needsToBeSwitched", false);
+            Scribe_Values.Look(ref this.buttonOn, "buttonOn", false);
         }
     }
 }

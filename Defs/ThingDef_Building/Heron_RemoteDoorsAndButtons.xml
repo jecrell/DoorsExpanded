@@ -16,6 +16,8 @@
     <thingClass>DoorsExpanded.Building_DoorRemoteButton</thingClass>
     <category>Building</category>
     <defaultPlacingRot>South</defaultPlacingRot>
+    <hasInteractionCell>true</hasInteractionCell>
+    <interactionCellOffset>(0,0,1)</interactionCellOffset>
 	  <building>
 	    <isEdifice>false</isEdifice>
       <fullGraveGraphicData>
@@ -86,6 +88,8 @@
     <thingClass>DoorsExpanded.Building_DoorRemoteButton</thingClass>
     <category>Building</category>
     <defaultPlacingRot>South</defaultPlacingRot>
+    <hasInteractionCell>true</hasInteractionCell>
+    <interactionCellOffset>(0,0,1)</interactionCellOffset>
 	  <building>
 	    <isEdifice>false</isEdifice>
       <fullGraveGraphicData>

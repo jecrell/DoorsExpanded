@@ -110,6 +110,16 @@ namespace DoorsExpanded
             set => Traverse.Create(this).Field("openInt").SetValue(value);
         }
 
+        public override bool BlocksPawn(Pawn p)
+        {
+            return base.BlocksPawn(p) || ParentDoor.BlocksPawn(p);
+        }
+
+        public override bool PawnCanOpen(Pawn p)
+        {
+            return base.PawnCanOpen(p) && ParentDoor.PawnCanOpenSpecialCases(p);
+        }
+
         public void OpenMe(int ticks)
         {
             this.ticksUntilClose = ticks;
