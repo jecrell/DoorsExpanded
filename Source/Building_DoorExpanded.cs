@@ -427,7 +427,7 @@ namespace DoorsExpanded
         #region Building_Door Copy
 
         private bool openInt;
-        private bool holdOpenInt;
+        protected bool holdOpenInt;
         protected int ticksUntilClose;
         private int lastFriendlyTouchTick = -9999;
         protected int visualTicksOpen;
@@ -444,6 +444,11 @@ namespace DoorsExpanded
             }
         }
 
+        public virtual bool PawnCanOpenSpecialCases(Pawn p)
+        {
+            return true;
+        }
+
 
         // RimWorld.Building_Door
         public virtual bool PawnCanOpen(Pawn p)
@@ -458,16 +463,20 @@ namespace DoorsExpanded
 
 
         // RimWorld.Building_Door
-        public void Notify_PawnApproaching(Pawn p)
+        public virtual void Notify_PawnApproaching(Pawn p)
         {
             //Log.Message("PawnPawn!");
             if (crossingPawns.Contains(p)) return;
             //Log.Message("PawnPawn!2");
             //Log.Message("PawnPawn!3");
+            
+            if (p.InAggroMentalState && p.AnimalOrWildMan())
+                return;
 
-            if (!p.HostileTo(this))
+            if (!p.HostileTo(this) && !this.IsForbidden(p))
             {
                 this.FriendlyTouched(p);
+                return;
             }
 
             if (this.PawnCanOpen(p))

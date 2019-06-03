@@ -1,3 +1,7 @@
+1.20.0.6 (06-02-2019)
+========================
+Remote doors can be secured and locked properly. Also pathing fixes.
+
 1.20.0.5 (04-11-2019)
 ========================
 Adds research for remote buttons and doors as well. Updates Japanese translation.

@@ -64,6 +64,8 @@
     <Compile Include="MapGrid_DoorsExpanded.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TexButton.cs" />
+    <Compile Include="TexOverlay.cs" />
+    <Compile Include="WorkGiver_PressOrFlip.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

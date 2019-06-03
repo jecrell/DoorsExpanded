@@ -2,9 +2,11 @@
 <ModMetaData>
   <name>Doors Expanded</name>
   <author>Jecrell</author>
-  <targetVersion>1.0.2059</targetVersion>
+  <supportedVersions>
+    <li>1.0</li>
+  </supportedVersions>
   <url>https://discord.gg/AaVFA7V</url>
-  <description>1.20.0.5 (04-11-2019)
+  <description>1.20.0.6 (06-02-2019)
 
   Adds new types and sizes of doors to RimWorld.
   
@@ -34,6 +36,10 @@ Maaxar, Shibby Says, TheJagermeister, Cory Bonifay, Kiya Nicoll, Matt Harris, Pa
 ========================
 Changelog
 ========================
+1.20.0.6 (06-02-2019)
+========================
+Remote doors can be secured and locked properly. Also pathing fixes.
+
 1.20.0.5 (04-11-2019)
 ========================
 Adds research for remote buttons and doors as well. Updates Japanese translation.

@@ -23,7 +23,7 @@ namespace DoorsExpanded
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
+            yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
             yield return Toils_General.Do(delegate
             {
                 Button.PushButton();
