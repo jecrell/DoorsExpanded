@@ -1,6 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
 
+  <PH_ButtonDisconnect>ボタンやレバーを解除</PH_ButtonDisconnect>
+  <PH_ButtonDisconnectDesc>接続されているボタンまたはレバーを解除します。</PH_ButtonDisconnectDesc>
+  <PH_CannotOpenRemotelyWithoutPower>{0}を遠隔操作で開く必要があります。</PH_CannotOpenRemotelyWithoutPower>
+  <PH_PowerSourceRequired>電気供給が必要です。</PH_PowerSourceRequired>
+  <PH_NeedsLinkedDoorsFirst>接続された遠隔操作ドアが必要です。</PH_NeedsLinkedDoorsFirst>
+  <PH_UseButtonOrLever>ボタンかレバーを使用</PH_UseButtonOrLever>
+  <PH_UseButtonOrLeverDesc>入植者がボタンやレバーの操作をできるのか、できないかを切り替えます。</PH_UseButtonOrLeverDesc>
+  <PH_PowerNeeded>遠隔操作で安全を確保するために電源に接続してください。</PH_PowerNeeded>
+  <PH_ButtonNeeded>ボタンやレバーを接続して遠隔操作で安全を確保します。</PH_ButtonNeeded>
   <PH_ButtonConnect>ボタンに接続</PH_ButtonConnect>
   <PH_ButtonConnectDesc>離れていても操作できるように遠隔ドアをドアボタンやドアレバーに接続します。</PH_ButtonConnectDesc>
   <PH_ButtonConnectSuccess>新しい操作ボタン(座標：{0})に設定しました</PH_ButtonConnectSuccess>
