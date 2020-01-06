@@ -1,3 +1,15 @@
+Source/**/bin
+Source/**/obj
+Source/**/packages
+.idea
+.vs
+.vscode
+*.csproj.user
+
+Source/DiscordWebhookToken.txt
+updateinfo
+
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -45,10 +57,3 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-Source/Dependencies/Assembly-CSharp.dll
-Source/Dependencies/0Harmony.dll
-Source/Dependencies/UnityEngine.dll
-Source/Dependencies/Assembly-CSharp.dll
-Source/obj/Debug/DoorsExpanded.dll
-updateinfo
-Source/DiscordWebhookToken.txt
