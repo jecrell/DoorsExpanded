@@ -23,6 +23,8 @@ Rewrite and fully rebase code onto 1.0 RimWorld, fixing several bugs. Engineered
 - 1x1 door blueprint also auto-rotates upon placement
 - dev mode inspector has new toggles (write temperature, write edifice grid, write doors), more path info, more precise mouse position, and patch call registry for debugging
 
+Add German translation by Erdnussbrot.
+
 1.20.0.7 (06-03-2019)
 ========================
 Fixes explosion slowdowns that occur while playing the CE mod coupled with Doors Expanded. The fix was engineered by JonnyNova.
