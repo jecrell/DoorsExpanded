@@ -178,6 +178,13 @@ namespace DoorsExpanded
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
+            // Non-1x1 rotations change the footprint of the blueprint, so this needs to be done before that footprint is
+            // cached in various ways in base.SpawnSetup.
+            // Fortunately once rotated, no further non-1x1 rotations will change the footprint further.
+            // Restricted rotation logic in both patched Designator_Place and Blueprint shouldn't allow invalid rotations by
+            // this point, but better safe than sorry, especially if this is spawned without Designator_Place or Blueprint.
+            Rotation = DoorRotationAt(Def, Position, Rotation, map);
+
             base.SpawnSetup(map, respawningAfterLoad);
 
             powerComp = GetComp<CompPowerTrader>();
@@ -458,111 +465,133 @@ namespace DoorsExpanded
             ticksUntilClose = CloseDelayTicks;
         }
 
+        // This exists to expose draw vectors for debugging purposes.
+        internal class DebugDrawVectors
+        {
+            public float percentOpen;
+            public Vector3 offsetVector, scaleVector, graphicVector;
+        }
+
+        internal DebugDrawVectors debugDrawVectors = new DebugDrawVectors();
+
         public override void Draw()
         {
-            var percentOpen = Mathf.Clamp01((float)visualTicksOpen / VisualTicksToOpen);
-            var mod = (VisualDoorOffsetStart + Def.doorOpenMultiplier * percentOpen) * def.Size.x;
-            var rotation = Rotation;
-            if (!Def.rotatesSouth && Rotation == Rot4.South)
-                rotation = Rot4.North;
+            var percentOpen = VisualTicksToOpen == 0 ? 1f : Mathf.Clamp01((float)visualTicksOpen / VisualTicksToOpen);
+            var def = Def;
+
+            var rotation = DoorRotationAt(def, Position, Rotation, Map);
+            Rotation = rotation;
+
+            var drawPos = DrawPos;
+            drawPos.y = AltitudeLayer.DoorMoveable.AltitudeFor();
+
             for (var i = 0; i < 2; i++)
             {
                 var flipped = i != 0;
-                Mesh mesh;
-                Matrix4x4 matrix;
-
-                switch (Def.doorType)
-                {
-                    case DoorType.StretchVertical:
-                        DrawStretchParams(Def, DrawPos, rotation, out mesh, out matrix, mod, flipped, true);
-                        break;
-                    case DoorType.Stretch:
-                        DrawStretchParams(Def, DrawPos, rotation, out mesh, out matrix, mod, flipped);
-                        break;
-                    case DoorType.DoubleSwing:
-                        DrawDoubleSwingParams(Def, DrawPos, rotation, out mesh, out matrix, mod, flipped);
-                        break;
-                    default:
-                        DrawParams(Def, DrawPos, rotation, out mesh, out matrix, mod, flipped);
-                        break;
-                }
-
-                var matToDraw = (!flipped && Def.doorAsync is GraphicData doorAsyncGraphic)
+                var material = (!flipped && def.doorAsync is GraphicData doorAsyncGraphic)
                     ? doorAsyncGraphic.GraphicColoredFor(this).MatAt(rotation)
                     : Graphic.MatAt(rotation);
-                Graphics.DrawMesh(mesh, matrix, matToDraw, 0);
-                if (Def.singleDoor)
+                Draw(def, material, drawPos, rotation, percentOpen, flipped,
+                    i == 0 && MoreDebugViewSettings.writeDoors ? debugDrawVectors : null);
+                if (def.singleDoor)
                     break;
             }
 
-            if (Def.doorFrame is GraphicData)
+            if (def.doorFrame is GraphicData)
             {
-                DrawFrameParams(Def, DrawPos, rotation, false, out var fMesh, out var fMatrix);
+                DrawFrameParams(def, drawPos, rotation, false, out var fMesh, out var fMatrix);
+                //var currRot = (def.fixedPerspective && Rotation == Rot4.West) ? Rot4.East : Rotation;
+                Graphics.DrawMesh(fMesh, fMatrix, def.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
 
-                //var currRot = (Def.fixedPerspective && Rotation == Rot4.West) ? Rot4.East : base.Rotation;
-                Graphics.DrawMesh(fMesh, fMatrix, Def.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
-                if (Def.doorFrameSplit is GraphicData)
+                if (def.doorFrameSplit is GraphicData)
                 {
-                    DrawFrameParams(Def, DrawPos, rotation, true, out fMesh, out fMatrix);
-                    Graphics.DrawMesh(fMesh, fMatrix, Def.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
+                    DrawFrameParams(def, drawPos, rotation, true, out fMesh, out fMatrix);
+                    Graphics.DrawMesh(fMesh, fMatrix, def.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
                 }
             }
 
             Comps_PostDraw();
         }
 
-        /// <param name="verticalStretch">This allows for vertical stretching doors, such as garage doors.</param>
-        private void DrawStretchParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh,
-            out Matrix4x4 matrix, float mod = 1, bool flipped = false, bool verticalStretch = false)
+        internal static void Draw(DoorExpandedDef def, Material material, Vector3 drawPos, Rot4 rotation, float percentOpen,
+            bool flipped, DebugDrawVectors drawVectors = null)
         {
-            Rotation = Building_Door.DoorRotationAt(Position, Map);
-            var verticalRotation = Rotation.IsHorizontal;
-            Vector3 offsetVector;
+            Mesh mesh;
+            Quaternion rotQuat;
+            Vector3 offsetVector, scaleVector;
+            switch (def.doorType)
+            {
+                // There's no difference between Stretch and StretchVertical except for stretchOpenSize's default value.
+                case DoorType.Stretch:
+                case DoorType.StretchVertical:
+                    DrawStretchParams(def, rotation, percentOpen, flipped,
+                        out mesh, out rotQuat, out offsetVector, out scaleVector);
+                    break;
+                case DoorType.DoubleSwing:
+                    // TODO: Should drawPos.y be set to Mathf.Max(drawPos.y, AltitudeLayer.BuildingOnTop.AltitudeFor())
+                    // since AltitudeLayer.DoorMoveable is only used to hide sliding doors behind adjacent walls?
+                    DrawDoubleSwingParams(def, drawPos, rotation, percentOpen, flipped,
+                        out mesh, out rotQuat, out offsetVector, out scaleVector);
+                    break;
+                default:
+                    DrawStandardParams(def, rotation, percentOpen, flipped,
+                        out mesh, out rotQuat, out offsetVector, out scaleVector);
+                    break;
+            }
+            var graphicVector = drawPos + offsetVector;
+            var matrix = Matrix4x4.TRS(graphicVector, rotQuat, scaleVector);
+            Graphics.DrawMesh(mesh, matrix, material, layer: 0);
+
+            if (drawVectors != null)
+            {
+                drawVectors.percentOpen = percentOpen;
+                drawVectors.offsetVector = offsetVector;
+                drawVectors.scaleVector = scaleVector;
+                drawVectors.graphicVector = graphicVector;
+            }
+        }
+
+        private static void DrawStretchParams(DoorExpandedDef def, Rot4 rotation,
+            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+            out Vector3 offsetVector, out Vector3 scaleVector)
+        {
+            var drawSize = def.graphicData.drawSize;
+            var closeSize = def.stretchCloseSize;
+            var openSize = def.stretchOpenSize;
+            var offset = def.stretchOffset.Value;
+
+            var verticalRotation = rotation.IsHorizontal;
+            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+
+            offsetVector = new Vector3(offset.x * percentOpen * persMod, 0f, offset.y * percentOpen * persMod);
+
+            var scaleX = Mathf.LerpUnclamped(openSize.x, closeSize.x, 1 - percentOpen) / closeSize.x * drawSize.x * persMod;
+            var scaleZ = Mathf.LerpUnclamped(openSize.y, closeSize.y, 1 - percentOpen) / closeSize.y * drawSize.y * persMod;
+            scaleVector = new Vector3(scaleX, 1f, scaleZ);
+
+            // South-facing stretch animation should have same vertical direction as north-facing one.
+            if (rotation == Rot4.South)
+                offsetVector.z = -offsetVector.z;
+
             if (!flipped)
             {
-                offsetVector = new Vector3(-1.5f, 0f, 0f);
                 mesh = MeshPool.plane10;
             }
             else
             {
-                offsetVector = new Vector3(1.5f, 0f, 0f);
+                offsetVector.x = -offsetVector.x;
                 mesh = MeshPool.plane10Flip;
             }
 
-            rotation.Rotate(RotationDirection.Clockwise);
-            offsetVector = rotation.AsQuat * offsetVector;
-
-            var graphicVector = drawPos;
-            graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
-            graphicVector += offsetVector * (mod * 1.15f);
-
-            var drawSize = thingDef.graphicData.drawSize;
-            var persMod = thingDef.fixedPerspective ? 2f : 1f;
-            Vector3 scaleVector;
-            if (verticalStretch)
-            {
-                scaleVector = verticalRotation
-                    ? new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod - mod * 1.3f)
-                    : new Vector3(drawSize.x, 1f, drawSize.y - mod * 1.3f);
-            }
-            else
-            {
-                scaleVector = verticalRotation
-                    ? new Vector3(drawSize.x * persMod - mod * 1.3f, 1f, drawSize.y * persMod)
-                    : new Vector3(drawSize.x - mod * 1.3f, 1f, drawSize.y);
-            }
-
-            matrix = default;
-            matrix.SetTRS(graphicVector, Rotation.AsQuat, scaleVector);
-
+            rotQuat = rotation.AsQuat;
+            offsetVector = rotQuat * offsetVector;
         }
 
-        private static void DrawDoubleSwingParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation,
-            out Mesh mesh, out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+        private static void DrawDoubleSwingParams(DoorExpandedDef def, Vector3 drawPos, Rot4 rotation,
+            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+            out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
-            rotation = (rotation == Rot4.South) ? Rot4.North : rotation;
-            Vector3 offsetVector;
             if (!flipped)
             {
                 offsetVector = new Vector3(-1f, 0f, 0f);
@@ -578,45 +607,34 @@ namespace DoorsExpanded
                 mesh = MeshPool.plane10Flip;
             }
 
-            var rotQuat = rotation.AsQuat;
             if (verticalRotation)
-            {
-                rotQuat = (!flipped)
-                    ? Quaternion.AngleAxis(rotation.AsAngle + (mod * -100f), Vector3.up)
-                    : Quaternion.AngleAxis(rotation.AsAngle + (mod * 100f), Vector3.up);
-            }
-
+                rotQuat = Quaternion.AngleAxis(rotation.AsAngle + (percentOpen * (flipped ? 90f : -90f)), Vector3.up);
+            else
+                rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var graphicVector = drawPos;
-            graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
+            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * percentOpen) * def.Size.x;
+            offsetVector *= offsetMod;
+
             if (verticalRotation)
             {
                 if (!flipped && rotation == Rot4.East
                     || flipped && rotation == Rot4.West)
-                    graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.BuildingOnTop);
+                {
+                    offsetVector.y = Mathf.Max(0f, AltitudeLayer.BuildingOnTop.AltitudeFor() - drawPos.y);
+                }
             }
 
-            //if (!verticalRotation)
-            //if (verticalRotation)
-            //    mod *= 2f;
-            graphicVector += offsetVector * mod;
-
-            var drawSize = thingDef.graphicData.drawSize;
-            var persMod = thingDef.fixedPerspective ? 2f : 1f;
-            var scaleVector = verticalRotation
-                ? new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod)
-                : new Vector3(drawSize.x, 1f, drawSize.y);
-
-            matrix = default;
-            matrix.SetTRS(graphicVector, rotQuat, scaleVector);
+            var drawSize = def.graphicData.drawSize;
+            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
         }
 
-        internal static void DrawParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, out Mesh mesh,
-            out Matrix4x4 matrix, float mod = 1, bool flipped = false)
+        private static void DrawStandardParams(DoorExpandedDef def, Rot4 rotation,
+            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+            out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
-            Vector3 offsetVector;
             if (!flipped)
             {
                 offsetVector = new Vector3(-1f, 0f, 0f);
@@ -628,32 +646,25 @@ namespace DoorsExpanded
                 mesh = MeshPool.plane10Flip;
             }
 
-            var rotQuat = rotation.AsQuat;
+            rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var graphicVector = drawPos;
-            graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
-            graphicVector += offsetVector * mod;
+            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * percentOpen) * def.Size.x;
+            offsetVector *= offsetMod;
 
-            var drawSize = thingDef.graphicData.drawSize;
-            var persMod = thingDef.fixedPerspective ? 2f : 1f;
-            var scaleVector = verticalRotation
-                ? new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod)
-                : new Vector3(drawSize.x, 1f, drawSize.y);
-
-            matrix = default;
-            matrix.SetTRS(graphicVector, rotQuat, scaleVector);
+            var drawSize = def.graphicData.drawSize;
+            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
         }
 
-        private static void DrawFrameParams(DoorExpandedDef thingDef, Vector3 drawPos, Rot4 rotation, bool split, out Mesh mesh,
-            out Matrix4x4 matrix)
+        private static void DrawFrameParams(DoorExpandedDef def, Vector3 drawPos, Rot4 rotation, bool split,
+            out Mesh mesh, out Matrix4x4 matrix)
         {
-            var mod = (VisualDoorOffsetStart + VisualDoorOffsetEnd * 1) * thingDef.Size.x;
             var verticalRotation = rotation.IsHorizontal;
             var offsetVector = new Vector3(-1f, 0f, 0f);
             mesh = MeshPool.plane10;
 
-            if (thingDef.doorFrameSplit != null)
+            if (def.doorFrameSplit != null)
             {
                 if (rotation == Rot4.West)
                 {
@@ -666,50 +677,60 @@ namespace DoorsExpanded
             var rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
+            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * 1f) * def.Size.x;
+            offsetVector *= offsetMod;
+
+            var drawSize = def.doorFrame.drawSize;
+            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
+
             var graphicVector = drawPos;
-            graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.Blueprint);
+            graphicVector.y = AltitudeLayer.Blueprint.AltitudeFor();
             if (rotation == Rot4.North || rotation == Rot4.South)
-                graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.PawnState);
+                graphicVector.y = AltitudeLayer.PawnState.AltitudeFor();
             if (!verticalRotation)
-                graphicVector.x += mod;
+                graphicVector.x += offsetMod;
             if (rotation == Rot4.East)
             {
-                graphicVector.z -= mod;
+                graphicVector.z -= offsetMod;
                 if (split)
-                    graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
+                    graphicVector.y = AltitudeLayer.DoorMoveable.AltitudeFor();
             }
-
-            if (rotation == Rot4.West)
+            else if (rotation == Rot4.West)
             {
-                graphicVector.z += mod;
+                graphicVector.z += offsetMod;
                 if (split)
-                    graphicVector.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
+                    graphicVector.y = AltitudeLayer.DoorMoveable.AltitudeFor();
             }
+            graphicVector += offsetVector;
 
-            graphicVector += offsetVector * mod;
-
-            var drawSize = thingDef.doorFrame.drawSize;
-            var persMod = thingDef.fixedPerspective ? 2f : 1f;
-            var scaleVector = verticalRotation
-                ? new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod)
-                : new Vector3(drawSize.x, 1f, drawSize.y);
-
-            var offset = thingDef.doorFrameOffset;
-            if (thingDef.doorFrameSplit != null)
+            var frameOffsetVector = def.doorFrameOffset;
+            if (def.doorFrameSplit != null)
             {
                 if (rotation == Rot4.West)
                 {
-                    rotQuat = Quaternion.Euler(0, 270, 0); //new Quaternion(0, 0.7f, 0, -0.7f);
+                    rotQuat = Quaternion.Euler(0f, 270f, 0f);
                     graphicVector.z -= 2.7f;
                     mesh = MeshPool.plane10Flip;
-                    offset = thingDef.doorFrameSplitOffset;
+                    frameOffsetVector = def.doorFrameSplitOffset;
                 }
             }
+            graphicVector += frameOffsetVector;
 
-            graphicVector += offset;
+            matrix = Matrix4x4.TRS(graphicVector, rotQuat, scaleVector);
+        }
 
-            matrix = default;
-            matrix.SetTRS(graphicVector, rotQuat, scaleVector);
+        public static Rot4 DoorRotationAt(DoorExpandedDef def, IntVec3 loc, Rot4 rot, Map map)
+        {
+            if (!def.rotatable)
+            {
+                var size = def.Size;
+                if ((size.x == 1 && size.z == 1) || def.doorType == DoorType.StretchVertical || def.doorType == DoorType.Stretch)
+                    rot = Building_Door.DoorRotationAt(loc, map);
+            }
+            if (!def.rotatesSouth && rot == Rot4.South)
+                rot = Rot4.North;
+            return rot;
         }
 
         public override IEnumerable<Gizmo> GetGizmos()

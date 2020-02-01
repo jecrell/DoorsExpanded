@@ -133,11 +133,25 @@ namespace DoorsExpanded
                 transpiler: nameof(DoorExpandedProjectileCheckForFreeIntercept));
             Patch(original: AccessTools.Method(typeof(TrashUtility), nameof(TrashUtility.TrashJob)),
                 transpiler: nameof(DoorExpandedTrashJobTranspiler));
+
+            // Patches for ghost (pre-placement) and blueprints for door expanded.
+            Patch(original: AccessTools.FirstMethod(
+                    AccessTools.FirstInner(typeof(Designator_Place), inner => inner.Name.StartsWith("<DoExtraGuiControls>")),
+                    method => method.Name.StartsWith("<")),
+                transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
+                transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
+            Patch(original: AccessTools.Method(typeof(Designator_Place), "HandleRotationShortcuts"),
+                transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
+                transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
             Patch(original: AccessTools.Method(typeof(GhostDrawer), nameof(GhostDrawer.DrawGhostThing)),
                 transpiler: nameof(DoorExpandedDrawGhostThingTranspiler),
                 transpilerRelated: nameof(DoorExpandedDrawGhostGraphicFromDef));
             Patch(original: AccessTools.Method(typeof(GhostUtility), nameof(GhostUtility.GhostGraphicFor)),
                 transpiler: nameof(DoorExpandedGhostGraphicForTranspiler));
+            Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.SpawnSetup)),
+                prefix: nameof(DoorExpandedBlueprintSpawnSetupPrefix));
+            Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.Draw)),
+                prefix: nameof(DoorExpandedBlueprintDrawPrefix));
         }
 
         private static HarmonyInstance harmony;
@@ -756,6 +770,76 @@ namespace DoorsExpanded
             return DoorExpandedIsDoorTranspiler(instructions);
         }
 
+        // Designator_Place.DoExtraGuiControls (internal lambda)
+        // Designator_Place.HandleRotationShortcuts
+        public static IEnumerable<CodeInstruction> DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            // This transforms the following code:
+            //  designatorPlace.placingRot.Rotate(rotDirection);
+            // to:
+            //  designatorPlace.placingRot.Rotate(rotDirection);
+            //  DoorExpandedRotateAgainIfNeeded(designatorPlace, ref designatorPlace.placingRot, rotDirection);
+
+            var fieldof_Designator_Place_placingRot = AccessTools.Field(typeof(Designator_Place), "placingRot");
+            var methodof_Rot4_Rotate = AccessTools.Method(typeof(Rot4), nameof(Rot4.Rotate));
+            var methodof_RotateAgainIfNeeded =
+                AccessTools.Method(typeof(HarmonyPatches), nameof(DoorExpandedRotateAgainIfNeeded));
+            var instructionList = instructions.AsList();
+
+            var searchIndex = 0;
+            var placingRotFieldIndex = instructionList.FindIndex(
+                instr => instr.operand == fieldof_Designator_Place_placingRot);
+            while (placingRotFieldIndex >= 0)
+            {
+                searchIndex = placingRotFieldIndex + 1;
+                var rotateIndex = instructionList.FindIndex(searchIndex,
+                    instr => instr.operand == methodof_Rot4_Rotate);
+                var nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
+                    instr => instr.operand == fieldof_Designator_Place_placingRot);
+                if (rotateIndex >= 0 && (nextPlacingRotFieldIndex < 0 || rotateIndex < nextPlacingRotFieldIndex))
+                {
+                    var replaceInstructions = new List<CodeInstruction>();
+                    // Need copy the Designator_Place instance on top of CIL stack 2 times, in reverse order
+                    // (due to stack popping):
+                    // (2) placingRot field access for the original Rotate call
+                    // (1) placingRot field access for 2nd arg to DoorExpandedRotateAgainIfNeeded call
+                    // (0) instance itself for 1st arg to DoorExpandedRotateAgainIfNeeded call
+                    replaceInstructions.AddRange(new[]
+                    {
+                        new CodeInstruction(OpCodes.Dup) { labels = instructionList[placingRotFieldIndex].labels.PopAll() },
+                        new CodeInstruction(OpCodes.Dup),
+                    });
+                    // Copy original instructions from placingRot field access to Rotate call (uses up (2)).
+                    var copiedRotateArgInstructions = instructionList.GetRange(placingRotFieldIndex,
+                        rotateIndex - placingRotFieldIndex);
+                    replaceInstructions.AddRange(copiedRotateArgInstructions);
+                    replaceInstructions.Add(new CodeInstruction(OpCodes.Call, methodof_Rot4_Rotate));
+                    // Call DoorExpandedRotateAgainIfNeeded with required arguments.
+                    replaceInstructions.AddRange(copiedRotateArgInstructions); // uses up (1)
+                    replaceInstructions.Add(new CodeInstruction(OpCodes.Call, methodof_RotateAgainIfNeeded)); // uses up (0)
+                    instructionList.ReplaceRange(placingRotFieldIndex, rotateIndex - placingRotFieldIndex + 1,
+                        replaceInstructions);
+                    searchIndex += replaceInstructions.Count - 1;
+                    nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
+                        instr => instr.operand == fieldof_Designator_Place_placingRot);
+                }
+                placingRotFieldIndex = nextPlacingRotFieldIndex;
+            }
+
+            return instructionList;
+        }
+
+        private static void DoorExpandedRotateAgainIfNeeded(Designator_Place designatorPlace, ref Rot4 placingRot,
+            RotationDirection rotDirection)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedRotateAgainIfNeeded));
+            if (placingRot == Rot4.South && designatorPlace.PlacingDef is DoorExpandedDef doorExDef && !doorExDef.rotatesSouth)
+            {
+                placingRot.Rotate(rotDirection);
+            }
+        }
+
         // GhostDrawer.DrawGhostThing
         public static IEnumerable<CodeInstruction> DoorExpandedDrawGhostThingTranspiler(
             IEnumerable<CodeInstruction> instructions) =>
@@ -767,13 +851,14 @@ namespace DoorsExpanded
             float extraRotation)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedDrawGhostGraphicFromDef));
-            if (thingDef is DoorExpandedDef doorExDef && doorExDef.fixedPerspective)
+            if (thingDef is DoorExpandedDef doorExDef)
             {
-                // Always delegate fixed perspective door expanded graphics to our custom code.
+                // Always delegate door expanded graphics to our custom code.
                 for (var i = 0; i < 2; i++)
                 {
-                    Building_DoorExpanded.DrawParams(doorExDef, loc, rot, out var mesh, out var matrix, mod: 0, flipped: i != 0);
-                    Graphics.DrawMesh(mesh, matrix, graphic.MatAt(rot), layer: 0);
+                    Building_DoorExpanded.Draw(doorExDef, graphic.MatAt(rot), loc, rot, percentOpen: 0, flipped: i != 0);
+                    if (doorExDef.singleDoor)
+                        break;
                 }
             }
             else
@@ -817,6 +902,78 @@ namespace DoorsExpanded
 
             return instructionList;
         }
+
+        // Blueprint.SpawnSetup
+        public static void DoorExpandedBlueprintSpawnSetupPrefix(Blueprint __instance, Map map)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedBlueprintSpawnSetupPrefix));
+            ref var blueprint = ref __instance;
+            // This needs to be a prefix (as opposed to a postfix), since Thing.SpawnSetup has logic which depends on
+            // drawerType and rotation.
+            if (blueprint.def.entityDefToBuild is DoorExpandedDef doorExDef)
+            {
+                // ThingDefGenerator_Buildings.NewBlueprintDef_Thing configures generated blueprint defs such that their
+                // def.drawerType is MapMeshAndRealTime. This means that they have both a "update-when-needed" drawing that
+                // calls the Print method (MapMesh), and an "update-on-tick" drawing that calls the Draw method (RealTime).
+                // All our custom graphics for door expanded are done in the Draw method, so we must use RealTimeOnly mode.
+                // For build blueprints, it special cases any def with Building_Door thingClass, such that their blueprint's
+                // def.drawerType is RealtimeOnly. However, it doesn't special case def.drawerType for (re)install blueprints,
+                // since they're not (re)installable by default.
+                // We need this special casing for both build and (re)install blueprints of Building_DoorExpanded
+                // (which doesn't inherit Building_Door), the latter is needed in case any door expanded are (re)installable.
+                // This could be done in a harmony patch that is applied before ThingDefGenerator_Buildings runs
+                // (must happen before StaticConstructorOnStartup) and would be more efficient, but it's easier to patch here
+                // in SpawnSetup and Draw (see below) and any performance cost is negligible.
+                blueprint.def.drawerType = DrawerType.RealtimeOnly;
+
+                // Non-1x1 rotations change the footprint of the blueprint, so this needs to be done before that footprint
+                // is cached in various ways in base.SpawnSetup, including in BlueprintGrid.
+                // Fortunately once rotated, no further non-1x1 rotations will change the footprint further.
+                blueprint.Rotation =
+                    Building_DoorExpanded.DoorRotationAt(doorExDef, blueprint.Position, blueprint.Rotation, map);
+            }
+            else if (blueprint is Blueprint_Install && IsVanillaDoorDef(blueprint.def.entityDefToBuild))
+            {
+                // Since it's convenient to do so, we'll also "fix" (re)install blueprints for Building_Door thingClass,
+                // in case another mod makes them (re)installable.
+                blueprint.def.drawerType = DrawerType.RealtimeOnly;
+            }
+        }
+
+        // Blueprint.Draw
+        public static bool DoorExpandedBlueprintDrawPrefix(Blueprint __instance)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedBlueprintDrawPrefix));
+            ref var blueprint = ref __instance;
+            if (blueprint.def.entityDefToBuild is DoorExpandedDef doorExDef)
+            {
+                // Always delegate door expanded graphics to our custom code.
+                var drawPos = blueprint.DrawPos;
+                var rotation = blueprint.Rotation;
+                rotation = Building_DoorExpanded.DoorRotationAt(doorExDef, blueprint.Position, rotation, blueprint.Map);
+                blueprint.Rotation = rotation;
+                var material = blueprint.Graphic.MatAt(rotation);
+                for (var i = 0; i < 2; i++)
+                {
+                    Building_DoorExpanded.Draw(doorExDef, material, drawPos, rotation, percentOpen: 0, flipped: i != 0);
+                    if (doorExDef.singleDoor)
+                        break;
+                }
+                Comps_PostDraw(blueprint, emptyObjArray);
+                return false;
+            }
+            else if (blueprint is Blueprint_Install && IsVanillaDoorDef(blueprint.def.entityDefToBuild))
+            {
+                // Since it's convenient to do so, we'll also "fix" (re)install blueprints for Building_Door thingClass,
+                // in case another mod makes them (re)installable.
+                blueprint.Rotation = Building_Door.DoorRotationAt(blueprint.Position, blueprint.Map);
+            }
+            return true;
+        }
+
+        private static readonly FastInvokeHandler Comps_PostDraw =
+            MethodInvoker.GetHandler(AccessTools.Method(typeof(ThingWithComps), "Comps_PostDraw"));
+        private static readonly object[] emptyObjArray = new object[0];
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door door && door.Open

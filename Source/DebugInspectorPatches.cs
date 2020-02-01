@@ -120,6 +120,16 @@ namespace DoorsExpanded
             var mouseCellIndex = instructionList.FindIndex(instr => instr.operand == methodof_UI_MouseCell);
             var mouseCellVar = (LocalBuilder)instructionList[mouseCellIndex + 1].operand;
 
+            var mouseCellToStringIndex = instructionList.FindSequenceIndex(
+                instr => instr.operand == mouseCellVar,
+                instr => instr.opcode == OpCodes.Constrained && instr.operand == typeof(IntVec3),
+                instr => instr.operand == methodof_object_ToString);
+            instructionList.ReplaceRange(mouseCellToStringIndex, 3, new[]
+            {
+                new CodeInstruction(OpCodes.Call,
+                AccessTools.Method(typeof(DebugInspectorPatches), nameof(MousePositionToString))),
+            });
+
             var writePathCostsFlagIndex = instructionList.FindIndex(
                 instr => instr.operand == fieldof_DebugViewSettings_writePathCosts);
             var nextFlagIndex = instructionList.FindIndex(writePathCostsFlagIndex + 1, IsDebugViewSettingFlagAccess);
@@ -136,6 +146,12 @@ namespace DoorsExpanded
             });
 
             return instructionList;
+        }
+
+        private static string MousePositionToString()
+        {
+            var mousePos = UI.MouseMapPosition();
+            return $"({mousePos.x:000.00}, {mousePos.z:000.00})";
         }
 
         private static bool IsDebugViewSettingFlagAccess(CodeInstruction instruction) =>
@@ -231,6 +247,11 @@ namespace DoorsExpanded
                         {
                             var parentDoor = invisDoor.ParentDoor;
                             debugString.AppendLine("- ParentDoor: " + parentDoor);
+                            debugString.AppendLine("  - DrawPos: " + parentDoor.DrawPos);
+                            debugString.AppendLine("  - debugDrawVectors.percentOpen: " + parentDoor.debugDrawVectors?.percentOpen);
+                            debugString.AppendLine("  - debugDrawVectors.offsetVector: " + parentDoor.debugDrawVectors?.offsetVector);
+                            debugString.AppendLine("  - debugDrawVectors.scaleVector: " + parentDoor.debugDrawVectors?.scaleVector);
+                            debugString.AppendLine("  - debugDrawVectors.graphicVector: " + parentDoor.debugDrawVectors?.graphicVector);
                             debugString.AppendLine("  - Open: " + parentDoor.Open);
                             debugString.AppendLine("  - HoldOpen: " + parentDoor.HoldOpen);
                             debugString.AppendLine("  - FreePassage: " + parentDoor.FreePassage);

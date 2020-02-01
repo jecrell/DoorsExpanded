@@ -194,7 +194,7 @@
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
     <size>(1,1)</size>
-    <rotatable>true</rotatable>
+    <rotatable>false</rotatable>
     <graphicData>
       <texPath>Things/Building/Door/JailCell_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
@@ -248,6 +248,7 @@
       <Flammability>2.0</Flammability>
     </statBases>
     <size>(1,1)</size>
+    <rotatable>false</rotatable>
     <building>
       <isInert>true</isInert>
       <canPlaceOverWall>true</canPlaceOverWall>
@@ -270,7 +271,7 @@
     <tempLeakRate>60</tempLeakRate>
     <doorType>Stretch</doorType>
     <singleDoor>true</singleDoor>
-    <doorOpenSpeedRate>0.24</doorOpenSpeedRate>
+    <doorOpenSpeedRate>0.5</doorOpenSpeedRate>
     <researchPrerequisites>
       <li>ProjectHeron_Curtains</li>
     </researchPrerequisites>
@@ -309,6 +310,7 @@
       </damageData>
     </graphicData>
     <doorType>DoubleSwing</doorType>
+    <rotatesSouth>false</rotatesSouth>
     <fixedPerspective>true</fixedPerspective>
     <costStuffCount>180</costStuffCount>
     <researchPrerequisites>

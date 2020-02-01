@@ -44,7 +44,7 @@
       </damageData>
       <drawSize>2</drawSize>
     </graphicData>
-    <altitudeLayer>MoteOverhead</altitudeLayer>
+    <altitudeLayer>BuildingOnTop</altitudeLayer>
     <passability>PassThroughOnly</passability>
     <pathCost>50</pathCost>
     <constructEffect>ConstructDirt</constructEffect>
@@ -115,7 +115,7 @@
       </damageData>
       <drawSize>2</drawSize>
     </graphicData>
-    <altitudeLayer>MoteOverhead</altitudeLayer>
+    <altitudeLayer>BuildingOnTop</altitudeLayer>
     <passability>PassThroughOnly</passability>
     <pathCost>50</pathCost>
     <constructEffect>ConstructDirt</constructEffect>
@@ -169,7 +169,7 @@
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
     <size>(1,1)</size>
-    <rotatable>true</rotatable>
+    <rotatable>false</rotatable>
     <graphicData>
       <texPath>Things/Building/Door/DoorRemote_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
@@ -250,6 +250,8 @@
     </costList>
     <designationCategory>Structure</designationCategory>
     <doorType>StretchVertical</doorType>
+    <!-- Top and bottom 4th of door texture is all transparent, so "actual" size of closed door for stretch purposes is (2,1) -->
+    <stretchCloseSize>(2,1)</stretchCloseSize>
     <singleDoor>true</singleDoor>
     <doorOpenSpeedRate>2</doorOpenSpeedRate>
     <researchPrerequisites>
