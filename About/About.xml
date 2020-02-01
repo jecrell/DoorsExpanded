@@ -6,7 +6,7 @@
     <li>1.0</li>
   </supportedVersions>
   <url>https://discord.gg/AaVFA7V</url>
-  <description>1.20.0.7 (06-03-2019)
+  <description><![CDATA[1.21.0.0 (01-31-2020)
 
   Adds new types and sizes of doors to RimWorld.
   
@@ -36,6 +36,34 @@ Maaxar, Shibby Says, TheJagermeister, Cory Bonifay, Kiya Nicoll, Matt Harris, Pa
 ========================
 Changelog
 ========================
+1.21.0.0 (01-31-2020)
+========================
+Rewrite and fully rebase code onto 1.0 RimWorld, fixing several bugs. Engineered by lbmaian.
+- fixes pathing issues, including enemies warping through large doors
+- forbid/unforbid has immediate effect (instead of having to wait a tick)
+- fixes behavior inconsistent with vanilla doors, including default door opening/closing speeds, previously held open door closing behavior, whether enemies set fire to doors, heat transfer rates through open/closed doors
+- allow <1.0 fillPercent doors with correct cover/snow/etc. calculations
+- doors are non-minifiable (non-uninstallable) by default
+- doors block light by default
+- remote doors default to non-remotely secured
+- remote hold open state now linked to remote button/lever, with latter's state initialized to first linked remote door
+- remote hold open state no longer clobbers native hold open state (in case door is unlinked)
+- secured remotely doors ignore native hold open state (and disables hold open gizmo)
+- custom remote door gizmos now appear right after hold open gizmo
+- more consistent messages on button connect/disconnect
+- remote button/lever no longer appears above pawns
+- fixed Stretch and StretchVertical and non-2-width DoubleSwing door type animations
+- Stretch/StretchVertical defs have new custom parameters, with the only functional difference between Stretch and StretchVertical being defaults
+- ghost (pre-placement) and blueprint door graphics now always match actual door graphics
+- ghost graphics for def.rotatesSouth=false now skip south rotation, and fix subtle bugs when spawning def.rotatesSouth=false doors
+- ghost graphics now appear above existing buildings as in vanilla
+- 1x1 door auto-rotates like vanilla doors (and don't rotate in ghost form)
+- 1x1 door blueprint also auto-rotates upon placement
+- dev mode inspector has new toggles (write temperature, write edifice grid, write doors), more path info, more precise mouse position, and patch call registry for debugging
+
+Add German translation by Erdnussbrot.
+Update Japanese translation by Proxyer.
+
 1.20.0.7 (06-03-2019)
 ========================
 Fixes explosion slowdowns that occur while playing the CE mod coupled with Doors Expanded. The fix was engineered by JonnyNova.
@@ -68,5 +96,5 @@ This should fix the issue where animals do not want to walk through the doors fo
 ========================
 Initial release for RimWorld 1.0
 
-</description>
+]]></description>
 </ModMetaData>
