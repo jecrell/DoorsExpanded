@@ -246,6 +246,14 @@ namespace DoorsExpanded
                             debugString.AppendLine("  - CanBeSeenOver: " + parentDoor.CanBeSeenOver());
                             debugString.AppendLine("  - BaseBlockChance: " + parentDoor.BaseBlockChance());
 
+                            if (parentDoor is Building_DoorRemote parentDoorRemote)
+                            {
+                                debugString.AppendLine("  - Button: " + parentDoorRemote.Button);
+                                debugString.AppendLine("  - SecuredRemotely: " + parentDoorRemote.SecuredRemotely);
+                                debugString.AppendLine("  - HoldOpenRemotely: " + parentDoorRemote.HoldOpenRemotely);
+                                debugString.AppendLine("  - ForcedClosed: " + parentDoorRemote.ForcedClosed);
+                            }
+
                             if (pawn != null)
                             {
                                 debugString.AppendLine("  - For selected pawn: " + pawn);
@@ -268,6 +276,13 @@ namespace DoorsExpanded
                                 //    (pawn.GetLord()?.extraForbiddenThings?.Contains(parentDoor) ?? false));
                             }
                         }
+                    }
+                    else if (thing is Building_DoorRemoteButton remoteButton)
+                    {
+                        debugString.AppendLine("RemoteButton: " + remoteButton);
+                        debugString.AppendLine("- LinkedDoors: " + remoteButton.LinkedDoors.ToStringSafeEnumerable());
+                        debugString.AppendLine("- ButtonOn: " + remoteButton.ButtonOn);
+                        debugString.AppendLine("- NeedsToBeSwitched: " + remoteButton.NeedsToBeSwitched);
                     }
                 }
             }

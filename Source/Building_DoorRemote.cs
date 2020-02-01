@@ -6,96 +6,67 @@ using Verse;
 
 namespace DoorsExpanded
 {
-    public enum DoorRemote_State
-    {
-        Free = 0,
-        ForcedOpen = 1,
-        ForcedClose = 2
-    }
-
     public class Building_DoorRemote : Building_DoorExpanded
     {
         private Building_DoorRemoteButton button;
-        private DoorRemote_State remoteState = DoorRemote_State.Free;
         private bool securedRemotely = false;
 
-        public DoorRemote_State RemoteState => remoteState;
+        public Building_DoorRemoteButton Button
+        {
+            get => button;
+            protected set
+            {
+                if (button != value)
+                {
+                    var oldButton = button;
+                    button = value;
+                    oldButton?.Notify_Unlinked(this);
+                    button?.Notify_Linked(this);
+                }
+            }
+        }
 
         public bool SecuredRemotely
         {
             get => securedRemotely;
             set
             {
-                if (value == false && remoteState == DoorRemote_State.ForcedClose)
-                {
-                    remoteState = DoorRemote_State.Free;
-                    Notify_ForbiddenInputChanged();
-                }
-
-                if (value == true)
-                {
-                    var error = "";
-                    if (button == null)
-                        error = "PH_ButtonNeeded".Translate();
-                    if (!DoorPowerOn)
-                        error = "PH_PowerNeeded".Translate();
-                    if (error != "")
-                    {
-                        Messages.Message(error, MessageTypeDefOf.RejectInput);
-                        securedRemotely = false;
-                        return;
-                    }
-
-                    if (remoteState == DoorRemote_State.Free && !Open)
-                    {
-                        remoteState = DoorRemote_State.ForcedClose;
-                        Notify_ForbiddenInputChanged();
-                    }
-                }
                 securedRemotely = value;
+                // Reactive update due to Forbidden depending on SecuredRemotely (via ForcedClosed).
+                Notify_ForbiddenInputChanged();
             }
         }
 
-        public override bool WillCloseSoon => remoteState != DoorRemote_State.ForcedOpen && base.WillCloseSoon;
+        protected override bool OpenInt
+        {
+            set
+            {
+                base.OpenInt = value;
+                // Reactive update due to Forbidden depending on OpenInt (via Open via ForcedClosed).
+                Notify_ForbiddenInputChanged();
+            }
+        }
 
-        public override bool Forbidden => SecuredRemotely && remoteState == DoorRemote_State.ForcedClose || base.Forbidden;
+        // When secured remotely, only care about whether its held open remotely;
+        // else can be held open either remotely or by gizmo.
+        public override bool HoldOpen => securedRemotely ? HoldOpenRemotely : HoldOpenRemotely || base.HoldOpen;
+
+        public bool HoldOpenRemotely => Button != null && Button.ButtonOn;
+
+        public bool ForcedClosed => SecuredRemotely && !Open;
+
+        public override bool Forbidden => ForcedClosed || base.Forbidden;
+
+        // For purposes of determining whether a door can be closed automatically,
+        // treat a powered door that's linked to an enabled button as always being "friendly touched".
+        internal protected override bool FriendlyTouchedRecently =>
+            (button?.IsEnabled ?? false) && DoorPowerOn || base.FriendlyTouchedRecently;
 
         public override void ExposeData()
         {
             base.ExposeData();
             Scribe_References.Look(ref button, nameof(button));
-            Scribe_Values.Look(ref remoteState, nameof(remoteState), DoorRemote_State.Free);
-            Scribe_Values.Look(ref securedRemotely, nameof(securedRemotely), true);
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
-            {
-                if (SecuredRemotely && remoteState == DoorRemote_State.ForcedClose)
-                {
-                    DoorTryClose();
-                    Notify_ForbiddenInputChanged();
-                }
-                if (remoteState == DoorRemote_State.ForcedOpen)
-                {
-                    DoorOpen(int.MaxValue);
-                    holdOpenInt = true;
-                }
-            }
-        }
-
-        public override void Notify_PawnApproaching(Pawn p, int moveCost)
-        {
-            if (remoteState != DoorRemote_State.ForcedOpen && SecuredRemotely)
-                return;
-            base.Notify_PawnApproaching(p, moveCost);
-        }
-
-        public override bool PawnCanOpen(Pawn p)
-        {
-            return (remoteState == DoorRemote_State.Free || remoteState == DoorRemote_State.ForcedOpen) && base.PawnCanOpen(p);
-        }
-
-        public override bool BlocksPawn(Pawn p)
-        {
-            return base.BlocksPawn(p) || (SecuredRemotely && remoteState != DoorRemote_State.ForcedOpen);
+            Scribe_Values.Look(ref securedRemotely, nameof(securedRemotely), false);
         }
 
         private const float LockPulseFrequency = 1.5f; // OverlayDrawer.PulseFrequency is 4f
@@ -103,10 +74,7 @@ namespace DoorsExpanded
 
         public override void Draw()
         {
-            // TODO: Buildings never tick when unspawned - remove this check.
-            if (!Spawned)
-                return;
-            if (SecuredRemotely && remoteState == DoorRemote_State.ForcedClose)
+            if (ForcedClosed)
             {
                 // This is based off OverlayDrawer.RenderQuestionMarkOverlay/RenderPulsingOverlayInternal, with customized parameters.
                 var drawLoc = DrawPos;
@@ -122,77 +90,95 @@ namespace DoorsExpanded
 
         public override void DrawExtraSelectionOverlays()
         {
-            if (button != null)
-                GenDraw.DrawLineBetween(this.TrueCenter(), button.TrueCenter());
+            if (Button != null)
+                GenDraw.DrawLineBetween(this.TrueCenter(), Button.TrueCenter());
             base.DrawExtraSelectionOverlays();
         }
 
         public override IEnumerable<Gizmo> GetGizmos()
         {
             foreach (var gizmo in base.GetGizmos())
-                yield return gizmo;
-
-            yield return new Command_Action
             {
-                defaultLabel = "PH_ButtonConnect".Translate(),
-                defaultDesc = "PH_ButtonConnectDesc".Translate(),
-                icon = TexButton.ConnectToButton,
-                disabled = false,
-                disabledReason = "",
-                action = ButtonConnect,
-            };
-
-            if (button != null)
-            {
-                yield return new Command_Action
+                if (gizmo is Command_Toggle command && command.defaultLabel == "CommandToggleDoorHoldOpen".Translate())
                 {
-                    defaultLabel = "PH_ButtonDisconnect".Translate(),
-                    defaultDesc = "PH_ButtonDisconnectDesc".Translate(),
-                    icon = TexButton.DisconnectButton,
-                    disabled = false,
-                    disabledReason = "",
-                    action = ButtonDisconnect,
-                };
-            }
+                    // Disable hold open toggle gizmo if secured remotely.
+                    if (SecuredRemotely)
+                    {
+                        gizmo.Disable("PH_RemoteDoorSecuredRemotely".Translate());
+                    }
+                    yield return gizmo;
 
-            yield return new Command_Toggle
-            {
-                defaultLabel = "PH_RemoteDoorSecuredRemotely".Translate(),
-                defaultDesc = "PH_RemoteDoorSecuredRemotelyDesc".Translate(),
-                icon = TexButton.SecuredRemotely,
-                disabled = false,
-                disabledReason = "",
-                isActive = () => SecuredRemotely,
-                toggleAction = () => SecuredRemotely = !SecuredRemotely, 
-            };
+                    // Insert all our custom gizmos right after hold open toggle gizmo,
+                    // with the secured remotely gizmo being the first.
+
+                    string securedRemotelyDisableReason = null;
+                    if (Button == null)
+                        securedRemotelyDisableReason = "PH_ButtonNeeded".Translate();
+                    if (!DoorPowerOn)
+                        securedRemotelyDisableReason = "PH_PowerNeeded".Translate();
+                    yield return new Command_Toggle
+                    {
+                        defaultLabel = "PH_RemoteDoorSecuredRemotely".Translate(),
+                        defaultDesc = "PH_RemoteDoorSecuredRemotelyDesc".Translate(),
+                        icon = TexButton.SecuredRemotely,
+                        disabled = securedRemotelyDisableReason != null,
+                        disabledReason = securedRemotelyDisableReason,
+                        isActive = () => SecuredRemotely,
+                        toggleAction = () => SecuredRemotely = !SecuredRemotely,
+                    };
+
+                    yield return new Command_Action
+                    {
+                        defaultLabel = "PH_ButtonConnect".Translate(),
+                        defaultDesc = "PH_ButtonConnectDesc".Translate(),
+                        icon = TexButton.ConnectToButton,
+                        disabled = false,
+                        disabledReason = "",
+                        action = ButtonConnect,
+                    };
+
+                    if (Button != null)
+                    {
+                        yield return new Command_Action
+                        {
+                            defaultLabel = "PH_ButtonDisconnect".Translate(),
+                            defaultDesc = "PH_ButtonDisconnectDesc".Translate(),
+                            icon = TexButton.DisconnectButton,
+                            disabled = false,
+                            disabledReason = "",
+                            action = ButtonDisconnect,
+                        };
+                    }
+                }
+                else
+                {
+                    yield return gizmo;
+                }
+            }
         }
 
         public void Notify_ButtonPushed()
         {
-            if (PowerComp != null && !DoorPowerOn)
+            if (DoorPowerOff)
             {
                 Messages.Message("PH_CannotOpenRemotelyWithoutPower".Translate(Label), this, MessageTypeDefOf.RejectInput);
                 return;
             }
+            UpdateOpenStateFromButtonEvent();
+        }
 
-            if (Open)
+        private void UpdateOpenStateFromButtonEvent()
+        {
+            if (Button.ButtonOn != Open)
             {
-                holdOpenInt = false;
-                DoorTryClose();
-                if (!SecuredRemotely)
-                    remoteState = DoorRemote_State.Free;
+                if (Open)
+                {
+                    DoorTryClose();
+                }
                 else
                 {
-                    remoteState = DoorRemote_State.ForcedClose;
-                    Notify_ForbiddenInputChanged();
+                    DoorOpen();
                 }
-            }
-            else
-            {
-                DoorOpen(int.MaxValue);
-                holdOpenInt = true;
-                remoteState = DoorRemote_State.ForcedOpen;
-                Notify_ForbiddenInputChanged();
             }
         }
 
@@ -200,7 +186,7 @@ namespace DoorsExpanded
         {
             var tp = new TargetingParameters
             {
-                validator = t => t.Thing is Building_DoorRemoteButton bt,
+                validator = t => t.Thing is Building_DoorRemoteButton,
                 canTargetBuildings = true,
                 canTargetPawns = false,
             };
@@ -208,19 +194,17 @@ namespace DoorsExpanded
             {
                 if (t.Thing is Building_DoorRemoteButton otherButton)
                 {
-                    if (button != null)
+                    if (Button != otherButton)
                     {
-                        if (button.Spawned)
-                            Messages.Message("PH_ButtonUnlinked".Translate(button.PositionHeld.ToString()), button,
-                                MessageTypeDefOf.SilentInput);
-                        else
-                            Messages.Message("PH_ButtonUnlinkedUnspawned".Translate(button.PositionHeld.ToString()),
-                                MessageTypeDefOf.SilentInput);
+                        if (Button != null)
+                        {
+                            DisplayUnlinkedMessage();
+                        }
+                        Button = otherButton;
+                        Messages.Message("PH_ButtonConnectSuccess".Translate(otherButton.PositionHeld.ToString()), otherButton,
+                            MessageTypeDefOf.PositiveEvent);
+                        UpdateOpenStateFromButtonEvent();
                     }
-                    otherButton.Notify_Linked(this);
-                    button = otherButton;
-                    Messages.Message("PH_ButtonConnectSuccess".Translate(otherButton.PositionHeld.ToString()), otherButton,
-                        MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {
@@ -231,9 +215,17 @@ namespace DoorsExpanded
 
         private void ButtonDisconnect()
         {
-            if (button != null)
-                button.Notify_Unlinked(this);
-            button = null;
+            DisplayUnlinkedMessage();
+            Button = null;
+            SecuredRemotely = false;
+        }
+
+        private void DisplayUnlinkedMessage()
+        {
+            if (Button.Spawned)
+                Messages.Message("PH_ButtonUnlinked".Translate(Button.PositionHeld.ToString()), Button, MessageTypeDefOf.SilentInput);
+            else
+                Messages.Message("PH_ButtonUnlinkedUnspawned".Translate(Button.PositionHeld.ToString()), MessageTypeDefOf.SilentInput);
         }
     }
 }

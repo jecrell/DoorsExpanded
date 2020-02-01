@@ -40,7 +40,7 @@ namespace DoorsExpanded
         private CompPowerTrader powerComp;
         private CompForbiddable forbiddenComp;
         private bool openInt;
-        protected bool holdOpenInt;
+        private bool holdOpenInt;
         private int lastFriendlyTouchTick = -9999;
         protected int ticksUntilClose;
         protected int visualTicksOpen;
@@ -51,7 +51,7 @@ namespace DoorsExpanded
 
         public bool Open => Def.doorType == DoorType.FreePassage || openInt;
 
-        protected bool OpenInt
+        protected virtual bool OpenInt
         {
             get => openInt;
             set
@@ -66,11 +66,11 @@ namespace DoorsExpanded
             }
         }
 
-        public bool HoldOpen => holdOpenInt;
+        public virtual bool HoldOpen => holdOpenInt;
 
         public bool FreePassage => Open && (HoldOpen || !WillCloseSoon);
 
-        public virtual bool WillCloseSoon
+        public bool WillCloseSoon
         {
             get
             {
@@ -342,7 +342,7 @@ namespace DoorsExpanded
             }
         }
 
-        public virtual void Notify_PawnApproaching(Pawn p, int moveCost)
+        public void Notify_PawnApproaching(Pawn p, int moveCost)
         {
             CheckFriendlyTouched(p);
             if (PawnCanOpen(p))

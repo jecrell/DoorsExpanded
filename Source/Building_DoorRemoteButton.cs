@@ -14,6 +14,14 @@ namespace DoorsExpanded
         private bool buttonOn = false;
         private bool needsToBeSwitched = false;
 
+        public List<Building_DoorRemote> LinkedDoors => linkedDoors;
+
+        public bool ButtonOn
+        {
+            get => buttonOn;
+            set => buttonOn = value;
+        }
+
         public bool NeedsToBeSwitched
         {
             get => needsToBeSwitched;
@@ -21,16 +29,16 @@ namespace DoorsExpanded
         }
 
         // base.Graphic is off; fullGraveGraphicData.Graphic is on.
-        public override Graphic Graphic => !buttonOn ? base.Graphic : def.building.fullGraveGraphicData.Graphic;
+        public override Graphic Graphic => !ButtonOn ? base.Graphic : def.building.fullGraveGraphicData.Graphic;
 
-        private bool IsPowered
+        public bool IsEnabled => powerComp == null || powerComp.PowerOn;
+
+        private bool NeedsPower => powerComp != null && !powerComp.PowerOn;
+
+        public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
-            get
-            {
-                if (powerComp == null)
-                    powerComp = this.TryGetComp<CompPowerTrader>();
-                return powerComp == null || powerComp.PowerOn;
-            }
+            base.SpawnSetup(map, respawningAfterLoad);
+            powerComp = GetComp<CompPowerTrader>();
         }
 
         public override void DrawExtraSelectionOverlays()
@@ -46,13 +54,19 @@ namespace DoorsExpanded
 
         public void Notify_Linked(Building_DoorRemote remoteDoor)
         {
+            // ButtonOn state is set to the first linked door's HoldOpen state.
+            // From that point on, the relationship is reversed such that all linked door's HoldOpen state are synchronized
+            // with this button's ButtonOn state.
+            if (linkedDoors.Count == 0)
+                ButtonOn = remoteDoor.HoldOpen;
             linkedDoors.Add(remoteDoor);
         }
 
         public void Notify_Unlinked(Building_DoorRemote remoteDoor)
         {
-            if (linkedDoors.Contains(remoteDoor))
-                linkedDoors.Remove(remoteDoor);
+            linkedDoors.Remove(remoteDoor);
+            if (linkedDoors.Count == 0)
+                ButtonOn = false;
         }
 
         public void PushButton()
@@ -60,10 +74,10 @@ namespace DoorsExpanded
             if (NeedsToBeSwitched)
                 NeedsToBeSwitched = false;
             SoundDefOf.RadioButtonClicked.PlayOneShot(this);
-            buttonOn = !buttonOn;
-            linkedDoors?.RemoveAll(door => !door.Spawned);
+            ButtonOn = !ButtonOn;
             if (linkedDoors != null)
             {
+                linkedDoors.RemoveAll(door => !door.Spawned);
                 foreach (var linkedDoor in linkedDoors)
                     linkedDoor.Notify_ButtonPushed();
             }
@@ -85,10 +99,10 @@ namespace DoorsExpanded
                 defaultLabel = "PH_UseButtonOrLever".Translate(),
                 defaultDesc = "PH_UseButtonOrLeverDesc".Translate(),
                 icon = TexButton.UseButtonOrLever,
-                disabled = linkedDoors == null || linkedDoors?.Count() == 0 || (PowerComp != null && !IsPowered),
+                disabled = linkedDoors == null || linkedDoors.Count == 0 || NeedsPower,
                 disabledReason = GetDisabledReason(),
                 isActive = () => NeedsToBeSwitched,
-                toggleAction = ToggleAction,
+                toggleAction = () => NeedsToBeSwitched = !NeedsToBeSwitched,
             };
         }
 
@@ -98,16 +112,11 @@ namespace DoorsExpanded
             {
                 return "PH_NeedsLinkedDoorsFirst".Translate();
             }
-            if (PowerComp != null && !IsPowered)
+            if (NeedsPower)
             {
                 return "PH_PowerSourceRequired".Translate();
             }
             return "";
-        }
-
-        private void ToggleAction()
-        {
-            NeedsToBeSwitched = !NeedsToBeSwitched;
         }
 
         public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn selPawn)
@@ -115,7 +124,7 @@ namespace DoorsExpanded
             foreach (var floatMenuOpton in base.GetFloatMenuOptions(selPawn))
                 yield return floatMenuOpton;
 
-            if (IsPowered)
+            if (IsEnabled)
             {
                 if (linkedDoors != null && linkedDoors.Count > 0)
                 {
@@ -153,7 +162,6 @@ namespace DoorsExpanded
             }
             else
             {
-
                 var disabled2 = new FloatMenuOption
                 (
                     label: "PH_ButtonPressNoPower".Translate(),
