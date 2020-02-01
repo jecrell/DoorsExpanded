@@ -29,10 +29,7 @@ namespace DoorsExpanded
                 if (value == false && remoteState == DoorRemote_State.ForcedClose)
                 {
                     remoteState = DoorRemote_State.Free;
-                    foreach (var invisDoor in InvisDoors)
-                    {
-                        invisDoor.SetForbidden(false);
-                    }
+                    Notify_ForbiddenInputChanged();
                 }
 
                 if (value == true)
@@ -52,10 +49,7 @@ namespace DoorsExpanded
                     if (remoteState == DoorRemote_State.Free && !Open)
                     {
                         remoteState = DoorRemote_State.ForcedClose;
-                        foreach (var invisDoor in InvisDoors)
-                        {
-                            invisDoor.SetForbidden(true);
-                        }
+                        Notify_ForbiddenInputChanged();
                     }
                 }
                 securedRemotely = value;
@@ -63,6 +57,8 @@ namespace DoorsExpanded
         }
 
         public override bool WillCloseSoon => remoteState != DoorRemote_State.ForcedOpen && base.WillCloseSoon;
+
+        public override bool Forbidden => SecuredRemotely && remoteState == DoorRemote_State.ForcedClose || base.Forbidden;
 
         public override void ExposeData()
         {
@@ -75,10 +71,7 @@ namespace DoorsExpanded
                 if (SecuredRemotely && remoteState == DoorRemote_State.ForcedClose)
                 {
                     DoorTryClose();
-                    foreach (var invisDoor in InvisDoors)
-                    {
-                        invisDoor.SetForbidden(true);
-                    }
+                    Notify_ForbiddenInputChanged();
                 }
                 if (remoteState == DoorRemote_State.ForcedOpen)
                 {
@@ -88,26 +81,21 @@ namespace DoorsExpanded
             }
         }
 
-        public override void Notify_PawnApproaching(Pawn p)
+        public override void Notify_PawnApproaching(Pawn p, int moveCost)
         {
             if (remoteState != DoorRemote_State.ForcedOpen && SecuredRemotely)
                 return;
-            base.Notify_PawnApproaching(p);
+            base.Notify_PawnApproaching(p, moveCost);
         }
 
-        public override bool PawnCanOpenSpecialCases(Pawn p)
+        public override bool PawnCanOpen(Pawn p)
         {
-            return (remoteState == DoorRemote_State.Free || remoteState == DoorRemote_State.ForcedOpen) && base.PawnCanOpenSpecialCases(p);
+            return (remoteState == DoorRemote_State.Free || remoteState == DoorRemote_State.ForcedOpen) && base.PawnCanOpen(p);
         }
 
         public override bool BlocksPawn(Pawn p)
         {
             return base.BlocksPawn(p) || (SecuredRemotely && remoteState != DoorRemote_State.ForcedOpen);
-        }
-
-        protected override bool ShouldKeepDoorOpen()
-        {
-            return remoteState == DoorRemote_State.ForcedOpen || base.ShouldKeepDoorOpen();
         }
 
         private const float LockPulseFrequency = 1.5f; // OverlayDrawer.PulseFrequency is 4f
@@ -196,10 +184,7 @@ namespace DoorsExpanded
                 else
                 {
                     remoteState = DoorRemote_State.ForcedClose;
-                    foreach (var invisDoor in InvisDoors)
-                    {
-                        invisDoor.SetForbidden(true);
-                    }
+                    Notify_ForbiddenInputChanged();
                 }
             }
             else
@@ -207,10 +192,7 @@ namespace DoorsExpanded
                 DoorOpen(int.MaxValue);
                 holdOpenInt = true;
                 remoteState = DoorRemote_State.ForcedOpen;
-                foreach (var invisDoor in InvisDoors)
-                {
-                    invisDoor.SetForbidden(false);
-                }
+                Notify_ForbiddenInputChanged();
             }
         }
 

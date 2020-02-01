@@ -29,7 +29,12 @@ namespace DoorsExpanded
 
         public DoorExpandedDef()
         {
+            // Following are already defined in the AbstractHeronDoorBase ThingDef,
+            // but just in case anyone doesn't inherit from that def, so that they're at least minimally functional.
             thingClass = typeof(Building_DoorExpanded);
+            category = ThingCategory.Building;
+            tickerType = TickerType.Normal;
+            drawerType = DrawerType.RealtimeOnly;
         }
     }
 }

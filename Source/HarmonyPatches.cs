@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define PATCH_CALL_REGISTRY
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,17 +12,57 @@ using Verse.AI;
 
 namespace DoorsExpanded
 {
+    // This is a separate class from HarmonyPatches in case any other mod wants to patch transpilers in HarmonyPatches.
+    // If those transpilers were in the same class, the static constructor would run before any patching of said transpilers
+    // could be done, which makes such patching too late.
     [StaticConstructorOnStartup]
-    static class HarmonyPatches
+    public static class HarmonyPatchesOnStartup
     {
-        static HarmonyPatches()
+        static HarmonyPatchesOnStartup()
         {
-            harmony = HarmonyInstance.Create("rimworld.jecrell.doorsexpanded");
+            var harmony = HarmonyInstance.Create("rimworld.jecrell.doorsexpanded");
+            HarmonyPatches.PatchAll(harmony);
+            DebugInspectorPatches.PatchDebugInspector(harmony);
+        }
+    }
 
+    public static class HarmonyPatches
+    {
+        public static void PatchAll(HarmonyInstance harmony)
+        {
+            HarmonyPatches.harmony = harmony;
+            var rwAssembly = typeof(Building_Door).Assembly;
+
+            // Historical note: There used to be patches on the following methods that are no longer necessary since:
+            // a) edificeGrid (and thus GridsUtility.GetEdifice) should now never return a Building_DoorExpanded thing
+            // b) forbidden state is now synced between Building_DoorExpanded and its invis doors
+            // c) were workarounds for bugs that have since been fixed
+            // GenPath.ShouldNotEnterCell
+            // GenSpawn.SpawnBuildingAsPossible
+            // ForbidUtility.IsForbiddenToPass
+            // PathFinder.GetBuildingCost
+            // PathFinder.BlocksDiagonalMovement
+            // PawnPathUtility.TryFindLastCellBeforeBlockingDoor
+            // PawnPathUtility.FirstBlockingBuilding
+            // RegionTypeUtility.GetExpectedRegionType
+            // JobGiver_Manhunter.TryGiveJob
+            // JobGiver_SeekAllowedArea.TryGiveJob
+
+            // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.FreePassage)).GetGetMethod(),
                 prefix: nameof(InvisDoorFreePassagePrefix));
+            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.WillCloseSoon)).GetGetMethod(),
+                prefix: nameof(InvisDoorWillCloseSoonPrefix));
+            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.BlockedOpenMomentary)).GetGetMethod(),
+                prefix: nameof(InvisDoorBlockedOpenMomentaryPrefix));
+            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.SlowsPawns)).GetGetMethod(),
+                prefix: nameof(InvisDoorSlowsPawnsPrefix));
+            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.TicksToOpenNow)).GetGetMethod(),
+                prefix: nameof(InvisDoorTicksToOpenNowPrefix));
+            Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.CheckFriendlyTouched)),
+                prefix: nameof(InvisDoorCheckFriendlyTouchedPrefix));
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Notify_PawnApproaching)),
-                postfix: nameof(InvisDoorNotifyPawnApproachingPostfix));
+                prefix: nameof(InvisDoorNotifyPawnApproachingPrefix));
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.CanPhysicallyPass)),
                 prefix: nameof(InvisDoorCanPhysicallyPassPrefix));
             Patch(original: AccessTools.Method(typeof(Building_Door), "DoorOpen"),
@@ -29,42 +70,84 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Building_Door), "DoorTryClose"),
                 prefix: nameof(InvisDoorDoorTryClosePrefix));
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualOpenBy)),
-                postfix: nameof(InvisDoorStartManualOpenByPostfix));
-            Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
-                prefix: nameof(InvisDoorStartManualCloseByPrefix));
+                prefix: nameof(InvisDoorStartManualOpenByPrefix));
+            // Building_Door.StartManualCloseBy gets inlined, so can only patch its caller Pawn_PathFollower.TryEnterNextPathCell.
+            //Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
+            //    prefix: nameof(InvisDoorStartManualCloseByPrefix));
+            Patch(original: AccessTools.Method(typeof(Pawn_PathFollower), "TryEnterNextPathCell"),
+                transpiler: nameof(InvisDoorManualCloseCallTranspiler),
+                transpilerRelated: nameof(InvisDoorStartManualCloseBy));
 
-            Patch(original: AccessTools.Method(typeof(GenSpawn), nameof(GenSpawn.SpawnBuildingAsPossible)),
-                prefix: nameof(InvisDoorSpawnBuildingAsPossiblePrefix));
+            // Patches to redirect access from invis door def to its parent door def.
+            Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
+                transpiler: nameof(InvisDoorCanBeSeenOverTranspiler));
+            Patch(original: AccessTools.FirstMethod(
+                    AccessTools.FirstInner(typeof(FloodFillerFog), inner => inner.Name.StartsWith("<FloodUnfog>")),
+                    method => method.Name.StartsWith("<") && method.ReturnType == typeof(bool)),
+                transpiler: nameof(InvisDoorMakeFogTranspiler));
+            Patch(original: AccessTools.Method(typeof(FogGrid), "FloodUnfogAdjacent"),
+                transpiler: nameof(InvisDoorMakeFogTranspiler));
+            Patch(original: AccessTools.Method(typeof(Projectile), "ImpactSomething"),
+                transpiler: nameof(InvisDoorProjectileImpactSomethingTranspiler));
+            Patch(original: AccessTools.Method(rwAssembly.GetType("Verse.SectionLayer_IndoorMask"), "HideRainPrimary"),
+                transpiler: nameof(InvisDoorSectionLayerIndoorMaskHideRainPrimaryTranspiler));
+            Patch(original: AccessTools.Method(typeof(SnowGrid), "CanHaveSnow"),
+                transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
+            Patch(original: AccessTools.Method(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor)),
+                transpiler: nameof(InvisDoorBlockLightTranspiler));
+            Patch(original: AccessTools.Method(
+                    typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
+                transpiler: nameof(InvisDoorBlockLightTranspiler));
+
+            // Other patches for invis doors.
+            Patch(original: AccessTools.Method(typeof(PathGrid), nameof(PathGrid.CalculatedCostAt)),
+                transpiler: nameof(InvisDoorCalculatedCostAtTranspiler));
             Patch(original: AccessTools.Method(typeof(GenSpawn), nameof(GenSpawn.WipeExistingThings)),
                 prefix: nameof(InvisDoorWipeExistingThingsPrefix));
             Patch(original: AccessTools.Method(typeof(GenSpawn), nameof(GenSpawn.SpawningWipes)),
-                postfix: nameof(InvisDoorSpawningWipesPostfix));
+                prefix: nameof(InvisDoorSpawningWipesPrefix));
             Patch(original: AccessTools.Method(typeof(PathFinder), nameof(PathFinder.IsDestroyable)),
                 postfix: nameof(InvisDoorIsDestroyablePostfix));
-            Patch(original: AccessTools.Method(typeof(ForbidUtility), nameof(ForbidUtility.IsForbiddenToPass)),
-                postfix: nameof(InvisDoorIsForbiddenToPassPostfix));
-            Patch(original: AccessTools.Method(typeof(CompForbiddable), nameof(CompForbiddable.PostDraw)),
-                prefix: nameof(InvisDoorCompForbiddablePostDrawPrefix));
+            Patch(original: AccessTools.Method(typeof(MouseoverReadout), nameof(MouseoverReadout.MouseoverReadoutOnGUI)),
+                transpiler: nameof(MouseoverReadoutTranspiler));
 
+            // Patches for door expanded doors themselves.
+            Patch(original: AccessTools.Method(
+                    typeof(CoverUtility), nameof(CoverUtility.BaseBlockChance), new[] { typeof(Thing) }),
+                transpiler: nameof(DoorExpandedBaseBlockChanceTranspiler));
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
-                postfix: nameof(DoorExpandedCanBeSeenOverPostfix));
-            Patch(original: AccessTools.Method(typeof(GenPath), "ShouldNotEnterCell"),
-                postfix: nameof(DoorExpandedShouldNotEnterCellPostfix));
+                transpiler: nameof(DoorExpandedCanBeSeenOverTranspiler));
             Patch(original: AccessTools.Method(typeof(EdificeGrid), nameof(EdificeGrid.Register)),
                 prefix: nameof(DoorExpandedEdificeGridRegisterPrefix));
-            Patch(original: AccessTools.Method(typeof(JobGiver_Manhunter), "TryGiveJob"),
-                transpiler: nameof(DoorExpandedJobGiverManhunterTryGiveJobTranspiler));
-            Patch(original: AccessTools.Method(typeof(PawnPathUtility), nameof(PawnPathUtility.TryFindLastCellBeforeBlockingDoor)),
-                prefix: nameof(DoorExpandedTryFindLastCellBeforeBlockingDoorPrefix));
+            Patch(original: AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod(),
+                postfix: nameof(DoorExpandedThingDefIsDoorPostfix));
+            Patch(original: AccessTools.Property(typeof(CompForbiddable), nameof(CompForbiddable.Forbidden)).GetSetMethod(),
+                transpiler: nameof(DoorExpandedSetForbiddenTranspiler),
+                transpilerRelated: nameof(DoorExpandedSetForbidden));
+            Patch(original: AccessTools.Method(typeof(RegionAndRoomUpdater), "ShouldBeInTheSameRoomGroup"),
+                postfix: nameof(DoorExpandedShouldBeInTheSameRoomGroupPostfix));
+            Patch(original: AccessTools.Method(typeof(GenTemperature), nameof(GenTemperature.EqualizeTemperaturesThroughBuilding)),
+                transpiler: nameof(DoorExpandedEqualizeTemperaturesThroughBuildingTranspiler),
+                transpilerRelated: nameof(GetAdjacentCellsForTemperature));
+            Patch(original: AccessTools.Method(typeof(Projectile), "CheckForFreeIntercept"),
+                transpiler: nameof(DoorExpandedProjectileCheckForFreeIntercept));
+            Patch(original: AccessTools.Method(typeof(TrashUtility), nameof(TrashUtility.TrashJob)),
+                transpiler: nameof(DoorExpandedTrashJobTranspiler));
             Patch(original: AccessTools.Method(typeof(GhostDrawer), nameof(GhostDrawer.DrawGhostThing)),
-                prefix: nameof(DoorExpandedDrawGhostThingPrefix));
+                transpiler: nameof(DoorExpandedDrawGhostThingTranspiler),
+                transpilerRelated: nameof(DoorExpandedDrawGhostGraphicFromDef));
+            Patch(original: AccessTools.Method(typeof(GhostUtility), nameof(GhostUtility.GhostGraphicFor)),
+                transpiler: nameof(DoorExpandedGhostGraphicForTranspiler));
         }
 
-        private static readonly HarmonyInstance harmony;
+        private static HarmonyInstance harmony;
 
         private static void Patch(MethodInfo original, string prefix = null, string postfix = null, string transpiler = null,
-            bool harmonyDebug = false)
+            string transpilerRelated = null, bool harmonyDebug = false)
         {
+            DebugInspectorPatches.RegisterPatch(prefix);
+            DebugInspectorPatches.RegisterPatch(postfix);
+            DebugInspectorPatches.RegisterPatch(transpilerRelated);
             HarmonyInstance.DEBUG = harmonyDebug;
             try
             {
@@ -79,450 +162,721 @@ namespace DoorsExpanded
             }
         }
 
+        private static bool IsDoorExpandedDef(Def def) =>
+            def is ThingDef thingDef && typeof(Building_DoorExpanded).IsAssignableFrom(thingDef.thingClass);
+
+        private static bool IsVanillaDoorDef(Def def) =>
+            def is ThingDef thingDef && typeof(Building_Door).IsAssignableFrom(thingDef.thingClass);
+
+        private static bool IsInvisDoorDef(Def def) =>
+            def is ThingDef thingDef && typeof(Building_DoorRegionHandler).IsAssignableFrom(thingDef.thingClass);
+
+        private static Thing GetActualDoor(Thing thing) =>
+            thing is Building_DoorRegionHandler invisDoor ? invisDoor.ParentDoor : thing;
+
         // Building_Door.FreePassage
         public static bool InvisDoorFreePassagePrefix(Building_Door __instance, ref bool __result)
         {
-            if (__instance is Building_DoorRegionHandler invisDoor && invisDoor.ParentDoor != null)
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorFreePassagePrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
             {
-                __result = invisDoor.ParentDoor.FreePassage;// && !invisDoor.ParentDoor.Forbidden;
+                __result = invisDoor.ParentDoor?.FreePassage ?? true;
                 return false;
             }
+            return true;
+        }
 
+        // Building_Door.WillCloseSoon
+        public static bool InvisDoorWillCloseSoonPrefix(Building_Door __instance, ref bool __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorWillCloseSoonPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
+            {
+                __result = invisDoor.ParentDoor?.WillCloseSoon ?? false;
+                return false;
+            }
+            return true;
+        }
+
+        // Building_Door.BlockedOpenMomentary
+        public static bool InvisDoorBlockedOpenMomentaryPrefix(Building_Door __instance, ref bool __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorBlockedOpenMomentaryPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
+            {
+                __result = invisDoor.ParentDoor?.BlockedOpenMomentary ?? false;
+                return false;
+            }
+            return true;
+        }
+
+        // Building_Door.SlowsPawns
+        public static bool InvisDoorSlowsPawnsPrefix(Building_Door __instance, ref bool __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorSlowsPawnsPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
+            {
+                __result = invisDoor.ParentDoor?.SlowsPawns ?? false;
+                return false;
+            }
+            return true;
+        }
+
+        // Building_Door.TicksToOpenNow
+        public static bool InvisDoorTicksToOpenNowPrefix(Building_Door __instance, ref int __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorTicksToOpenNowPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
+            {
+                __result = invisDoor.ParentDoor?.TicksToOpenNow ?? 0;
+                return false;
+            }
+            return true;
+        }
+
+        // Building_Door.CheckFriendlyTouched
+        public static bool InvisDoorCheckFriendlyTouchedPrefix(Building_Door __instance, Pawn p)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorCheckFriendlyTouchedPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
+            {
+                invisDoor.ParentDoor?.CheckFriendlyTouched(p);
+                return false;
+            }
             return true;
         }
 
         // Building_Door.Notify_PawnApproaching
-        public static void InvisDoorNotifyPawnApproachingPostfix(Building_Door __instance, Pawn p)
+        public static bool InvisDoorNotifyPawnApproachingPrefix(Building_Door __instance, Pawn p, int moveCost)
         {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorNotifyPawnApproachingPrefix));
             if (__instance is Building_DoorRegionHandler invisDoor)
             {
-                invisDoor.ParentDoor?.Notify_PawnApproaching(p);
+                invisDoor.ParentDoor?.Notify_PawnApproaching(p, moveCost);
+                return false;
             }
+            return true;
         }
 
         // Building_Door.CanPhysicallyPass
         public static bool InvisDoorCanPhysicallyPassPrefix(Building_Door __instance, Pawn p, ref bool __result)
         {
-            bool pawnCanOpen;
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorCanPhysicallyPassPrefix));
             if (__instance is Building_DoorRegionHandler invisDoor)
             {
-                pawnCanOpen = invisDoor.PawnCanOpen(p);
-                if (invisDoor.ParentDoor is Building_DoorRemote rem && rem.RemoteState == DoorRemote_State.ForcedClose)
-                {
-                    __result = false;
-                    return false;
-                }
+                __result = invisDoor.ParentDoor?.CanPhysicallyPass(p) ?? true;
+                return false;
             }
-            else
-            {
-                pawnCanOpen = __instance.PawnCanOpen(p);
-            }
-            __result = __instance.FreePassage || pawnCanOpen || (__instance.Open && p.HostileTo(__instance));
-            return false;
+            return true;
         }
 
         // Building_Door.DoorOpen
         public static bool InvisDoorDoorOpenPrefix(Building_Door __instance, int ticksToClose)
         {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorDoorOpenPrefix));
             if (__instance is Building_DoorRegionHandler invisDoor)
             {
-                Traverse.Create(__instance).Field("ticksUntilClose").SetValue(ticksToClose);
-                if (!Traverse.Create(__instance).Field("openInt").GetValue<bool>())
-                {
-                    AccessTools.Field(typeof(Building_Door), "openInt").SetValue(__instance, true);
-                }
-
-                invisDoor.ParentDoor.DoorOpen(ticksToClose);
+                invisDoor.ParentDoor?.DoorOpen(ticksToClose);
                 return false;
             }
-
             return true;
         }
 
         // Building_Door.DoorTryClose
         public static bool InvisDoorDoorTryClosePrefix(Building_Door __instance)
         {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorDoorTryClosePrefix));
             if (__instance is Building_DoorRegionHandler invisDoor)
             {
-                //invisDoor.ParentDoor.DoorTryClose();
-                if (!Traverse.Create(__instance).Field("holdOpenInt").GetValue<bool>() ||
-                    __instance.BlockedOpenMomentary || invisDoor.ParentDoor.Open)
-                {
-                    return false;
-                }
-                //AccessTools.Field(typeof(Building_Door), "openInt").SetValue(__instance, false);
+                invisDoor.ParentDoor?.DoorTryClose();
                 return false;
             }
-
             return true;
         }
 
         // Building_Door.StartManualOpenBy
-        public static void InvisDoorStartManualOpenByPostfix(Building_Door __instance, Pawn opener)
+        public static bool InvisDoorStartManualOpenByPrefix(Building_Door __instance, Pawn opener)
         {
-            if (__instance is Building_DoorRegionHandler invisDoor)
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorStartManualOpenByPrefix));
+            if (__instance is Building_DoorRegionHandler w)
             {
-                if (invisDoor.ParentDoor.PawnCanOpen(opener))
-                {
-                    invisDoor.ParentDoor.StartManualOpenBy(opener);
-                    if (invisDoor.ParentDoor.InvisDoors.ToList().FindAll(otherDoor => otherDoor != __instance) is
-                            List<Building_DoorRegionHandler> otherDoors && !otherDoors.NullOrEmpty())
-                    {
-                        foreach (var otherDoor in otherDoors)
-                        {
-                            if (!otherDoor.Open)
-                            {
-                                var drawSize = invisDoor.ParentDoor.Graphic.drawSize;
-                                var math = (int)(1200 * Math.Max(drawSize.x, drawSize.y));
-                                Traverse.Create(otherDoor).Field("ticksUntilClose").SetValue(math);
-                                Traverse.Create(otherDoor).Field("openInt").SetValue(true);
-                            }
-                        }
-                    }
-                }
+                w.ParentDoor?.StartManualOpenBy(opener);
+                return false;
             }
+            return true;
         }
 
         // Building_Door.StartManualCloseBy
-        public static bool InvisDoorStartManualCloseByPrefix(Building_Door __instance, Pawn closer)
+        // Note: Used to be a prefix patch, but changed into a method that's called within Pawn_PathFollower.TryEnterNextPathCell
+        // (see next patch method), since Building_Door.StartManualCloseBy gets inlined.
+        public static void InvisDoorStartManualCloseBy(Building_Door door, Pawn closer)
         {
-            if (__instance is Building_DoorRegionHandler invisDoor)
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorStartManualCloseBy));
+            if (door is Building_DoorRegionHandler invisDoor)
             {
-                //invisDoor.ParentDoor.StartManualCloseBy(closer);
-                return false;
+                invisDoor.ParentDoor?.StartManualCloseBy(closer);
             }
-
-            return true;
+            else
+            {
+                door.StartManualCloseBy(closer);
+            }
         }
 
-        // GenSpawn.SpawnBuildingAsPossible
-        public static bool InvisDoorSpawnBuildingAsPossiblePrefix(Building building, Map map, bool respawningAfterLoad = false)
-        {
-            // TODO: Redundant much?
-            if (building is Building_DoorExpanded ||
-                building is Building_DoorRegionHandler ||
-                building.def == HeronDefOf.HeronInvisibleDoor ||
-                building.def.thingClass == typeof(Building_DoorRegionHandler))
-            {
-                GenSpawn.Spawn(building, building.Position, map, building.Rotation, WipeMode.Vanish, respawningAfterLoad);
-                return false;
-            }
+        // Pawn_PathFollower.TryEnterNextPathCell
+        public static IEnumerable<CodeInstruction> InvisDoorManualCloseCallTranspiler(
+            IEnumerable<CodeInstruction> instructions) =>
+            Transpilers.MethodReplacer(instructions,
+                AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
+                AccessTools.Method(typeof(HarmonyPatches), nameof(InvisDoorStartManualCloseBy)));
 
-            return true;
+        // GenGrid.CanBeSeenOver
+        public static IEnumerable<CodeInstruction> InvisDoorCanBeSeenOverTranspiler(IEnumerable<CodeInstruction> instructions) =>
+            GetActualDoorForDefTranspiler(instructions,
+                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
+
+        // FloodFillerFog.FloodUnfog
+        // FogGrid.FloodUnfogAdjacent
+        public static IEnumerable<CodeInstruction> InvisDoorMakeFogTranspiler(IEnumerable<CodeInstruction> instructions) =>
+            GetActualDoorForDefTranspiler(instructions,
+                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.MakeFog)).GetGetMethod());
+
+        // Projectile.ImpactSomething
+        public static IEnumerable<CodeInstruction> InvisDoorProjectileImpactSomethingTranspiler(
+            IEnumerable<CodeInstruction> instructions) =>
+            GetActualDoorForDefTranspiler(instructions,
+                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
+
+        // SectionLayer_IndoorMask.HideRainPrimary
+        public static IEnumerable<CodeInstruction> InvisDoorSectionLayerIndoorMaskHideRainPrimaryTranspiler(
+            IEnumerable<CodeInstruction> instructions) =>
+            GetActualDoorForDefTranspiler(instructions,
+                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
+
+        // SnowGrid.CanHaveSnow
+        public static IEnumerable<CodeInstruction> InvisDoorCanHaveSnowTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // Unlike the other thing.def.<defMember> transpilers, the accessing of the defMember Fillage happens
+            // in another method, so we have to just replace thing.def with GetActualDoor(thing).def.
+            foreach (var instruction in instructions)
+            {
+                if (instruction.operand == fieldof_Thing_def)
+                {
+                    yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
+                }
+                yield return instruction;
+            }
         }
+
+        // GlowFlooder.AddFloodGlowFor
+        // SectionLayer_LightingOverlay.Regenerate
+        public static IEnumerable<CodeInstruction> InvisDoorBlockLightTranspiler(IEnumerable<CodeInstruction> instructions) =>
+            GetActualDoorForDefTranspiler(instructions, AccessTools.Field(typeof(ThingDef), nameof(ThingDef.blockLight)));
+
+        private static IEnumerable<CodeInstruction> GetActualDoorForDefTranspiler(IEnumerable<CodeInstruction> instructions,
+            object defMember)
+        {
+            // This transforms the following code:
+            //  thing.def.<defMember>
+            // to:
+            //  GetActualDoor(thing).def.<defMember>
+
+            var enumerator = instructions.GetEnumerator();
+            // There must be at least one instruction, so we can ignore first MoveNext() value.
+            enumerator.MoveNext();
+            var prevInstruction = enumerator.Current;
+            while (enumerator.MoveNext())
+            {
+                var instruction = enumerator.Current;
+                if (prevInstruction.operand == fieldof_Thing_def && instruction.operand == defMember)
+                {
+                    yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
+                }
+                yield return prevInstruction;
+                prevInstruction = instruction;
+            }
+            yield return prevInstruction;
+        }
+
+        private static readonly FieldInfo fieldof_Thing_def = AccessTools.Field(typeof(Thing), nameof(Thing.def));
+        private static readonly MethodInfo methodof_GetActualDoor =
+            AccessTools.Method(typeof(HarmonyPatches), nameof(GetActualDoor));
+
+        // PathGrid.CalculatedCostAt
+        public static IEnumerable<CodeInstruction> InvisDoorCalculatedCostAtTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // This removes the slowdown from consecutive invis doors of the same Building_DoorExpanded thing.
+            // It keeps the slowdown from consecutive "actual" doors
+            // (non-Building_DoorRegionhandler Building_Door or Building_DoorExpanded).
+            // This transforms the following code:
+            //  if (thing is Building_Door && prevCell.IsValid)
+            //  {
+            //      Building edifice = prevCell.GetEdifice(map);
+            //      if (edifice != null && edifice is Building_Door)
+            //      {
+            //          consecutiveDoors = true;
+            //      }
+            //  }
+            //  ...
+            // into:
+            //  if (thing is Building_Door && prevCell.IsValid)
+            //  {
+            //      Building edifice = prevCell.GetEdifice(map);
+            //      if (edifice != null && edifice is Building_Door)
+            //      {
+            //          if (GetActualDoor(thing) != GetActualDoor(edifice))
+            //              consecutiveDoors = true;
+            //      }
+            //  }
+            //  ...
+
+            var methodof_GetActualDoor = AccessTools.Method(typeof(HarmonyPatches), nameof(GetActualDoor));
+            var instructionList = instructions.AsList();
+
+            var searchIndex = 0;
+            var firstDoor = GetIsinstDoorVar(instructionList, ref searchIndex);
+            var secondDoor = GetIsinstDoorVar(instructionList, ref searchIndex);
+            var condBranchToAfterFlagIndex = instructionList.FindIndex(searchIndex, instr => instr.operand is Label);
+            var afterFlagLabel = (Label)instructionList[condBranchToAfterFlagIndex].operand;
+            instructionList.InsertRange(condBranchToAfterFlagIndex + 1, new[]
+            {
+                new CodeInstruction(OpCodes.Ldloc_S, firstDoor),
+                new CodeInstruction(OpCodes.Call, methodof_GetActualDoor),
+                new CodeInstruction(OpCodes.Ldloc_S, secondDoor),
+                new CodeInstruction(OpCodes.Call, methodof_GetActualDoor),
+                new CodeInstruction(OpCodes.Beq, afterFlagLabel),
+            });
+
+            return instructionList;
+        }
+
+        // Get x from instruction sequence: ldloc.s <x>; isinst Building_Door.
+        private static LocalBuilder GetIsinstDoorVar(List<CodeInstruction> instructions, ref int startIndex)
+        {
+            var isinstDoorIndex = instructions.FindIndex(startIndex, IsinstDoorInstruction);
+            startIndex = isinstDoorIndex + 1;
+            return (LocalBuilder)instructions[isinstDoorIndex - 1].operand;
+        }
+
+        private static bool IsinstDoorInstruction(CodeInstruction instruction) =>
+            instruction.opcode == OpCodes.Isinst && instruction.operand == typeof(Building_Door);
 
         // GenSpawn.WipeExistingThings
         public static bool InvisDoorWipeExistingThingsPrefix(BuildableDef thingDef)
         {
-            // Allow vanilla to run if this is not an invisible door.
-            return thingDef.defName != HeronDefOf.HeronInvisibleDoor.defName
-                   && thingDef != HeronDefOf.HeronInvisibleDoor;
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorWipeExistingThingsPrefix));
+            // Only allow vanilla to run if this is not an invisible door.
+            return !IsInvisDoorDef(thingDef);
         }
 
         // GenSpawn.SpawningWipes
-        public static void InvisDoorSpawningWipesPostfix(BuildableDef newEntDef, BuildableDef oldEntDef, ref bool __result)
+        public static bool InvisDoorSpawningWipesPrefix(BuildableDef newEntDef, BuildableDef oldEntDef, ref bool __result)
         {
-            // TODO: Remove this Combat Extended workaround when DefDatabase<ThingDef>.GetNamed calls below are removed.
-            if (newEntDef.defName.StartsWith("Fragment_") &&
-                oldEntDef.defName.StartsWith("Fragment_"))
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorSpawningWipesPrefix));
+            if (IsInvisDoorDef(newEntDef) || IsInvisDoorDef(oldEntDef))
             {
-                return;
+                __result = false; // false, meaning, don't wipe the old thing when you spawn
+                return false;
             }
-
-            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName ||
-                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                __result = false; //false, meaning, don't wipe the old thing when you spawn
-                return;
-            }
-
-            // TODO: All the following is redundant and useless, plus DefDatabase<ThingDef>.GetNamed is slow.
-
-            if (newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName &&
-                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                __result = true;
-                return;
-            }
-
-            var oldTrueDef = DefDatabase<ThingDef>.GetNamed(oldEntDef.defName);
-            var newTrueDef = DefDatabase<ThingDef>.GetNamed(newEntDef.defName);
-
-            if (newTrueDef != null && newTrueDef.thingClass == typeof(Building_DoorExpanded) &&
-                oldTrueDef != null && oldTrueDef.thingClass == typeof(Building_DoorExpanded))
-            {
-                __result = true;
-                return;
-            }
-
-            if (oldTrueDef != null && oldTrueDef.thingClass == typeof(Building_DoorExpanded) &&
-                newEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                __result = false;
-                return;
-            }
-
-            if (newTrueDef != null && newTrueDef.thingClass == typeof(Building_DoorExpanded) &&
-                oldEntDef.defName == HeronDefOf.HeronInvisibleDoor.defName)
-            {
-                __result = false;
-                return;
-            }
+            return true;
         }
 
         // PathFinder.IsDestroyable
-        public static void InvisDoorIsDestroyablePostfix(Thing th, ref bool __result)
+        public static bool InvisDoorIsDestroyablePostfix(bool result, Thing th)
         {
-            __result = __result && th is Building_DoorRegionHandler;
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorIsDestroyablePostfix));
+            return result || th is Building_DoorRegionHandler;
         }
 
-        // ForbidUtility.IsForbiddenToPass
-        public static void InvisDoorIsForbiddenToPassPostfix(this Thing t, Pawn pawn, ref bool __result)
+        // MouseoverReadout.MouseoverReadoutOnGUI
+        public static IEnumerable<CodeInstruction> MouseoverReadoutTranspiler(IEnumerable<CodeInstruction> instructions,
+            ILGenerator ilGen)
         {
-            if (t is Building_DoorRegionHandler invisDoor)
+            var methodof_Entity_get_LabelMouseover =
+                AccessTools.Property(typeof(Entity), nameof(Entity.LabelMouseover)).GetGetMethod();
+            var instructionList = instructions.AsList();
+
+            // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
+            // In particular, this makes it skip invis doors, which have null LabelMouseover.
+            var index = instructionList.FindIndex(instr => instr.operand == methodof_Entity_get_LabelMouseover);
+            // This relies on the fact that there's a conditional within the loop that acts as a loop continue,
+            // and we're going to piggyback on that.
+            var loopContinueLabelIndex = instructionList.FindIndex(index + 1, instr => instr.labels.Count > 0);
+            var loopContinueLabel = instructionList[loopContinueLabelIndex].labels[0];
+            // We can't simply do a brtrue to loopContinueLabel after the string.IsNullOrEmpty call,
+            // since we need to pop off the LabelMouseover value from the CIL stack.
+            // So we need a brfalse to the (current) next instruction, followed by a pop and then the br to loopContinueLabel.
+            var nextInstructionLabel = ilGen.DefineLabel();
+            instructionList[index + 1].labels.Add(nextInstructionLabel);
+            instructionList.InsertRange(index + 1, new[]
             {
-                var tPositionIsForbidden_withoutLocationCheck = ForbidUtility.CaresAboutForbidden(pawn, true) && pawn.mindState.maxDistToSquadFlag > 0f && !t.Position.InHorDistOf(pawn.DutyLocation(), pawn.mindState.maxDistToSquadFlag);
+                new CodeInstruction(OpCodes.Dup),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.IsNullOrEmpty))),
+                new CodeInstruction(OpCodes.Brfalse, nextInstructionLabel),
+                new CodeInstruction(OpCodes.Pop),
+                new CodeInstruction(OpCodes.Br, loopContinueLabel),
+            });
 
-                __result =
-                    (t.Spawned && tPositionIsForbidden_withoutLocationCheck)
-                    || t.IsForbidden(pawn.Faction)
-                    || pawn.HostileTo(t) && !invisDoor.Open ||
-                    (invisDoor.ParentDoor is Building_DoorRemote r && r.RemoteState == DoorRemote_State.ForcedClose);
-            }
+            return instructionList;
         }
 
-        // CompForbiddable.PostDraw
-        public static bool InvisDoorCompForbiddablePostDrawPrefix(CompForbiddable __instance)
+        // CoverUtility.BaseBlockChance
+        public static IEnumerable<CodeInstruction> DoorExpandedBaseBlockChanceTranspiler(
+            IEnumerable<CodeInstruction> instructions)
         {
-            if (__instance.parent is Building_DoorRegionHandler)
-                return false;
-            return true;
+            // Since invis grid's fillPercent is 0, coverGrid should never contain them,
+            // and CoverUtility.BaseBlockChance is only called on things in the coverGrid.
+            // Rather, they'd contain the invis doors' parents that have >0.01 fillPercent,
+            // so we need to handle door expanded doors.
+            return DoorExpandedIsOpenDoorTranspiler(instructions);
         }
 
         // GenGrid.CanBeSeenOver
-        public static void DoorExpandedCanBeSeenOverPostfix(Building b, ref bool __result)
+        public static IEnumerable<CodeInstruction> DoorExpandedCanBeSeenOverTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            //Ignores fillage
-            if (b is Building_DoorExpanded doorEx)
-            {
-                __result = doorEx != null && doorEx.Open;
-            }
-        }
-
-        // GenPath.ShouldNotEnterCell
-        public static void DoorExpandedShouldNotEnterCellPostfix(Pawn pawn, Map map, IntVec3 dest, ref bool __result)
-        {
-            if (__result || pawn == null)
-                return;
-            if (map.pathGrid.PerceivedPathCostAt(dest) > 30)
-            {
-                __result = true;
-                return;
-            }
-
-            if (!dest.Walkable(map))
-            {
-                __result = true;
-                return;
-            }
-
-            var edifice = dest.GetEdifice(map);
-            if (edifice == null)
-            {
-                //Log.Message("No edifice. So let's go!");
-                return;
-            }
-
-            if (edifice is Building_DoorExpanded doorEx)
-            {
-                if (doorEx.IsForbidden(pawn))
-                {
-                    __result = true;
-                    return;
-                }
-
-                if (!doorEx.PawnCanOpen(pawn))
-                {
-                    __result = true;
-                    return;
-                }
-            }
-
-            if (edifice is Building_DoorRegionHandler invisDoor)
-            {
-                if (invisDoor.IsForbidden(pawn))
-                {
-                    __result = true;
-                    return;
-                }
-
-                if (!invisDoor.PawnCanOpen(pawn))
-                {
-                    __result = true;
-                }
-            }
+            // GenGrid.CanBeenSeenOver is only either called for edifices (never Building_DoorExpanded)
+            // or by code that's responsible for setting dirty flags on caches. The latter should already be
+            // done by such code also being called for invis doors, so this patch probably isn't necessary,
+            // but better safe than sorry.
+            return DoorExpandedIsOpenDoorTranspiler(instructions);
         }
 
         // EdificeGrid.Register
-        // TODO Make transpiler
-        public static bool DoorExpandedEdificeGridRegisterPrefix(EdificeGrid __instance, Building ed)
+        public static bool DoorExpandedEdificeGridRegisterPrefix(Building ed)
         {
-            if (IsExceptionForEdificeRegistration(ed))
-            {
-                //<VanillaCodeSequence>
-                var cellIndices = Traverse.Create(__instance).Field("map").GetValue<Map>().cellIndices;
-                var cellRect = ed.OccupiedRect();
-                for (var i = cellRect.minZ; i <= cellRect.maxZ; i++)
-                {
-                    for (var j = cellRect.minX; j <= cellRect.maxX; j++)
-                    {
-                        var intVec = new IntVec3(j, 0, i);
-                        var oldBuilding = __instance[intVec];
-                        if (UnityData.isDebugBuild && oldBuilding != null && !oldBuilding.Destroyed &&
-                            !IsExceptionForEdificeRegistration(oldBuilding))
-                        {
-                            Log.Error("Added edifice " + ed.LabelCap + " over edifice " + oldBuilding.LabelCap + " at " + intVec +
-                                ". Destroying old edifice, despite DoorsExpanded code.");
-                            oldBuilding.Destroy(DestroyMode.Vanish);
-                            return false;
-                        }
-
-                        Traverse.Create(__instance).Field("innerArray").GetValue<Building[]>()[
-                            cellIndices.CellToIndex(intVec)] = ed;
-                    }
-                }
-                //</VanillaCodeSequence>
-                return false;
-            }
-
-            return true;
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedEdificeGridRegisterPrefix));
+            // Only the door expanded's invis doors are registered in the edifice grid,
+            // not the parent door expanded itself.
+            return !(ed is Building_DoorExpanded);
         }
 
-        private static bool IsExceptionForEdificeRegistration(Building ed)
+        // ThingDef.IsDoor
+        public static bool DoorExpandedThingDefIsDoorPostfix(bool result, ThingDef __instance)
         {
-            // TODO: This should be typeof(Building_DoorExpanded).IsAssignableFrom(ed.def.thingClass), etc.
-            return ed.def.thingClass.IsAssignableFrom(typeof(Building_DoorExpanded)) ||
-                   ed.def.thingClass.IsAssignableFrom(typeof(Building_DoorRegionHandler)) ||
-                   ed.def.thingClass == typeof(Building_DoorRegionHandler) ||
-                   ed.def.thingClass == typeof(Building_DoorExpanded);
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedThingDefIsDoorPostfix));
+            // Treat Building_DoorExpanded as a door even if it doesn't derive from Building_Door.
+            // This allows doors stats to appear for them, among other features.
+            // However, because GhostUtility.GhostGraphicFor has hardcoded path for thingDef.IsDoor,
+            // this prevents our DoorExpandedDrawGhostThingTranspiler from working properly.
+            return result || IsDoorExpandedDef(__instance);
         }
 
-        // JobGiver_Manhunter.TryGiveJob
-        // Removes logged error if PawnPathUtility.TryFindLastCellBeforeBlockingDoor returns false.
-        public static IEnumerable<CodeInstruction> DoorExpandedJobGiverManhunterTryGiveJobTranspiler(
+        // CompForbiddable.Forbidden
+        public static IEnumerable<CodeInstruction> DoorExpandedSetForbiddenTranspiler(
             IEnumerable<CodeInstruction> instructions)
         {
-            var instructionList = instructions.ToList();
-
-            var postureInfo = AccessTools.Method(typeof(Log), nameof(Log.Error));
-
-            var indexNum = 0;
-
-            for (var index = 0; index < instructionList.Count; index++)
+            foreach (var instruction in instructions)
             {
-                var instruction = instructionList[index];
-
-                if (instruction.opcode == OpCodes.Call && instruction.operand == postureInfo)
+                if (IsinstDoorInstruction(instruction))
                 {
-                    indexNum = index;
-                    break;
+                    // CompForbiddable instance's parent is on top of CIL stack.
+                    yield return new CodeInstruction(OpCodes.Call,
+                        AccessTools.Method(typeof(HarmonyPatches), nameof(DoorExpandedSetForbidden)));
                 }
+                yield return instruction;
             }
-            instructionList.RemoveRange(indexNum - 6, 7);
-            foreach (var ins in instructionList)
-                yield return ins;
         }
 
-        // PawnPathUtility.TryFindLastCellBeforeBlockingDoor
-        // Adds an extra check for manhunters.
-        public static bool DoorExpandedTryFindLastCellBeforeBlockingDoorPrefix(PawnPath path, Pawn pawn, ref IntVec3 result, ref bool __result)
+        private static ThingWithComps DoorExpandedSetForbidden(ThingWithComps thing)
         {
-            if (path?.NodesReversed?.Count == 1)
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedSetForbidden));
+            if (thing is Building_DoorExpanded doorEx)
             {
-                result = path.NodesReversed[0];
-                __result = false;
-                //Log.Message("Nodes less or equal to 1");
-                return false;
+                doorEx.Notify_ForbiddenInputChanged();
             }
+            return thing;
+        }
 
-            var nodesReversed = path.NodesReversed;
-            if (nodesReversed != null)
+        // RegionAndRoomUpdater.ShouldBeInTheSameRoomGroup
+        public static bool DoorExpandedShouldBeInTheSameRoomGroupPostfix(bool result, Room a, Room b)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedShouldBeInTheSameRoomGroupPostfix));
+            // All the invis doors each comprise a room.
+            // They should all be combined into a single RoomGroup at least for the purposes of temperature management.
+            if (result)
+                return true;
+            if (GetRoomDoor(a) is Building_DoorRegionHandler invisDoorA &&
+                GetRoomDoor(b) is Building_DoorRegionHandler invisDoorB)
             {
-                for (var i = nodesReversed.Count - 2; i >= 1; i--)
+                return invisDoorA.ParentDoor == invisDoorB.ParentDoor;
+            }
+            return false;
+        }
+
+        private static Building_Door GetRoomDoor(Room room)
+        {
+            if (!room.IsDoorway)
+                return null;
+            return room.Regions[0].door;
+        }
+
+        // GenTemperature.EqualizeTemperaturesThroughBuilding
+        public static IEnumerable<CodeInstruction> DoorExpandedEqualizeTemperaturesThroughBuildingTranspiler(
+            IEnumerable<CodeInstruction> instructions, ILGenerator ilGen)
+        {
+            // GenTemperature.EqualizeTemperaturesThroughBuildingTranspiler doesn't handle buildings that are larger than 1x1.
+            // For the twoWay=false case (which is the one we care about), the algorithm for finding surrounding temperatures
+            // only looks at the cardinal directions from the building's singular position cell.
+            // We need it look at all cells surrounding the building's OccupiedRect, excluding corners.
+            // This transforms the following code:
+            //  int roomGroupCount = 0;
+            //  float temperatureSum = 0f;
+            //  if (twoWay)
+            //  ...
+            //  else
+            //  {
+            //      for (int j = 0; j < 4; j++)
+            //      {
+            //          IntVec3 c = b.Position + GenAdj.CardinalDirections[j];
+            //          if (c.InBounds(b.Map))
+            //          ...
+            //      }
+            //  }
+            //  if (roomGroupCount == 0)
+            //      return;
+            // to:
+            //  int roomGroupCount = 0;
+            //  float temperatureSum = 0f;
+            //  if (twoWay)
+            //  ...
+            //  else
+            //  {
+            //      IntVec3[] adjCells = GetAdjacentCellsForTemperature(b);
+            //      for (int j = 0; j < adjCells.Length; j++)
+            //      {
+            //          IntVec3 c = adjCells[j];
+            //          if (c.InBounds(b.Map))
+            //          ...
+            //      }
+            //  }
+            //  if (roomGroupCount == 0)
+            //      return;
+
+            var instructionList = instructions.AsList();
+            var adjCellsVar = ilGen.DeclareLocal(typeof(IntVec3[]));
+            //void DebugInstruction(string label, int index)
+            //{
+            //    Log.Message($"{label} @ {index}: " +
+            //        ((index >= 0 && index < instructionList.Count) ? instructionList[index].ToString() : "invalid index"));
+            //}
+
+            var twoWayArgIndex = instructionList.FindIndex(instr => instr.opcode == OpCodes.Ldarg_2);
+            // Assume the next brfalse(.s) operand is a label to the twoWay=false branch.
+            var twoWayArgFalseBranchIndex = instructionList.FindIndex(twoWayArgIndex + 1,
+                instr => instr.opcode == OpCodes.Brfalse || instr.opcode == OpCodes.Brfalse_S);
+            var twoWayArgFalseLabel = (Label)instructionList[twoWayArgFalseBranchIndex].operand;
+            var twoWayArgFalseIndex = instructionList.FindIndex(twoWayArgFalseBranchIndex + 1,
+                instr => instr.labels.Contains(twoWayArgFalseLabel));
+            // Assume next stloc.s is storing to the loop index var.
+            var loopIndexIndex = instructionList.FindIndex(twoWayArgFalseIndex + 1,
+                instr => instr.opcode == OpCodes.Stloc_S);
+            var loopIndexVar = (LocalBuilder)instructionList[loopIndexIndex].operand;
+
+            var newInstructions = new[]
+            {
+                new CodeInstruction(OpCodes.Ldarg_0) // Building b
+                { labels = instructionList[twoWayArgFalseIndex].labels.PopAll() },
+                new CodeInstruction(OpCodes.Call,
+                    AccessTools.Method(typeof(HarmonyPatches), nameof(GetAdjacentCellsForTemperature))),
+                new CodeInstruction(OpCodes.Starg_S, adjCellsVar),
+            };
+            instructionList.InsertRange(twoWayArgFalseIndex, newInstructions);
+
+            var buildingArgIndex = instructionList.FindIndex(twoWayArgFalseIndex + newInstructions.Length,
+                instr => instr.opcode == OpCodes.Ldarg_0);
+            var currentCellStoreIndex = instructionList.FindIndex(buildingArgIndex + 1,
+                instr => instr.opcode == OpCodes.Stloc_S);
+            newInstructions = new[]
+            {
+                new CodeInstruction(OpCodes.Ldarg_S, adjCellsVar)
+                { labels = instructionList[buildingArgIndex].labels.PopAll() },
+                new CodeInstruction(OpCodes.Ldloc_S, loopIndexVar),
+                new CodeInstruction(OpCodes.Ldelem, typeof(IntVec3)),
+            };
+            instructionList.ReplaceRange(buildingArgIndex, currentCellStoreIndex - buildingArgIndex, newInstructions);
+
+            var loopEndIndexIndex = instructionList.FindIndex(buildingArgIndex + newInstructions.Length,
+                instr => instr.opcode == OpCodes.Ldc_I4_4);
+            instructionList.ReplaceRange(loopEndIndexIndex, 1, new[]
+            {
+                new CodeInstruction(OpCodes.Ldarg_S, adjCellsVar),
+                new CodeInstruction(OpCodes.Ldlen),
+            });
+
+            return instructionList;
+        }
+
+        private static IntVec3[] GetAdjacentCellsForTemperature(Building building)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(GetAdjacentCellsForTemperature));
+            var size = building.def.Size;
+            if (size.x == 1 && size.z == 1)
+            {
+                var position = building.Position;
+                return new[]
                 {
-                    //pawn.Map.debugDrawer.FlashCell(nodesReversed[i]);
-                    //var edifice = nodesReversed[i].GetEdifice(pawn.Map);
-                    var edifice = nodesReversed[i].GetThingList(pawn.Map)
-                        .FirstOrDefault(x =>
-                            x.def.thingClass == typeof(Building_DoorExpanded) ||
-                            x.def.thingClass == typeof(Building_DoorRegionHandler));
-
-                    if (edifice is Building_DoorExpanded doorEx)
-                    {
-                        if (!doorEx?.InvisDoors?.Any(x => !x.CanPhysicallyPass(pawn) && !x.PawnCanOpen(pawn)) ??
-                            false)
-                        {
-                            //Log.Message("DoorsExpanded :: Manhunter Check Passed (doorExpanded)");
-                            result = nodesReversed[i + 1];
-                            __result = true;
-                            return false;
-                        }
-                    }
-
-                    if (edifice is Building_DoorRegionHandler invisDoor)
-                    {
-                        if (!invisDoor.CanPhysicallyPass(pawn))
-                        {
-                            //Log.Message("DoorsExpanded :: Manhunter Check Passed (doorRegionHandler) (CanPhysicallyPass)");
-                            result = nodesReversed[i + 1];
-                            __result = true;
-                            return false;
-                        }
-                        if (!invisDoor.PawnCanOpen(pawn))
-                        {
-                            //Log.Message("DoorsExpanded :: Manhunter Check Passed (doorRegionHandler) (PawnCanOpen)");
-                            result = nodesReversed[i + 1];
-                            __result = true;
-                            return false;
-                        }
-                    }
-                }
-
-                //Log.Message("No objects detected in path");
-                result = nodesReversed[0];
+                    position + GenAdj.CardinalDirections[0],
+                    position + GenAdj.CardinalDirections[1],
+                    position + GenAdj.CardinalDirections[2],
+                    position + GenAdj.CardinalDirections[3],
+                };
             }
+            else
+            {
+                var adjCells = GenAdj.CellsAdjacentCardinal(building).ToArray();
+                // Ensure GenTemperature.beqRoomGroups is large enough.
+                if (((RoomGroup[])fieldof_GenTemperature_beqRoomGroups.GetValue(null)).Length < adjCells.Length)
+                {
+                    fieldof_GenTemperature_beqRoomGroups.SetValue(null, new RoomGroup[adjCells.Length]);
+                }
+                return adjCells;
+            }
+        }
 
-            __result = false;
-            return true;
+        private static readonly FieldInfo fieldof_GenTemperature_beqRoomGroups =
+            AccessTools.Field(typeof(GenTemperature), "beqRoomGroups");
+
+        // Projectile.CheckForFreeIntercept
+        public static IEnumerable<CodeInstruction> DoorExpandedProjectileCheckForFreeIntercept(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            // Projectile.CheckForFreeIntercept has code that looks like:
+            //  if (thing.def.Fillage == FillCategory.Full)
+            //  {
+            //      if (!(thing is Building_Door building_Door && building_Door.Open))
+            //      ...
+            // Invis doors have Fillage == FillCategory.None, while parent doors are not Building_Door.
+            // So we need to patch the Building_Door check to work for Building_DoorExpanded.
+            return DoorExpandedIsOpenDoorTranspiler(instructions);
+        }
+
+        // TrashUtility.TrashJob
+        public static IEnumerable<CodeInstruction> DoorExpandedTrashJobTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // This prevents enemies from setting Building_DoorExpanded's on fire.
+            return DoorExpandedIsDoorTranspiler(instructions);
         }
 
         // GhostDrawer.DrawGhostThing
-        public static bool DoorExpandedDrawGhostThingPrefix(IntVec3 center, Rot4 rot, ThingDef thingDef, Graphic baseGraphic,
-            Color ghostCol, AltitudeLayer drawAltitude)
+        public static IEnumerable<CodeInstruction> DoorExpandedDrawGhostThingTranspiler(
+            IEnumerable<CodeInstruction> instructions) =>
+            Transpilers.MethodReplacer(instructions,
+                AccessTools.Method(typeof(Graphic), nameof(Graphic.DrawFromDef)),
+                AccessTools.Method(typeof(HarmonyPatches), nameof(DoorExpandedDrawGhostGraphicFromDef)));
+
+        private static void DoorExpandedDrawGhostGraphicFromDef(Graphic graphic, Vector3 loc, Rot4 rot, ThingDef thingDef,
+            float extraRotation)
         {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedDrawGhostGraphicFromDef));
             if (thingDef is DoorExpandedDef doorExDef && doorExDef.fixedPerspective)
             {
-                var graphic = GhostUtility.GhostGraphicFor(baseGraphic, thingDef, ghostCol);
-                var loc = GenThing.TrueCenter(center, rot, thingDef.Size, drawAltitude.AltitudeFor());
-
+                // Always delegate fixed perspective door expanded graphics to our custom code.
                 for (var i = 0; i < 2; i++)
                 {
                     Building_DoorExpanded.DrawParams(doorExDef, loc, rot, out var mesh, out var matrix, mod: 0, flipped: i != 0);
                     Graphics.DrawMesh(mesh, matrix, graphic.MatAt(rot), layer: 0);
                 }
+            }
+            else
+            {
+                // extraRotation is always 0.
+                graphic.DrawFromDef(loc, rot, thingDef, extraRotation);
+            }
+        }
 
-                if (thingDef?.PlaceWorkers?.Count > 0)
+        // GhostUtility.GhostGraphicFor
+        public static IEnumerable<CodeInstruction> DoorExpandedGhostGraphicForTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            // One consequence of the patch to ThingDef.IsDoor to include door expanded defs is that
+            // GhostUtility.GhostGraphicFor can now return a graphic that our patch for GhostDrawer.DrawGhostThing
+            // doesn't work with (it returns a Graphic_Single based off thingDef.uiIconPath rather than Graphic_Multi
+            // based off thingDef.graphic). So we need to patch GhostDrawer.DrawGhostThing as well.
+            // For door expanded, we always want to return a Graphic_Multi based off thingDef.graphic.
+            // This transforms the following code:
+            //  if (... || thingDef.IsDoor)
+            // to:
+            //  if (... || (thingDef.IsDoor && !IsDoorExpandedDef(thingDef))
+
+            var methodof_ThingDef_IsDoor = AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod();
+            var instructionList = instructions.AsList();
+
+            var isDoorIndex = instructionList.FindIndex(instr => instr.operand == methodof_ThingDef_IsDoor);
+            // Assume prev instruction is ldarg(.s) or ldloc(.s) for thingDef argument.
+            var thingDefLoadInstruction = instructionList[isDoorIndex - 1];
+            // Assume the next brfalse(.s) operand is a label that skips the Graphic_Single code path.
+            var skipGraphicSingleBranchIndex = instructionList.FindIndex(isDoorIndex + 1,
+                instr => instr.opcode == OpCodes.Brfalse || instr.opcode == OpCodes.Brfalse_S);
+            var skipGraphicSingleLabel = (Label)instructionList[skipGraphicSingleBranchIndex].operand;
+            instructionList.InsertRange(skipGraphicSingleBranchIndex + 1, new[]
+            {
+                thingDefLoadInstruction.Clone(),
+                new CodeInstruction(OpCodes.Call,
+                    AccessTools.Method(typeof(HarmonyPatches), nameof(IsDoorExpandedDef))),
+                new CodeInstruction(OpCodes.Brtrue, skipGraphicSingleLabel),
+            });
+
+            return instructionList;
+        }
+
+        // Generic transpiler that transforms all following instances of code:
+        //  thing is Building_Door door && door.Open
+        // to:
+        //  IsOpenDoor(thing)
+        private static IEnumerable<CodeInstruction> DoorExpandedIsOpenDoorTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var instructionList = instructions.AsList();
+
+            var searchIndex = 0;
+            var isinstDoorIndex = instructionList.FindIndex(IsinstDoorInstruction);
+            while (isinstDoorIndex >= 0)
+            {
+                searchIndex = isinstDoorIndex + 1;
+                var doorOpenIndex = instructionList.FindIndex(searchIndex,
+                    instr => instr.operand == methodof_Building_Door_get_Open);
+                var nextIsinstDoorIndex = instructionList.FindIndex(searchIndex, IsinstDoorInstruction);
+                if (doorOpenIndex >= 0 && (nextIsinstDoorIndex < 0 || doorOpenIndex < nextIsinstDoorIndex))
                 {
-                    for (var i = 0; i < thingDef.PlaceWorkers.Count; i++)
+                    instructionList.ReplaceRange(isinstDoorIndex, doorOpenIndex - isinstDoorIndex + 1, new[]
                     {
-                        thingDef.PlaceWorkers[i].DrawGhost(thingDef, center, rot, ghostCol);
-                    }
+                        new CodeInstruction(OpCodes.Call,
+                            AccessTools.Method(typeof(HarmonyPatches), nameof(IsOpenDoor)))
+                        { labels = instructionList[isinstDoorIndex].labels.PopAll() },
+                    });
+                    nextIsinstDoorIndex = instructionList.FindIndex(searchIndex, IsinstDoorInstruction);
                 }
-
-                return false;
+                isinstDoorIndex = nextIsinstDoorIndex;
             }
 
-            return true;
+            return instructionList;
         }
+
+        private static readonly MethodInfo methodof_Building_Door_get_Open =
+            AccessTools.Property(typeof(Building_Door), nameof(Building_Door.Open)).GetGetMethod();
+
+        private static bool IsOpenDoor(Thing thing) =>
+            thing is Building_Door door && door.Open ||
+            thing is Building_DoorExpanded doorEx && doorEx.Open;
+
+        // Generic transpiler that transforms all following instances of code:
+        //  thing is Building_Door
+        // to:
+        //  IsDoor(thing)
+        private static IEnumerable<CodeInstruction> DoorExpandedIsDoorTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            foreach (var instruction in instructions)
+            {
+                if (IsinstDoorInstruction(instruction))
+                {
+                    yield return new CodeInstruction(OpCodes.Call,
+                        AccessTools.Method(typeof(HarmonyPatches), nameof(IsDoor)));
+                }
+                else
+                {
+                    yield return instruction;
+                }
+            }
+        }
+
+        private static bool IsDoor(Thing thing) => thing is Building_Door || thing is Building_DoorExpanded;
     }
 }

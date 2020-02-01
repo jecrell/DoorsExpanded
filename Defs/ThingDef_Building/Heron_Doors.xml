@@ -16,9 +16,6 @@
     <category>Building</category>
     <thingCategories/>
     <repairEffect>Repair</repairEffect>
-    <statBases>
-      <SellPriceFactor>0.70</SellPriceFactor>
-    </statBases>
     <graphicData>
       <texPath>BlankTex</texPath>
       <graphicClass>Graphic_Single</graphicClass>
@@ -27,7 +24,7 @@
       </damageData>
     </graphicData>
     <altitudeLayer>FloorEmplacement</altitudeLayer>
-    <fillPercent>1</fillPercent>
+    <fillPercent>0</fillPercent>
     <useHitPoints>false</useHitPoints>
     <scatterableOnMapGen>false</scatterableOnMapGen>
     <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
@@ -36,9 +33,7 @@
     <isAutoAttackableMapObject>false</isAutoAttackableMapObject>
     <tickerType>Normal</tickerType>
     <rotatable>false</rotatable>
-    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
     <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-    <blockLight>false</blockLight>
     <drawerType>RealtimeOnly</drawerType>
     <building>
       <isEdifice>true</isEdifice>
@@ -48,9 +43,6 @@
     <comps>
       <li Class="CompProperties_Forbiddable"/>
     </comps>
-    <placeWorkers>
-      <li>PlaceWorker_DoorLearnOpeningSpeed</li>
-    </placeWorkers>
   </ThingDef>
 
   <DoorsExpanded.DoorExpandedDef Name="HeronDoor" ParentName="HeronDoorBase">

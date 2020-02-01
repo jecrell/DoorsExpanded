@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Harmony;
 using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 using Verse.Sound;
 
 namespace DoorsExpanded
@@ -23,19 +22,21 @@ namespace DoorsExpanded
     /// prevents portal errors.
     /// 
     /// </summary>
+    // TODO: Since we're spending so much effort copying and patching things such that a door that's not a
+    // Building_Door acts like Building_Door with extra features just to avoid RimWorld limitations regarding doors,
+    // at this point, shouldn't we consider attacking those limitations directly rather than all these workarounds?
     public class Building_DoorExpanded : Building
     {
         private const float OpenTicks = 45f;
-        private const int CloseDelayTicks = 60;
-        private const int WillCloseSoonThreshold = 60;
-        private const int ApproachCloseDelayTicks = 120;
-        private const int MaxTicksSinceFriendlyTouchToAutoClose = 97;
+        private const int CloseDelayTicks = 110;
+        private const int WillCloseSoonThreshold = 111;
+        private const int ApproachCloseDelayTicks = 300;
+        private const int MaxTicksSinceFriendlyTouchToAutoClose = 120;
         private const float PowerOffDoorOpenSpeedFactor = 0.25f;
         private const float VisualDoorOffsetStart = 0f;
         internal const float VisualDoorOffsetEnd = 0.45f;
 
-        private List<Building_DoorRegionHandler> invisDoors;
-        private List<Pawn> crossingPawns;
+        private List<Building_DoorRegionHandler> invisDoors = new List<Building_DoorRegionHandler>();
         private CompPowerTrader powerComp;
         private CompForbiddable forbiddenComp;
         private bool openInt;
@@ -44,17 +45,30 @@ namespace DoorsExpanded
         protected int ticksUntilClose;
         protected int visualTicksOpen;
         private bool freePassageWhenClearedReachabilityCache;
-        private float friendlyTouchTicksFactor = 1f;
-        private bool lastForbidSetting;
+        private bool lastForbiddenState;
 
-        public DoorExpandedDef Def => def as DoorExpandedDef;
-
-        public List<Building_DoorRegionHandler> InvisDoors =>
-            invisDoors ?? (invisDoors = new List<Building_DoorRegionHandler>());
+        public DoorExpandedDef Def => (DoorExpandedDef)def;
 
         public bool Open => Def.doorType == DoorType.FreePassage || openInt;
 
-        public bool FreePassage => Def.doorType == DoorType.FreePassage || openInt && (holdOpenInt || !WillCloseSoon);
+        protected bool OpenInt
+        {
+            get => openInt;
+            set
+            {
+                if (openInt == value)
+                    return;
+                openInt = value;
+                foreach (var invisDoor in invisDoors)
+                {
+                    invisDoor.Open = value;
+                }
+            }
+        }
+
+        public bool HoldOpen => holdOpenInt;
+
+        public bool FreePassage => Open && (HoldOpen || !WillCloseSoon);
 
         public virtual bool WillCloseSoon
         {
@@ -64,404 +78,384 @@ namespace DoorsExpanded
                 {
                     return true;
                 }
-
-                if (!openInt)
+                if (!Open)
                 {
                     return true;
                 }
-
-                if (ticksUntilClose > 0 && ticksUntilClose <= WillCloseSoonThreshold && CanCloseAutomatically)
-                {
-                    return true;
-                }
-
-                if (holdOpenInt)
+                if (HoldOpen)
                 {
                     return false;
                 }
-
+                if (ticksUntilClose > 0 && ticksUntilClose <= WillCloseSoonThreshold && !BlockedOpenMomentary)
+                {
+                    return true;
+                }
+                if (CanTryCloseAutomatically && !BlockedOpenMomentary)
+                {
+                    return true;
+                }
+                var searchRect = this.OccupiedRect().ExpandedBy(1);
+                foreach (var c in searchRect)
+                {
+                    if (!searchRect.IsCorner(c) && c.InBounds(Map))
+                    {
+                        var thingList = c.GetThingList(Map);
+                        for (var j = 0; j < thingList.Count; j++)
+                        {
+                            if (thingList[j] is Pawn pawn && !pawn.HostileTo(this) && !pawn.Downed &&
+                                (pawn.Position == Position || (pawn.pather.Moving && pawn.pather.nextCell == Position)))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
                 return true;
             }
         }
 
-        public bool BlockedOpenMomentary => InvisDoors != null && InvisDoors?.Count > 0 && InvisDoors.Any(invisDoor =>
+        public bool BlockedOpenMomentary
         {
-            var result = false;
-            try
+            get
             {
-                result = invisDoor?.BlockedOpenMomentary ?? false;
+                foreach (var c in this.OccupiedRect())
+                {
+                    var thingList = c.GetThingList(Map);
+                    for (var i = 0; i < thingList.Count; i++)
+                    {
+                        var thing = thingList[i];
+                        if (thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Pawn)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
-            catch (Exception)
-            {
-            }
-            return result;
-        });
+        }
 
         public bool DoorPowerOn => powerComp != null && powerComp.PowerOn;
 
-        public bool SlowsPawns => Def.doorType != DoorType.FreePassage && (/*!DoorPowerOn ||*/ TicksToOpenNow > 20);
+        public bool DoorPowerOff => powerComp != null && !powerComp.PowerOn;
+
+        public bool SlowsPawns => /*!DoorPowerOn ||*/ TicksToOpenNow > 20;
 
         public int TicksToOpenNow
         {
             get
             {
-                var ticksToOpenNow = OpenTicks / this.GetStatValue(StatDefOf.DoorOpenSpeed, true);
+                if (Def.doorType == DoorType.FreePassage)
+                {
+                    return 0;
+                }
+                var ticksToOpenNow = OpenTicks / this.GetStatValue(StatDefOf.DoorOpenSpeed);
                 if (DoorPowerOn)
                 {
                     ticksToOpenNow *= PowerOffDoorOpenSpeedFactor;
                 }
-
                 ticksToOpenNow *= Def.doorOpenSpeedRate;
-                if (Def.doorType == DoorType.FreePassage)
-                {
-                    ticksToOpenNow *= 0.01f;
-                }
-
                 return Mathf.RoundToInt(ticksToOpenNow);
             }
         }
 
-        private bool CanCloseAutomatically => DoorPowerOn && FriendlyTouchedRecently;
+        internal bool CanTryCloseAutomatically => FriendlyTouchedRecently && !HoldOpen;
 
-        private bool FriendlyTouchedRecently =>
-            Find.TickManager.TicksGame < lastFriendlyTouchTick +
-                (int)(MaxTicksSinceFriendlyTouchToAutoClose * friendlyTouchTicksFactor);
+        internal protected virtual bool FriendlyTouchedRecently =>
+            Find.TickManager.TicksGame < lastFriendlyTouchTick + MaxTicksSinceFriendlyTouchToAutoClose;
 
-        private int VisualTicksToOpen => TicksToOpenNow;
+        internal int VisualTicksToOpen => TicksToOpenNow;
+
+        public override bool FireBulwark => !Open && base.FireBulwark;
+
+        public virtual bool Forbidden => forbiddenComp?.Forbidden ?? false;
 
         public override void PostMake()
         {
             base.PostMake();
             powerComp = GetComp<CompPowerTrader>();
+            forbiddenComp = GetComp<CompForbiddable>();
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
-            crossingPawns = new List<Pawn>();
-
             base.SpawnSetup(map, respawningAfterLoad);
+
             powerComp = GetComp<CompPowerTrader>();
-            forbiddenComp = GetComp<CompForbiddable>();
-            lastForbidSetting = forbiddenComp.Forbidden;
-            if (invisDoors?.Count > 0)
+            if (invisDoors.Count == 0)
             {
-                foreach (var invisDoor in invisDoors)
-                    invisDoor.SetForbidden(forbiddenComp.Forbidden);
+                // Note: We only want invisDoors to register in the edificeGrid (during its SpawnSetup).
+                // A harmony patch prevents this Building_DoorExpanded from being registered in the edificeGrid.
+                SpawnDoors(map);
             }
-            Map.edificeGrid.Register(this);
-            Map.reachability.ClearCache();
-            foreach (var c in this.OccupiedRect().Cells)
+            forbiddenComp = GetComp<CompForbiddable>();
+            SetForbidden(Forbidden);
+            ClearReachabilityCache(map);
+            if (BlockedOpenMomentary)
             {
-                Map.GetComponent<MapGrid_DoorsExpanded>().Notify_UpdateDoorReference(c);
+                DoorOpen();
             }
         }
 
-        private void SpawnDoors()
+        private void SpawnDoors(Map map)
         {
-            InvisDoors.Clear();
-            foreach (var c in this.OccupiedRect().Cells)
+            foreach (var c in this.OccupiedRect())
             {
-                if (c.GetThingList(MapHeld).FirstOrDefault(thing => thing.def == HeronDefOf.HeronInvisibleDoor) is
-                    Building_DoorRegionHandler invisDoor)
+                var invisDoor = c.GetThingList(map).OfType<Building_DoorRegionHandler>().FirstOrDefault();
+                var spawnInvisDoor = true;
+                if (invisDoor != null)
                 {
                     // Spawn over another door? Let's erase that door and add our own invis doors.
                     if (invisDoor.ParentDoor != this && (invisDoor.ParentDoor?.Spawned ?? false))
                     {
                         invisDoor.ParentDoor.DeSpawn();
-                        invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
-                        invisDoor.ParentDoor = this;
-                        GenSpawn.Spawn(invisDoor, c, MapHeld);
-                        invisDoor.SetFaction(Faction);
-                        AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(invisDoor, holdOpenInt);
-                        InvisDoors.Add(invisDoor);
-                        continue;
                     }
-
+                    else
+                    {
+                        spawnInvisDoor = false;
+                    }
+                }
+                if (spawnInvisDoor)
+                {
+                    invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
                     invisDoor.ParentDoor = this;
-                    invisDoor.SetFaction(Faction);
-                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt")
-                        .SetValue(invisDoor, holdOpenInt);
-                    InvisDoors.Add(invisDoor);
+                    invisDoor.SetFactionDirect(Faction);
+                    GenSpawn.Spawn(invisDoor, c, map);
                 }
                 else
                 {
-                    //Log.Message("Door not found");
-                    var thing = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
-                    thing.ParentDoor = this;
-                    GenSpawn.Spawn(thing, c, MapHeld);
-                    thing.SetFaction(Faction);
-                    AccessTools.Field(typeof(Building_DoorRegionHandler), "holdOpenInt").SetValue(thing, holdOpenInt);
-                    InvisDoors.Add(thing);
+                    invisDoor.ParentDoor = this;
+                    invisDoor.SetFaction(Faction);
                 }
+                invisDoor.Open = Open;
+                invisDoors.Add(invisDoor);
             }
-
-            ClearReachabilityCache(MapHeld);
-            if (BlockedOpenMomentary)
-                DoorOpen();
         }
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
-            if (invisDoors?.Count > 0)
+            foreach (var invisDoor in invisDoors)
             {
-                var tempDoors = new List<Building_DoorRegionHandler>(invisDoors);
-                foreach (var invisDoor in invisDoors)
-                {
-                    if (invisDoor != null && invisDoor.Spawned)
-                        tempDoors?.FirstOrDefault(otherInvisDoor => otherInvisDoor == invisDoor)?.DeSpawn();
-                }
-                tempDoors = null;
-                invisDoors = null;
+                if (invisDoor.Spawned)
+                    invisDoor.DeSpawn(mode);
             }
-
-            foreach (var c in this.OccupiedRect().Cells)
-            {
-                Map.GetComponent<MapGrid_DoorsExpanded>().Notify_UpdateDoorReference(c);
-            }
+            invisDoors.Clear();
+            var map = Map;
             base.DeSpawn(mode);
+            ClearReachabilityCache(map);
         }
 
         public override void ExposeData()
         {
             base.ExposeData();
             Scribe_Collections.Look(ref invisDoors, nameof(invisDoors), LookMode.Reference);
-            Scribe_Collections.Look(ref crossingPawns, nameof(crossingPawns), LookMode.Reference);
             Scribe_Values.Look(ref openInt, "open", false);
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
+            if (Scribe.mode == LoadSaveMode.LoadingVars && Open)
+            {
+                visualTicksOpen = VisualTicksToOpen;
+            }
+        }
+
+        public override void SetFaction(Faction newFaction, Pawn recruiter = null)
+        {
+            // This check prevents redundant calls from all the invis doors' SetFaction.
+            if (Faction == newFaction)
+                return;
+            base.SetFaction(newFaction, recruiter);
+            foreach (var invisDoor in invisDoors)
+            {
+                invisDoor.SetFaction(newFaction, recruiter);
+            }
+            if (Spawned)
+            {
+                ClearReachabilityCache(Map);
+            }
         }
 
         public override void Tick()
         {
             base.Tick();
-            // TODO: Buildings never tick when destroyed or unspawned. And this is never null.
-            if (!Spawned || this.DestroyedOrNull())
-                return;
-            if (invisDoors.NullOrEmpty())
-                SpawnDoors();
-
-            if (forbiddenComp.Forbidden != lastForbidSetting)
+            if (FreePassage != freePassageWhenClearedReachabilityCache)
             {
-                lastForbidSetting = forbiddenComp.Forbidden;
-                foreach (var invisDoor in invisDoors)
-                    invisDoor.SetForbidden(forbiddenComp.Forbidden);
-                Map.reachability.ClearCache();
+                ClearReachabilityCache(Map);
             }
-
-            var closedTempLeakRate = Def?.tempLeakRate ?? TemperatureTuning.Door_TempEqualizeIntervalClosed;
-            if (Find.TickManager.TicksGame % MaxTicksSinceFriendlyTouchToAutoClose == 0)
+            if (!Open)
             {
-                if (ShouldKeepDoorOpen())
+                if (visualTicksOpen > 0)
                 {
-                    foreach (var pawn in new List<Pawn>(crossingPawns))
+                    visualTicksOpen--;
+                }
+                var closedTempLeakRate = Def.tempLeakRate;
+                if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
+                {
+                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
+                }
+            }
+            else
+            {
+                if (visualTicksOpen < VisualTicksToOpen)
+                {
+                    visualTicksOpen++;
+                }
+                var isPawnPresent = false;
+                foreach (var c in this.OccupiedRect())
+                {
+                    var thingList = c.GetThingList(Map);
+                    for (var i = 0; i < thingList.Count; i++)
                     {
-                        var curDist = pawn.PositionHeld.LengthHorizontalSquared;
-                        //Log.Message(curDist.ToString());
-                        if (curDist > Mathf.Max(def.Size.x, def.Size.z) + 1)
+                        if (thingList[i] is Pawn pawn)
                         {
-                            //Log.Message("Removed " + pawn.LabelShort);
-                            crossingPawns.Remove(pawn);
+                            CheckFriendlyTouched(pawn);
+                            isPawnPresent = true;
                         }
                     }
                 }
-                else
-                    DoorTryClose();
-            }
-
-            if (FreePassage != freePassageWhenClearedReachabilityCache)
-                ClearReachabilityCache(Map);
-
-            if (!openInt)
-            {
-                if (visualTicksOpen > 0)
-                    visualTicksOpen--;
-                if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
-                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, twoWay: false);
-            }
-            else if (openInt)
-            {
-                if (visualTicksOpen < VisualTicksToOpen)
-                    visualTicksOpen++;
-                if (!holdOpenInt)
+                if (ticksUntilClose > 0)
                 {
-                    var isPawnPresent = false;
-                    foreach (var invisDoor in invisDoors)
-                    {
-                        if (!Map.thingGrid.CellContains(invisDoor.PositionHeld, ThingCategory.Pawn))
-                            continue;
-                        invisDoor.OpenValue = true;
-                        invisDoor.TicksUntilClose = CloseDelayTicks;
-                        isPawnPresent = true;
-                    }
-
-                    if (!isPawnPresent)
-                    {
-                        ticksUntilClose--;
-                        if (ticksUntilClose <= 0 && CanCloseAutomatically)
-                        {
-                            DoorTryClose();
-                            foreach (var invisDoor in invisDoors)
-                            {
-                                AccessTools.Method(typeof(Building_Door), "DoorTryClose").Invoke(invisDoor, null);
-                            }
-                        }
-                    }
-                    else
+                    if (isPawnPresent)
                     {
                         ticksUntilClose = CloseDelayTicks;
                     }
+                    ticksUntilClose--;
+                    if (ticksUntilClose <= 0 && !HoldOpen && !DoorTryClose())
+                    {
+                        ticksUntilClose = 1;
+                    }
                 }
-
+                else if (CanTryCloseAutomatically)
+                {
+                    ticksUntilClose = CloseDelayTicks;
+                }
                 if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % TemperatureTuning.Door_TempEqualizeIntervalOpen == 0)
                 {
-                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, twoWay: false);
+                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
                 }
             }
         }
 
-        public void FriendlyTouched(Pawn p)
+        public void CheckFriendlyTouched(Pawn p)
         {
-            if (crossingPawns.NullOrEmpty())
+            if (!p.HostileTo(this) && PawnCanOpen(p))
             {
-                crossingPawns = new List<Pawn>();
+                lastFriendlyTouchTick = Find.TickManager.TicksGame;
             }
-
-            if (!crossingPawns.Contains(p))
-                crossingPawns.Add(p);
-            friendlyTouchTicksFactor = 1.0f;
-            if (p.CurJob != null)
-            {
-                switch (p.CurJob.locomotionUrgency)
-                {
-                    case LocomotionUrgency.None:
-                    case LocomotionUrgency.Amble:
-                        friendlyTouchTicksFactor += 1.5f;
-                        break;
-                    case LocomotionUrgency.Walk:
-                        friendlyTouchTicksFactor += 0.75f;
-                        break;
-                    case LocomotionUrgency.Jog:
-                    case LocomotionUrgency.Sprint:
-                        break;
-                }
-            }
-
-            if (p.health.capacities.GetLevel(PawnCapacityDefOf.Moving) is float val && val < 1f)
-            {
-                //Log.Message("Moving capacity is: " + val);
-                friendlyTouchTicksFactor += 1f - val;
-            }
-
-            lastFriendlyTouchTick = Find.TickManager.TicksGame;
         }
 
-        public virtual void Notify_PawnApproaching(Pawn p)
+        public virtual void Notify_PawnApproaching(Pawn p, int moveCost)
         {
-            if (crossingPawns.Contains(p))
-                return;
-
-            if (p.InAggroMentalState && p.AnimalOrWildMan())
-                return;
-
-            if (!p.HostileTo(this) && !this.IsForbidden(p))
-            {
-                FriendlyTouched(p);
-                return;
-            }
-
+            CheckFriendlyTouched(p);
             if (PawnCanOpen(p))
             {
-                //Map.fogGrid.Notify_PawnEnteringDoor(this, p);
-                if (!crossingPawns.Contains(p))
-                    crossingPawns.Add(p);
-
-                //Map.fogGrid.Notify_PawnEnteringDoor(this, p);
+                // Following is kinda inefficient, but this isn't perfomance critical code, so it shouldn't matter.
+                foreach (var invisDoor in invisDoors)
+                {
+                    Map.fogGrid.Notify_PawnEnteringDoor(invisDoor, p);
+                }
                 if (!SlowsPawns)
                 {
-                    DoorOpen(ApproachCloseDelayTicks);
+                    var ticksToClose = Mathf.Max(ApproachCloseDelayTicks, moveCost + 1);
+                    DoorOpen(ticksToClose);
                 }
             }
+        }
+
+        public void Notify_ForbiddenInputChanged()
+        {
+            var forbidden = Forbidden;
+            if (forbidden != lastForbiddenState)
+            {
+                SetForbidden(forbidden);
+            }
+        }
+
+        private void SetForbidden(bool forbidden)
+        {
+            lastForbiddenState = forbidden;
+            foreach (var invisDoor in invisDoors)
+            {
+                invisDoor.SetForbidden(forbidden);
+            }
+        }
+
+        public bool CanPhysicallyPass(Pawn p)
+        {
+            return FreePassage || PawnCanOpen(p) || (Open && p.HostileTo(this));
         }
 
         public virtual bool PawnCanOpen(Pawn p)
         {
-            if (invisDoors?.Count > 0)
+            var lord = p.GetLord();
+            if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p))
             {
-                if (invisDoors.Any(x => x.PawnCanOpen(p)))
-                    return true;
+                return true;
             }
-            return false;
+            if (WildManUtility.WildManShouldReachOutsideNow(p))
+            {
+                return true;
+            }
+            if (Faction == null)
+            {
+                return true;
+            }
+            if (p.guest != null && p.guest.Released)
+            {
+                return true;
+            }
+            return GenAI.MachinesLike(Faction, p);
         }
 
-        public virtual bool PawnCanOpenSpecialCases(Pawn p) => true;
-
-        public override bool BlocksPawn(Pawn p) => Def.doorType != DoorType.FreePassage && !openInt && !PawnCanOpen(p);
-
-        protected virtual bool ShouldKeepDoorOpen()
-        {
-            return !openInt || holdOpenInt || BlockedOpenMomentary || FriendlyTouchedRecently || crossingPawns?.Count > 0;
-        }
+        public override bool BlocksPawn(Pawn p) => !Open && !PawnCanOpen(p);
 
         protected internal void DoorOpen(int ticksToClose = CloseDelayTicks)
         {
-            ticksUntilClose = ticksToClose;
-            if (!openInt)
+            if (Open)
             {
-                openInt = true;
+                ticksUntilClose = ticksToClose;
+            }
+            else
+            {
+                ticksUntilClose = TicksToOpenNow + ticksToClose;
+                OpenInt = true;
+                CheckClearReachabilityCacheBecauseOpenedOrClosed();
                 if (DoorPowerOn)
                 {
-                    def?.building?.soundDoorOpenPowered?.PlayOneShot(new TargetInfo(Position, Map));
+                    def.building.soundDoorOpenPowered?.PlayOneShot(new TargetInfo(Position, Map));
                 }
                 else
                 {
-                    def?.building?.soundDoorOpenManual?.PlayOneShot(new TargetInfo(Position, Map));
-                }
-
-                foreach (var invisDoor in invisDoors)
-                {
-                    Traverse.Create(invisDoor).Field("lastFriendlyTouchTick").SetValue(Find.TickManager.TicksGame);
-                    //invisDoor.CheckFriendlyTouched(); //FriendlyTouched();
-                    invisDoor.OpenMe(ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2);
-                    //AccessTools.Method(typeof(Building_Door), "DoorOpen").Invoke(invisDoor, new object[] { ticksToClose * Mathf.Max(Def.Size.x, Def.Size.z) * 2});
+                    def.building.soundDoorOpenManual?.PlayOneShot(new TargetInfo(Position, Map));
                 }
             }
         }
 
-        protected void DoorTryClose()
+        protected internal bool DoorTryClose()
         {
-            if (ShouldKeepDoorOpen())
+            if (HoldOpen || BlockedOpenMomentary)
             {
-                return;
+                return false;
             }
-
-            //Log.Message("Stop that!");
-            foreach (var invisDoor in InvisDoors)
-            {
-                if (invisDoor.Open)
-                    AccessTools.Field(typeof(Building_Door), "openInt").SetValue(invisDoor, false);
-                //AccessTools.Method(typeof(Building_Door), "DoorTryClose").Invoke(handler, null);
-            }
-
-            openInt = false;
+            OpenInt = false;
+            CheckClearReachabilityCacheBecauseOpenedOrClosed();
             if (DoorPowerOn)
             {
-                def?.building?.soundDoorClosePowered?.PlayOneShot(new TargetInfo(Position, Map));
+                def.building.soundDoorClosePowered?.PlayOneShot(new TargetInfo(Position, Map));
             }
             else
             {
-                def?.building?.soundDoorCloseManual?.PlayOneShot(new TargetInfo(Position, Map));
+                def.building.soundDoorCloseManual?.PlayOneShot(new TargetInfo(Position, Map));
             }
+            return true;
         }
 
         public void StartManualOpenBy(Pawn opener)
         {
-            //if (PawnCanOpen(opener))
             DoorOpen();
         }
 
         public void StartManualCloseBy(Pawn closer)
         {
-            DoorTryClose();
+            ticksUntilClose = CloseDelayTicks;
         }
 
         public override void Draw()
@@ -724,7 +718,6 @@ namespace DoorsExpanded
             {
                 yield return gizmo;
             }
-
             if (Faction == Faction.OfPlayer)
             {
                 yield return new Command_Toggle
@@ -740,12 +733,12 @@ namespace DoorsExpanded
                 {
                     yield return new Command_Toggle
                     {
-                        defaultLabel = "DEV: openInt",
+                        defaultLabel = "DEV: Open",
                         defaultDesc = "debug".Translate(),
                         hotKey = KeyBindingDefOf.Misc3,
                         icon = TexCommand.HoldOpen,
-                        isActive = () => openInt,
-                        toggleAction = () => openInt = !openInt,
+                        isActive = () => OpenInt,
+                        toggleAction = () => OpenInt = !OpenInt,
                     };
                 }
             }
@@ -755,6 +748,14 @@ namespace DoorsExpanded
         {
             map.reachability.ClearCache();
             freePassageWhenClearedReachabilityCache = FreePassage;
+        }
+
+        private void CheckClearReachabilityCacheBecauseOpenedOrClosed()
+        {
+            if (Spawned)
+            {
+                Map.reachability.ClearCacheForHostile(this);
+            }
         }
     }
 }

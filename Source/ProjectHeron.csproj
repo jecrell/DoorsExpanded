@@ -53,10 +53,12 @@
     <Compile Include="Building_DoorExpanded.cs" />
     <Compile Include="Building_DoorRegionHandler.cs" />
     <Compile Include="Building_DoorRemoteButton.cs" />
+    <Compile Include="DebugInspectorPatches.cs" />
     <Compile Include="DoorExpandedDef.cs" />
     <Compile Include="HarmonyPatches.cs" />
     <Compile Include="HeronDefOf.cs" />
     <Compile Include="JobDriver_PushButton.cs" />
+    <Compile Include="ListExtensions.cs" />
     <Compile Include="MapGrid_DoorsExpanded.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TexButton.cs" />
