@@ -24,6 +24,7 @@ Rewrite and fully rebase code onto 1.0 RimWorld, fixing several bugs. Engineered
 - dev mode inspector has new toggles (write temperature, write edifice grid, write doors), more path info, more precise mouse position, and patch call registry for debugging
 
 Add German translation by Erdnussbrot.
+Update Japanese translation by Proxyer.
 
 1.20.0.7 (06-03-2019)
 ========================
