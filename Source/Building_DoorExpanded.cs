@@ -500,7 +500,6 @@ namespace DoorsExpanded
             if (def.doorFrame is GraphicData)
             {
                 DrawFrameParams(def, drawPos, rotation, false, out var fMesh, out var fMatrix);
-                //var currRot = (def.fixedPerspective && Rotation == Rot4.West) ? Rot4.East : Rotation;
                 Graphics.DrawMesh(fMesh, fMatrix, def.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
 
                 if (def.doorFrameSplit is GraphicData)
