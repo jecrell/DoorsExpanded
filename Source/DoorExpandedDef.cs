@@ -23,6 +23,7 @@ namespace DoorsExpanded
         public bool rotatesSouth = true;
         public int tempLeakRate = TemperatureTuning.Door_TempEqualizeIntervalClosed;
         public float doorOpenMultiplier = Building_DoorExpanded.VisualDoorOffsetEnd;
+        // TODO: Shouldn't this be incorporated into the DoorOpenSpeed stat somehow?
         public float doorOpenSpeedRate = 1.0f;
         public GraphicData doorFrame;
         public Vector3 doorFrameOffset;

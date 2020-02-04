@@ -7,6 +7,7 @@ Rewrite and fully rebase code onto 1.0 RimWorld, fixing several bugs. Engineered
 - allow <1.0 fillPercent doors with correct cover/snow/etc. calculations
 - doors are non-minifiable (non-uninstallable) by default
 - doors block light by default
+- door opening speed stat now appears in door expanded doors' info dialog (note: def.doorOpenSpeedRate value currently isn't reflected in this)
 - remote doors default to non-remotely secured
 - remote hold open state now linked to remote button/lever, with latter's state initialized to first linked remote door
 - remote hold open state no longer clobbers native hold open state (in case door is unlinked)
