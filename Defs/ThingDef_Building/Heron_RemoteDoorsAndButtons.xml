@@ -18,8 +18,8 @@
     <defaultPlacingRot>South</defaultPlacingRot>
     <hasInteractionCell>true</hasInteractionCell>
     <interactionCellOffset>(0,0,1)</interactionCellOffset>
-	  <building>
-	    <isEdifice>false</isEdifice>
+    <building>
+      <isEdifice>false</isEdifice>
       <fullGraveGraphicData>
         <texPath>Things/Building/RemoteDoorButton/RemoteDoorButton_ON</texPath>
         <graphicClass>Graphic_Multi</graphicClass>
@@ -31,7 +31,7 @@
         </damageData>
         <drawSize>2</drawSize>
       </fullGraveGraphicData>
-	  </building>
+    </building>
     <clearBuildingArea>false</clearBuildingArea>
     <graphicData>
       <texPath>Things/Building/RemoteDoorButton/RemoteDoorButton_OFF</texPath>
@@ -75,11 +75,10 @@
       </li>
     </comps>
     <designationCategory>Structure</designationCategory>
-   <researchPrerequisites>
+    <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
   </ThingDef>
-  
 
   <ThingDef ParentName="BuildingBase">
     <defName>PH_DoorLever</defName>
@@ -90,8 +89,8 @@
     <defaultPlacingRot>South</defaultPlacingRot>
     <hasInteractionCell>true</hasInteractionCell>
     <interactionCellOffset>(0,0,1)</interactionCellOffset>
-	  <building>
-	    <isEdifice>false</isEdifice>
+    <building>
+      <isEdifice>false</isEdifice>
       <fullGraveGraphicData>
         <texPath>Things/Building/RemoteDoorLever/RemoteDoorLever_ON</texPath>
         <graphicClass>Graphic_Multi</graphicClass>
@@ -103,7 +102,7 @@
         </damageData>
         <drawSize>2</drawSize>
       </fullGraveGraphicData>
-	  </building>
+    </building>
     <clearBuildingArea>false</clearBuildingArea>
     <graphicData>
       <texPath>Things/Building/RemoteDoorLever/RemoteDoorLever_OFF</texPath>
@@ -147,11 +146,10 @@
       </li>
     </comps>
     <designationCategory>Structure</designationCategory>
-   <researchPrerequisites>
+    <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
   </ThingDef>
-  
 
   <DoorsExpanded.DoorExpandedDef Name="HeronDoorRemote" ParentName="HeronDoorBase">
     <defName>PH_DoorRemoteSingle</defName>
@@ -163,11 +161,11 @@
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
     <statBases>
-	  <Mass>60</Mass>
-	  <MaxHitPoints>300</MaxHitPoints>
-    <WorkToBuild>850</WorkToBuild>
+      <Mass>60</Mass>
+      <MaxHitPoints>300</MaxHitPoints>
+      <WorkToBuild>850</WorkToBuild>
     </statBases>
-	  <placeWorkers>
+    <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
     <size>(1,1)</size>
@@ -198,10 +196,10 @@
       <ComponentIndustrial>1</ComponentIndustrial>
     </costList>
     <designationCategory>Structure</designationCategory>
-    <doorType>StretchVertical</doorType>		
+    <doorType>StretchVertical</doorType>
     <singleDoor>true</singleDoor>
-	  <doorOpenSpeedRate>2</doorOpenSpeedRate>
-   <researchPrerequisites>
+    <doorOpenSpeedRate>2</doorOpenSpeedRate>
+    <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
@@ -216,11 +214,11 @@
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
     <statBases>
-	  <Mass>60</Mass>
-	  <MaxHitPoints>300</MaxHitPoints>
-    <WorkToBuild>850</WorkToBuild>
+      <Mass>60</Mass>
+      <MaxHitPoints>300</MaxHitPoints>
+      <WorkToBuild>850</WorkToBuild>
     </statBases>
-	  <placeWorkers>
+    <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
     <size>(2,1)</size>
@@ -251,10 +249,10 @@
       <ComponentIndustrial>2</ComponentIndustrial>
     </costList>
     <designationCategory>Structure</designationCategory>
-    <doorType>StretchVertical</doorType>		
+    <doorType>StretchVertical</doorType>
     <singleDoor>true</singleDoor>
-	  <doorOpenSpeedRate>2</doorOpenSpeedRate>
-   <researchPrerequisites>
+    <doorOpenSpeedRate>2</doorOpenSpeedRate>
+    <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>

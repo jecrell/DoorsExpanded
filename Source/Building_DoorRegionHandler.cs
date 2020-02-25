@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Harmony;
+﻿using Harmony;
 using RimWorld;
 using Verse;
-using Verse.AI;
-using Verse.AI.Group;
 using Verse.Sound;
 
 namespace DoorsExpanded
@@ -28,8 +22,8 @@ namespace DoorsExpanded
 
         public Building_DoorExpanded ParentDoor
         {
-            get { return parentDoor; }
-            set { parentDoor = value; }
+            get => parentDoor;
+            set => parentDoor = value;
         }
 
         public override string LabelMouseover => "";
@@ -40,68 +34,39 @@ namespace DoorsExpanded
 
         public int TicksUntilClose
         {
-            get => this.ticksUntilClose;
-            set => this.ticksUntilClose = value;
+            get => ticksUntilClose;
+            set => ticksUntilClose = value;
         }
-
-
-//        public override bool PawnCanOpen(Pawn p)
-//        {
-//            Lord lord = p.GetLord();
-//            return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) ||
-//                   WildManUtility.WildManShouldReachOutsideNow(p) || base.Faction == null ||
-//                   (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
-////            Lord lord = p.GetLord();
-////            if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p) ||
-////                (WildManUtility.WildManShouldReachOutsideNow(p) || this.Faction == null ||
-////                 p.guest != null && p.guest.Released) || p.AnimalOrWildMan() && p.playerSettings != null ||
-////                !p.HostileTo(this))
-////                return true;
-////            return false; //GenAI.MachinesLike(this.Faction, p);
-//        }
 
         public override void Tick()
         {
             base.Tick();
-            if (!Spawned || Destroyed) return;
-            /*if (!this.Open && )
-            {
-                lastOpenInt = this.Open;
-                ++lastOpenCount;
-            }
-            if (Find.TickManager.TicksGame % 100 == 0)
-            {
-                if (lastOpenCount > 10)
-                {
-                    Log.Message("1");
-                    if (GenClosest.ClosestThing_Global(this.PositionHeld, this.MapHeld.mapPawns.AllPawnsSpawned, 99999f, x => x is Pawn, null)
-                        is Pawn p)
-                        this.ParentDoor.Notify_PawnApproaching(p);
-                    
-                }
-                lastOpenCount = 0;
-            }*/
+            // TODO: Buildings never tick when destroyed or unspawned.
+            if (!Spawned || Destroyed)
+                return;
+
+            // Periodic sanity checks.
             if (Find.TickManager.TicksGame % 2500 == 0)
             {
                 if (ParentDoor == null)
-                    this.Destroy();
+                    Destroy();
 
-                if (this.Faction != ParentDoor.Faction)
-                    this.SetFaction(ParentDoor.Faction);
+                if (Faction != ParentDoor.Faction)
+                    SetFaction(ParentDoor.Faction);
             }
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             base.SpawnSetup(map, respawningAfterLoad);
-            this.Map.edificeGrid.Register(this);
+            Map.edificeGrid.Register(this);
         }
 
         public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
         {
             base.PostApplyDamage(dinfo, totalDamageDealt);
-            this.HitPoints = this.MaxHitPoints;
-            this.ParentDoor.TakeDamage(dinfo);
+            HitPoints = MaxHitPoints;
+            ParentDoor.TakeDamage(dinfo);
         }
 
         public bool OpenValue
@@ -122,24 +87,18 @@ namespace DoorsExpanded
 
         public void OpenMe(int ticks)
         {
-            this.ticksUntilClose = ticks;
+            ticksUntilClose = ticks;
             if (!Open)
             {
                 //Log.Message("Opened this door.");
                 Traverse.Create(this).Field("openInt").SetValue(true);
-                if (this.DoorPowerOn)
+                if (DoorPowerOn)
                 {
-                    var buildingSoundDoorOpenPowered = this.def.building.soundDoorOpenPowered;
-                    if (buildingSoundDoorOpenPowered != null)
-                        buildingSoundDoorOpenPowered.PlayOneShot(new TargetInfo(base.Position, base.Map,
-                            false));
+                    def.building.soundDoorOpenPowered?.PlayOneShot(new TargetInfo(Position, Map));
                 }
                 else
                 {
-                    var buildingSoundDoorOpenManual = this.def.building.soundDoorOpenManual;
-                    if (buildingSoundDoorOpenManual != null)
-                        buildingSoundDoorOpenManual.PlayOneShot(
-                            new TargetInfo(base.Position, base.Map, false));
+                    def.building.soundDoorOpenManual?.PlayOneShot(new TargetInfo(Position, Map));
                 }
             }
         }
@@ -147,11 +106,7 @@ namespace DoorsExpanded
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_References.Look<Building_DoorExpanded>(ref this.parentDoor, "parentDoor");
-/*            if (Scribe.mode == LoadSaveMode.Saving)
-            {
-                this.Destroy(DestroyMode.Vanish);
-            }*/
+            Scribe_References.Look(ref parentDoor, nameof(parentDoor));
         }
     }
 }

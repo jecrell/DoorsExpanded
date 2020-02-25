@@ -3,7 +3,7 @@
 
   <ResearchTabDef>
     <defName>Heron_ResearchTab</defName>
-	<label>Doors Research</label>
+    <label>Doors Research</label>
   </ResearchTabDef>
 
 </Defs>

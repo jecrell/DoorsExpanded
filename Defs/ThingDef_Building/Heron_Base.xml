@@ -1,106 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-
-
   <!--========================= Doors =============================-->
 
-
-		  <ThingDef ParentName="HeronBuildingBase" Name="HeronClothDoorBase" Abstract="True">
-		    <thingClass>Building_Door</thingClass>
-		    <category>Building</category>
-		    <altitudeLayer>DoorMoveable</altitudeLayer>
-		    <fillPercent>1</fillPercent>
-		    <useHitPoints>true</useHitPoints>
-				<stuffCategories>
-		      <li>Fabric</li>
-		      <li>Leathery</li>
-		    </stuffCategories>
-		    <statBases>
-		      <MaxHitPoints>250</MaxHitPoints>
-		      <Flammability>1.0</Flammability>
-		    </statBases>
-		    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
-		    <selectable>true</selectable>
-		    <tickerType>Normal</tickerType>
-		    <rotatable>false</rotatable>
-		    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
-		    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-		    <designationCategory>Structure</designationCategory>
-		    <holdsRoof>true</holdsRoof>
-		    <staticSunShadowHeight>1.0</staticSunShadowHeight>
-		    <blockLight>true</blockLight>
-		    <drawerType>RealtimeOnly</drawerType>
-		    <building>
-					<isInert>true</isInert>
-					<canPlaceOverWall>true</canPlaceOverWall>
-		      <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
-		      <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
-		      <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
-		      <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
-		    </building>
-		    <comps>
-		      <li Class="CompProperties_Forbiddable"/>
-		    </comps>
-				<placeWorkers>
-					<li>PlaceWorker_DoorLearnOpeningSpeed</li>
-				</placeWorkers>
-		  </ThingDef>
-
-
-	  <ThingDef ParentName="HeronBuildingBase" Name="HeronMetalDoorBase" Abstract="True">
-	    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
-	    <category>Building</category>
-	    <altitudeLayer>DoorMoveable</altitudeLayer>
-	    <fillPercent>0</fillPercent>
-	    <useHitPoints>true</useHitPoints>
-	    <stuffCategories>
-	      <li>Metallic</li>
-	    </stuffCategories>
-	    <statBases>
-	      <MaxHitPoints>250</MaxHitPoints>
-	      <Flammability>1.0</Flammability>
-	    </statBases>
-	    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
-	    <selectable>true</selectable>
-	    <tickerType>Normal</tickerType>
-	    <rotatable>true</rotatable>
-			<soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
-	    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-	    <designationCategory>Structure</designationCategory>
-	    <holdsRoof>true</holdsRoof>
-	    <staticSunShadowHeight>1.0</staticSunShadowHeight>
-	    <blockLight>true</blockLight>
-	    <drawerType>RealtimeOnly</drawerType>
-	    <building>
-				<isInert>true</isInert>
-				<canPlaceOverWall>true</canPlaceOverWall>
-	      <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
-	      <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
-	      <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
-	      <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
-	    </building>
-	    <comps>
-	      <li Class="CompProperties_Forbiddable"/>
-	    </comps>
-			<placeWorkers>
-				<li>PlaceWorker_DoorLearnOpeningSpeed</li>
-			</placeWorkers>
-	  </ThingDef>
-
-
-  <ThingDef ParentName="HeronBuildingBase" Name="HeronDoorBase" Abstract="True">
+  <ThingDef ParentName="HeronBuildingBase" Name="HeronClothDoorBase" Abstract="True">
     <thingClass>Building_Door</thingClass>
+    <category>Building</category>
     <altitudeLayer>DoorMoveable</altitudeLayer>
-    <fillPercent>0</fillPercent>
+    <fillPercent>1</fillPercent>
     <useHitPoints>true</useHitPoints>
     <stuffCategories>
-      <li>Metallic</li>
-      <li>Woody</li>
-      <li>Stony</li>
+      <li>Fabric</li>
+      <li>Leathery</li>
     </stuffCategories>
     <statBases>
-	  <Mass>40</Mass>
       <MaxHitPoints>250</MaxHitPoints>
       <Flammability>1.0</Flammability>
     </statBases>
@@ -116,8 +29,8 @@
     <blockLight>true</blockLight>
     <drawerType>RealtimeOnly</drawerType>
     <building>
-			<isInert>true</isInert>
-			<canPlaceOverWall>true</canPlaceOverWall>
+      <isInert>true</isInert>
+      <canPlaceOverWall>true</canPlaceOverWall>
       <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
       <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
       <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
@@ -126,16 +39,98 @@
     <comps>
       <li Class="CompProperties_Forbiddable"/>
     </comps>
-		<placeWorkers>
-			<li>PlaceWorker_DoorLearnOpeningSpeed</li>
-		</placeWorkers>
+    <placeWorkers>
+      <li>PlaceWorker_DoorLearnOpeningSpeed</li>
+    </placeWorkers>
+  </ThingDef>
+
+  <ThingDef ParentName="HeronBuildingBase" Name="HeronMetalDoorBase" Abstract="True">
+    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
+    <category>Building</category>
+    <altitudeLayer>DoorMoveable</altitudeLayer>
+    <fillPercent>0</fillPercent>
+    <useHitPoints>true</useHitPoints>
+    <stuffCategories>
+      <li>Metallic</li>
+    </stuffCategories>
+    <statBases>
+      <MaxHitPoints>250</MaxHitPoints>
+      <Flammability>1.0</Flammability>
+    </statBases>
+    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
+    <selectable>true</selectable>
+    <tickerType>Normal</tickerType>
+    <rotatable>true</rotatable>
+    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
+    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
+    <designationCategory>Structure</designationCategory>
+    <holdsRoof>true</holdsRoof>
+    <staticSunShadowHeight>1.0</staticSunShadowHeight>
+    <blockLight>true</blockLight>
+    <drawerType>RealtimeOnly</drawerType>
+    <building>
+      <isInert>true</isInert>
+      <canPlaceOverWall>true</canPlaceOverWall>
+      <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
+      <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
+      <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
+      <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
+    </building>
+    <comps>
+      <li Class="CompProperties_Forbiddable"/>
+    </comps>
+    <placeWorkers>
+      <li>PlaceWorker_DoorLearnOpeningSpeed</li>
+    </placeWorkers>
+  </ThingDef>
+
+  <ThingDef ParentName="HeronBuildingBase" Name="HeronDoorBase" Abstract="True">
+    <thingClass>Building_Door</thingClass>
+    <altitudeLayer>DoorMoveable</altitudeLayer>
+    <fillPercent>0</fillPercent>
+    <useHitPoints>true</useHitPoints>
+    <stuffCategories>
+      <li>Metallic</li>
+      <li>Woody</li>
+      <li>Stony</li>
+    </stuffCategories>
+    <statBases>
+      <Mass>40</Mass>
+      <MaxHitPoints>250</MaxHitPoints>
+      <Flammability>1.0</Flammability>
+    </statBases>
+    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
+    <selectable>true</selectable>
+    <tickerType>Normal</tickerType>
+    <rotatable>false</rotatable>
+    <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
+    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
+    <designationCategory>Structure</designationCategory>
+    <holdsRoof>true</holdsRoof>
+    <staticSunShadowHeight>1.0</staticSunShadowHeight>
+    <blockLight>true</blockLight>
+    <drawerType>RealtimeOnly</drawerType>
+    <building>
+      <isInert>true</isInert>
+      <canPlaceOverWall>true</canPlaceOverWall>
+      <soundDoorOpenPowered>Door_OpenPowered</soundDoorOpenPowered>
+      <soundDoorClosePowered>Door_ClosePowered</soundDoorClosePowered>
+      <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
+      <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
+    </building>
+    <comps>
+      <li Class="CompProperties_Forbiddable"/>
+    </comps>
+    <placeWorkers>
+      <li>PlaceWorker_DoorLearnOpeningSpeed</li>
+    </placeWorkers>
   </ThingDef>
 
   <ThingDef Name="HeronBuildingBase" ParentName="BuildingBase" Abstract="True">
-  	<thingCategories>
-	  <li>Buildings</li>
-	</thingCategories>
+    <thingCategories>
+      <li>Buildings</li>
+    </thingCategories>
     <minifiedDef>MinifiedThing</minifiedDef>
   </ThingDef>
-  
+
 </Defs>

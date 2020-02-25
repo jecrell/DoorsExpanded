@@ -1,9 +1,6 @@
-﻿using RimWorld;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UnityEngine;
+using RimWorld;
 using Verse;
 using Verse.AI;
 using Verse.Sound;
@@ -13,29 +10,35 @@ namespace DoorsExpanded
     public class Building_DoorRemoteButton : Building
     {
         private List<Building_DoorRemote> linkedDoors = new List<Building_DoorRemote>();
-        private CompPowerTrader cpt = null;
+        private CompPowerTrader powerComp;
         private bool buttonOn = false;
-
         private bool needsToBeSwitched = false;
-        public bool NeedsToBeSwitched { get => needsToBeSwitched; set => needsToBeSwitched = value; }
 
-        public override Graphic Graphic => !buttonOn ? base.Graphic : def.building.fullGraveGraphicData.Graphic; //base is off, grave is on
+        public bool NeedsToBeSwitched
+        {
+            get => needsToBeSwitched;
+            set => needsToBeSwitched = value;
+        }
+
+        // base.Graphic is off; fullGraveGraphicData.Graphic is on.
+        public override Graphic Graphic => !buttonOn ? base.Graphic : def.building.fullGraveGraphicData.Graphic;
 
         private bool IsPowered
         {
             get
             {
-                var cpt = this.TryGetComp<CompPowerTrader>();
-                if (cpt == null) return true;
-                return cpt.PowerOn;
+                if (powerComp == null)
+                    powerComp = this.TryGetComp<CompPowerTrader>();
+                return powerComp == null || powerComp.PowerOn;
             }
         }
 
         public override void DrawExtraSelectionOverlays()
         {
             base.DrawExtraSelectionOverlays();
-            if (linkedDoors == null) return;
-            for (int i = 0; i < linkedDoors.Count; i++)
+            if (linkedDoors == null)
+                return;
+            for (var i = 0; i < linkedDoors.Count; i++)
             {
                 GenDraw.DrawLineBetween(this.TrueCenter(), linkedDoors[i].TrueCenter());
             }
@@ -54,7 +57,8 @@ namespace DoorsExpanded
 
         public void PushButton()
         {
-            if (this.NeedsToBeSwitched) NeedsToBeSwitched = false;
+            if (NeedsToBeSwitched)
+                NeedsToBeSwitched = false;
             SoundDefOf.RadioButtonClicked.PlayOneShot(this);
             buttonOn = !buttonOn;
             linkedDoors?.RemoveAll(door => !door.Spawned);
@@ -71,38 +75,39 @@ namespace DoorsExpanded
             pawn.jobs.TryTakeOrderedJob(job);
         }
 
-        private void ToggleAction()
+        public override IEnumerable<Gizmo> GetGizmos()
         {
-            NeedsToBeSwitched = !NeedsToBeSwitched;
+            foreach (var gizmo in base.GetGizmos())
+                yield return gizmo;
+
+            yield return new Command_Toggle
+            {
+                defaultLabel = "PH_UseButtonOrLever".Translate(),
+                defaultDesc = "PH_UseButtonOrLeverDesc".Translate(),
+                icon = TexButton.UseButtonOrLever,
+                disabled = linkedDoors == null || linkedDoors?.Count() == 0 || (PowerComp != null && !IsPowered),
+                disabledReason = GetDisabledReason(),
+                isActive = () => NeedsToBeSwitched,
+                toggleAction = ToggleAction,
+            };
         }
+
         private string GetDisabledReason()
         {
             if (linkedDoors == null || linkedDoors?.Count() == 0)
             {
                 return "PH_NeedsLinkedDoorsFirst".Translate();
             }
-            if (this.PowerComp != null && !this.IsPowered)
+            if (PowerComp != null && !IsPowered)
             {
                 return "PH_PowerSourceRequired".Translate();
             }
             return "";
         }
 
-        public override IEnumerable<Gizmo> GetGizmos()
+        private void ToggleAction()
         {
-            foreach (Gizmo g in base.GetGizmos())
-                yield return g;
-
-            yield return new Command_Toggle()
-            {
-                defaultLabel = "PH_UseButtonOrLever".Translate(),
-                defaultDesc = "PH_UseButtonOrLeverDesc".Translate(),
-                icon = TexButton.UseButtonOrLever,
-                disabled = linkedDoors == null || linkedDoors?.Count() == 0 || (this.PowerComp != null && !this.IsPowered),
-                disabledReason = GetDisabledReason(),
-                toggleAction = ToggleAction,
-                isActive = (() => NeedsToBeSwitched)
-            };
+            NeedsToBeSwitched = !NeedsToBeSwitched;
         }
 
         public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn selPawn)
@@ -118,8 +123,8 @@ namespace DoorsExpanded
                     {
                         yield return new FloatMenuOption
                         (
-                            label: "PH_ButtonPress".Translate(this.def.label),
-                            action: (() => GivePushJob(selPawn))
+                            label: "PH_ButtonPress".Translate(def.label),
+                            action: () => GivePushJob(selPawn)
                         );
                     }
                     else
@@ -162,9 +167,9 @@ namespace DoorsExpanded
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look(ref this.linkedDoors, "linkedDoors", LookMode.Reference);
-            Scribe_Values.Look(ref this.needsToBeSwitched, "needsToBeSwitched", false);
-            Scribe_Values.Look(ref this.buttonOn, "buttonOn", false);
+            Scribe_Collections.Look(ref linkedDoors, nameof(linkedDoors), LookMode.Reference);
+            Scribe_Values.Look(ref needsToBeSwitched, nameof(needsToBeSwitched), false);
+            Scribe_Values.Look(ref buttonOn, nameof(buttonOn), false);
         }
     }
 }

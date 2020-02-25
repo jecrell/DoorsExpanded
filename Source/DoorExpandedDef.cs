@@ -1,48 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using UnityEngine;
 using Verse;
-using RimWorld;
-using UnityEngine;
 
 namespace DoorsExpanded
 {
-
     public enum DoorType
     {
         Standard = 0,
         Stretch,
         DoubleSwing,
         FreePassage,
-        StretchVertical
+        StretchVertical,
     }
+
     public class DoorExpandedDef : ThingDef
     {
         public bool fixedPerspective = false;
         public bool singleDoor = false;
         public DoorType doorType = DoorType.Standard;
         public bool rotatesSouth = true;
-        public int tempLeakRate = 375;
-        public float doorOpenMultiplier = 0.45f;
+        public int tempLeakRate = TemperatureTuning.Door_TempEqualizeIntervalClosed;
+        public float doorOpenMultiplier = Building_DoorExpanded.VisualDoorOffsetEnd;
         public float doorOpenSpeedRate = 1.0f;
         public GraphicData doorFrame;
-        public Vector3 doorFrameOffset = new Vector3(0,0,0);
+        public Vector3 doorFrameOffset;
         public GraphicData doorFrameSplit;
-        public Vector3 doorFrameSplitOffset = new Vector3(0,0,0);
+        public Vector3 doorFrameSplitOffset;
         public GraphicData doorAsync;
-
-        public CompPower powerComp;
-        public Map map;
-        public void test()
-        {
-
-        }
 
         public DoorExpandedDef()
         {
-            this.thingClass = typeof(Building_DoorExpanded);
+            thingClass = typeof(Building_DoorExpanded);
         }
     }
-
 }

@@ -1,45 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
+using RimWorld;
 using Verse;
 using Verse.AI;
-using RimWorld;
-using System.Linq;
 
 namespace DoorsExpanded
 {
     public class WorkGiver_PressOrFlip : WorkGiver_Scanner
     {
-        public override ThingRequest PotentialWorkThingRequest
+        public override ThingRequest PotentialWorkThingRequest => ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial);
+
+        public static IEnumerable<Thing> ButtonsOrLevers(Pawn pawn)
         {
-            get
-            {
-                return ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial);
-            }
+            var buttonsOrLevers =
+                from Building_DoorRemoteButton t
+                in pawn.Map.listerBuildings.AllBuildingsColonistOfClass<Building_DoorRemoteButton>()
+                where t.NeedsToBeSwitched == true
+                select (Thing)t;
+            return new HashSet<Thing>(buttonsOrLevers);
         }
 
-        public IEnumerable<Thing> ButtonsOrLevers(Pawn pawn)
-        {
-            var stuff = from Building_DoorRemoteButton t in pawn.Map.listerBuildings.AllBuildingsColonistOfClass<Building_DoorRemoteButton>()
-                        where t.NeedsToBeSwitched == true
-                        select t;
-
-            HashSet<Thing> things = new HashSet<Thing>();
-            foreach (var thing in stuff)
-            {
-                things.Add(thing);
-            }
-
-            return things;
-
-        }
-
-        public override PathEndMode PathEndMode
-        {
-            get
-            {
-                return PathEndMode.Touch;
-            }
-        }
+        public override PathEndMode PathEndMode => PathEndMode.Touch;
 
         public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
         {
@@ -48,13 +29,12 @@ namespace DoorsExpanded
 
         public override bool ShouldSkip(Pawn pawn, bool forced = false)
         {
-            return ButtonsOrLevers(pawn).Count<Thing>() == 0;
+            return ButtonsOrLevers(pawn).Count() == 0;
         }
 
         public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
         {
-            Building_DoorRemoteButton building = t as Building_DoorRemoteButton;
-            if (building == null)
+            if (!(t is Building_DoorRemoteButton building))
             {
                 return false;
             }
@@ -71,7 +51,8 @@ namespace DoorsExpanded
                 JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
                 return false;
             }
-            if (!pawn.CanReserve(t)) return false;// pawn.Map.reservationManager.IsReserved(t, pawn.Faction)) return false;
+            if (!pawn.CanReserve(t))
+                return false;
             return true;
         }
 

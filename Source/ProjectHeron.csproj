@@ -50,10 +50,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Building_DoorRemote.cs" />
-    <Compile Include="Building_DoorCurtains.cs" />
     <Compile Include="Building_DoorExpanded.cs" />
     <Compile Include="Building_DoorRegionHandler.cs" />
-    <Compile Include="Building_DoorLockable.cs" />
     <Compile Include="Building_DoorRemoteButton.cs" />
     <Compile Include="DoorExpandedDef.cs" />
     <Compile Include="HarmonyPatches.cs" />
