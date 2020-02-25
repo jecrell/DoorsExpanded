@@ -2,9 +2,7 @@
 <Manifest>
   <identifier>DoorsExpanded</identifier>
   <version>1.21.0.0</version>
-  <dependencies>
-    <li>JecsTools</li>
-  </dependencies>
+  <dependencies />
   <incompatibleWith />
   <loadBefore>
     <li>CoC-Factions</li>
@@ -26,10 +24,7 @@
     <li>SW-Lightsabers</li>
     <li>SW-TheForce</li>
   </loadBefore>
-  <loadAfter>
-    <li>HugsLib</li>
-    <li>JecsTools</li>
-  </loadAfter>
+  <loadAfter />
   <manifestUri>https://raw.githubusercontent.com/jecrell/DoorsExpanded/master/About/Manifest.xml</manifestUri>
   <downloadUri>https://github.com/jecrell/DoorsExpanded/releases</downloadUri>
 </Manifest>
