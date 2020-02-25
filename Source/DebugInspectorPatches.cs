@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using Harmony;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
@@ -24,7 +24,7 @@ namespace DoorsExpanded
 
     public static class DebugInspectorPatches
     {
-        public static void PatchDebugInspector(HarmonyInstance harmony)
+        public static void PatchDebugInspector(Harmony harmony)
         {
             harmony.Patch(original: AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoListingItems"),
                 transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(DebugSettingsMenuDoListingItemsTranspiler)));
@@ -63,7 +63,7 @@ namespace DoorsExpanded
             {
                 instruction = enumerator.Current;
                 yield return instruction;
-                if (instruction.operand == typeof(DebugViewSettings))
+                if (instruction.OperandIs(typeof(DebugViewSettings)))
                     break;
             }
 
@@ -72,7 +72,7 @@ namespace DoorsExpanded
             {
                 instruction = enumerator.Current;
                 yield return instruction;
-                if (instruction.operand == methodof_Dialog_DebugSettingsMenu_DoField)
+                if (instruction.OperandIs(methodof_Dialog_DebugSettingsMenu_DoField))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_0); // Dialog_DebugSettingsMenu instance
                     yield return prevInstruction.Clone(); // assumed to be ldloc(.s) for the current field
@@ -117,13 +117,13 @@ namespace DoorsExpanded
             var methodof_object_ToString = AccessTools.Method(typeof(object), nameof(ToString));
             var instructionList = instructions.AsList();
 
-            var mouseCellIndex = instructionList.FindIndex(instr => instr.operand == methodof_UI_MouseCell);
+            var mouseCellIndex = instructionList.FindIndex(instr => instr.OperandIs(methodof_UI_MouseCell));
             var mouseCellVar = (LocalBuilder)instructionList[mouseCellIndex + 1].operand;
 
             var mouseCellToStringIndex = instructionList.FindSequenceIndex(
-                instr => instr.operand == mouseCellVar,
-                instr => instr.opcode == OpCodes.Constrained && instr.operand == typeof(IntVec3),
-                instr => instr.operand == methodof_object_ToString);
+                instr => instr.OperandIs(mouseCellVar),
+                instr => instr.opcode == OpCodes.Constrained && instr.OperandIs(typeof(IntVec3)),
+                instr => instr.OperandIs(methodof_object_ToString));
             instructionList.ReplaceRange(mouseCellToStringIndex, 3, new[]
             {
                 new CodeInstruction(OpCodes.Call,
@@ -131,7 +131,7 @@ namespace DoorsExpanded
             });
 
             var writePathCostsFlagIndex = instructionList.FindIndex(
-                instr => instr.operand == fieldof_DebugViewSettings_writePathCosts);
+                instr => instr.OperandIs(fieldof_DebugViewSettings_writePathCosts));
             var nextFlagIndex = instructionList.FindIndex(writePathCostsFlagIndex + 1, IsDebugViewSettingFlagAccess);
             instructionList.InsertRange(nextFlagIndex - 1, new[]
             {

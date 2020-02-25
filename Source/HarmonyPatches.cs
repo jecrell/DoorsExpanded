@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Harmony;
+using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -20,7 +20,7 @@ namespace DoorsExpanded
     {
         static HarmonyPatchesOnStartup()
         {
-            var harmony = HarmonyInstance.Create("rimworld.jecrell.doorsexpanded");
+            var harmony = new Harmony("rimworld.jecrell.doorsexpanded");
             HarmonyPatches.PatchAll(harmony);
             DebugInspectorPatches.PatchDebugInspector(harmony);
         }
@@ -28,7 +28,7 @@ namespace DoorsExpanded
 
     public static class HarmonyPatches
     {
-        public static void PatchAll(HarmonyInstance harmony)
+        public static void PatchAll(Harmony harmony)
         {
             HarmonyPatches.harmony = harmony;
             var rwAssembly = typeof(Building_Door).Assembly;
@@ -154,7 +154,7 @@ namespace DoorsExpanded
                 prefix: nameof(DoorExpandedBlueprintDrawPrefix));
         }
 
-        private static HarmonyInstance harmony;
+        private static Harmony harmony;
 
         private static void Patch(MethodInfo original, string prefix = null, string postfix = null, string transpiler = null,
             string transpilerRelated = null, bool harmonyDebug = false)
@@ -162,18 +162,10 @@ namespace DoorsExpanded
             DebugInspectorPatches.RegisterPatch(prefix);
             DebugInspectorPatches.RegisterPatch(postfix);
             DebugInspectorPatches.RegisterPatch(transpilerRelated);
-            HarmonyInstance.DEBUG = harmonyDebug;
-            try
-            {
-                harmony.Patch(original,
-                    prefix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), prefix),
-                    postfix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), postfix),
-                    transpiler == null ? null : new HarmonyMethod(typeof(HarmonyPatches), transpiler));
-            }
-            finally
-            {
-                HarmonyInstance.DEBUG = false;
-            }
+            harmony.Patch(original,
+                prefix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), prefix) { debug = harmonyDebug },
+                postfix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), postfix) { debug = harmonyDebug },
+                transpiler == null ? null : new HarmonyMethod(typeof(HarmonyPatches), transpiler) { debug = harmonyDebug });
         }
 
         private static bool IsDoorExpandedDef(Def def) =>
@@ -339,7 +331,7 @@ namespace DoorsExpanded
         // Pawn_PathFollower.TryEnterNextPathCell
         public static IEnumerable<CodeInstruction> InvisDoorManualCloseCallTranspiler(
             IEnumerable<CodeInstruction> instructions) =>
-            Transpilers.MethodReplacer(instructions,
+            instructions.MethodReplacer(
                 AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
                 AccessTools.Method(typeof(HarmonyPatches), nameof(InvisDoorStartManualCloseBy)));
 
@@ -373,7 +365,7 @@ namespace DoorsExpanded
             // in another method, so we have to just replace thing.def with GetActualDoor(thing).def.
             foreach (var instruction in instructions)
             {
-                if (instruction.operand == fieldof_Thing_def)
+                if (instruction.OperandIs(fieldof_Thing_def))
                 {
                     yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
                 }
@@ -401,7 +393,7 @@ namespace DoorsExpanded
             while (enumerator.MoveNext())
             {
                 var instruction = enumerator.Current;
-                if (prevInstruction.operand == fieldof_Thing_def && instruction.operand == defMember)
+                if (prevInstruction.OperandIs(fieldof_Thing_def) && instruction.OperandIs(defMember))
                 {
                     yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
                 }
@@ -472,7 +464,7 @@ namespace DoorsExpanded
         }
 
         private static bool IsinstDoorInstruction(CodeInstruction instruction) =>
-            instruction.opcode == OpCodes.Isinst && instruction.operand == typeof(Building_Door);
+            instruction.opcode == OpCodes.Isinst && instruction.OperandIs(typeof(Building_Door));
 
         // GenSpawn.WipeExistingThings
         public static bool InvisDoorWipeExistingThingsPrefix(BuildableDef thingDef)
@@ -511,7 +503,7 @@ namespace DoorsExpanded
 
             // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
             // In particular, this makes it skip invis doors, which have null LabelMouseover.
-            var index = instructionList.FindIndex(instr => instr.operand == methodof_Entity_get_LabelMouseover);
+            var index = instructionList.FindIndex(instr => instr.OperandIs(methodof_Entity_get_LabelMouseover));
             // This relies on the fact that there's a conditional within the loop that acts as a loop continue,
             // and we're going to piggyback on that.
             var loopContinueLabelIndex = instructionList.FindIndex(index + 1, instr => instr.labels.Count > 0);
@@ -789,14 +781,14 @@ namespace DoorsExpanded
 
             var searchIndex = 0;
             var placingRotFieldIndex = instructionList.FindIndex(
-                instr => instr.operand == fieldof_Designator_Place_placingRot);
+                instr => instr.OperandIs(fieldof_Designator_Place_placingRot));
             while (placingRotFieldIndex >= 0)
             {
                 searchIndex = placingRotFieldIndex + 1;
                 var rotateIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.operand == methodof_Rot4_Rotate);
+                    instr => instr.OperandIs(methodof_Rot4_Rotate));
                 var nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.operand == fieldof_Designator_Place_placingRot);
+                    instr => instr.OperandIs(fieldof_Designator_Place_placingRot));
                 if (rotateIndex >= 0 && (nextPlacingRotFieldIndex < 0 || rotateIndex < nextPlacingRotFieldIndex))
                 {
                     var replaceInstructions = new List<CodeInstruction>();
@@ -822,7 +814,7 @@ namespace DoorsExpanded
                         replaceInstructions);
                     searchIndex += replaceInstructions.Count - 1;
                     nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
-                        instr => instr.operand == fieldof_Designator_Place_placingRot);
+                        instr => instr.OperandIs(fieldof_Designator_Place_placingRot));
                 }
                 placingRotFieldIndex = nextPlacingRotFieldIndex;
             }
@@ -843,7 +835,7 @@ namespace DoorsExpanded
         // GhostDrawer.DrawGhostThing
         public static IEnumerable<CodeInstruction> DoorExpandedDrawGhostThingTranspiler(
             IEnumerable<CodeInstruction> instructions) =>
-            Transpilers.MethodReplacer(instructions,
+            instructions.MethodReplacer(
                 AccessTools.Method(typeof(Graphic), nameof(Graphic.DrawFromDef)),
                 AccessTools.Method(typeof(HarmonyPatches), nameof(DoorExpandedDrawGhostGraphicFromDef)));
 
@@ -885,7 +877,7 @@ namespace DoorsExpanded
             var methodof_ThingDef_IsDoor = AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod();
             var instructionList = instructions.AsList();
 
-            var isDoorIndex = instructionList.FindIndex(instr => instr.operand == methodof_ThingDef_IsDoor);
+            var isDoorIndex = instructionList.FindIndex(instr => instr.OperandIs(methodof_ThingDef_IsDoor));
             // Assume prev instruction is ldarg(.s) or ldloc(.s) for thingDef argument.
             var thingDefLoadInstruction = instructionList[isDoorIndex - 1];
             // Assume the next brfalse(.s) operand is a label that skips the Graphic_Single code path.
@@ -989,7 +981,7 @@ namespace DoorsExpanded
             {
                 searchIndex = isinstDoorIndex + 1;
                 var doorOpenIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.operand == methodof_Building_Door_get_Open);
+                    instr => instr.OperandIs(methodof_Building_Door_get_Open));
                 var nextIsinstDoorIndex = instructionList.FindIndex(searchIndex, IsinstDoorInstruction);
                 if (doorOpenIndex >= 0 && (nextIsinstDoorIndex < 0 || doorOpenIndex < nextIsinstDoorIndex))
                 {

@@ -73,7 +73,7 @@ namespace DoorsExpanded
         {
             if (NeedsToBeSwitched)
                 NeedsToBeSwitched = false;
-            SoundDefOf.RadioButtonClicked.PlayOneShot(this);
+            SoundDefOf.Tick_Tiny.PlayOneShot(this);
             ButtonOn = !ButtonOn;
             if (linkedDoors != null)
             {
