@@ -1,9 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
+  <packageId>jecrell.doorsexpanded</packageId>
   <name>Doors Expanded</name>
   <author>Jecrell</author>
   <supportedVersions>
     <li>1.0</li>
+    <li>1.1</li>
   </supportedVersions>
   <url>https://discord.gg/AaVFA7V</url>
   <description><![CDATA[1.21.0.0 (01-31-2020)
