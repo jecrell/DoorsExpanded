@@ -46,7 +46,6 @@
     <Compile Include="HeronDefOf.cs" />
     <Compile Include="JobDriver_PushButton.cs" />
     <Compile Include="ListExtensions.cs" />
-    <Compile Include="MapGrid_DoorsExpanded.cs" />
     <Compile Include="PlaceWorker_OnTopOfWalls.cs" />
     <Compile Include="PlaceWorker_Outline.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
