@@ -65,5 +65,8 @@
     <Compile Include="TexOverlay.cs" />
     <Compile Include="WorkGiver_PressOrFlip.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Building_Door_Reference\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
