@@ -25,7 +25,7 @@ namespace RimWorld
         private bool holdOpenInt;
         private int lastFriendlyTouchTick = -9999;
         protected int ticksUntilClose;
-        protected int visualTicksOpen;
+        protected int ticksSinceOpen;
         private bool freePassageWhenClearedReachabilityCache;
 
         public bool Open => openInt;
@@ -33,6 +33,19 @@ namespace RimWorld
         public bool HoldOpen => holdOpenInt;
 
         public bool FreePassage => openInt && (holdOpenInt || !WillCloseSoon);
+
+        public int TicksTillFullyOpened
+        {
+            get
+            {
+                var ticksTillFullyOpened = TicksToOpenNow - ticksSinceOpen;
+                if (ticksTillFullyOpened < 0)
+                {
+                    ticksTillFullyOpened = 0;
+                }
+                return ticksTillFullyOpened;
+            }
+        }
 
         public bool WillCloseSoon
         {
@@ -118,8 +131,6 @@ namespace RimWorld
         private bool FriendlyTouchedRecently =>
             Find.TickManager.TicksGame < lastFriendlyTouchTick + MaxTicksSinceFriendlyTouchToAutoClose;
 
-        private int VisualTicksToOpen => TicksToOpenNow;
-
         public override bool FireBulwark => !Open && base.FireBulwark;
 
         public override void PostMake()
@@ -154,7 +165,7 @@ namespace RimWorld
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
             if (Scribe.mode == LoadSaveMode.LoadingVars && openInt)
             {
-                visualTicksOpen = VisualTicksToOpen;
+                ticksSinceOpen = TicksToOpenNow;
             }
         }
 
@@ -176,9 +187,9 @@ namespace RimWorld
             }
             if (!openInt)
             {
-                if (visualTicksOpen > 0)
+                if (ticksSinceOpen > 0)
                 {
-                    visualTicksOpen--;
+                    ticksSinceOpen--;
                 }
                 if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % TemperatureTuning.Door_TempEqualizeIntervalClosed == 0)
                 {
@@ -191,9 +202,9 @@ namespace RimWorld
                 {
                     return;
                 }
-                if (visualTicksOpen < VisualTicksToOpen)
+                if (ticksSinceOpen < TicksToOpenNow)
                 {
-                    visualTicksOpen++;
+                    ticksSinceOpen++;
                 }
                 var thingList = Position.GetThingList(Map);
                 for (var i = 0; i < thingList.Count; i++)
@@ -237,14 +248,15 @@ namespace RimWorld
         public void Notify_PawnApproaching(Pawn p, int moveCost)
         {
             CheckFriendlyTouched(p);
-            if (PawnCanOpen(p))
+            var pawnCanOpen = PawnCanOpen(p);
+            if (pawnCanOpen || Open)
             {
                 Map.fogGrid.Notify_PawnEnteringDoor(this, p);
-                if (!SlowsPawns)
-                {
-                    var ticksToClose = Mathf.Max(ApproachCloseDelayTicks, moveCost + 1);
-                    DoorOpen(ticksToClose);
-                }
+            }
+            if (pawnCanOpen && !SlowsPawns)
+            {
+                var ticksToClose = Mathf.Max(ApproachCloseDelayTicks, moveCost + 1);
+                DoorOpen(ticksToClose);
             }
         }
 
@@ -334,7 +346,7 @@ namespace RimWorld
         public override void Draw()
         {
             Rotation = DoorRotationAt(Position, Map);
-            var percentOpen = Mathf.Clamp01((float)visualTicksOpen / VisualTicksToOpen);
+            var percentOpen = Mathf.Clamp01((float)ticksSinceOpen / TicksToOpenNow);
             var offsetMod = VisualDoorOffsetStart + VisualDoorOffsetEnd * percentOpen;
             for (var i = 0; i < 2; i++)
             {
