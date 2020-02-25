@@ -51,6 +51,8 @@ namespace DoorsExpanded
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.FreePassage)).GetGetMethod(),
                 prefix: nameof(InvisDoorFreePassagePrefix));
+            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.TicksTillFullyOpened)).GetGetMethod(),
+                prefix: nameof(InvisDoorTicksTillFullyOpenedPrefix));
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.WillCloseSoon)).GetGetMethod(),
                 prefix: nameof(InvisDoorWillCloseSoonPrefix));
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.BlockedOpenMomentary)).GetGetMethod(),
@@ -187,6 +189,18 @@ namespace DoorsExpanded
             if (__instance is Building_DoorRegionHandler invisDoor)
             {
                 __result = invisDoor.ParentDoor?.FreePassage ?? true;
+                return false;
+            }
+            return true;
+        }
+
+        // Building_Door.TicksTillFullyOpened
+        public static bool InvisDoorTicksTillFullyOpenedPrefix(Building_Door __instance, ref int __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorTicksTillFullyOpenedPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
+            {
+                __result = invisDoor.ParentDoor?.TicksTillFullyOpened ?? 0;
                 return false;
             }
             return true;

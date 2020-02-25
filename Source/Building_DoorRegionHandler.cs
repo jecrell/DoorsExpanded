@@ -43,6 +43,7 @@ namespace DoorsExpanded
 
         // Following Building_Door non-virtual properties/methods are harmony patched to delegate to ParentDoor:
         // public bool FreePassage
+        // public int TicksTillFullyOpened
         // public bool WillCloseSoon
         // - Note: Although only used by Building_Door.FreePassage, it could be used outside of vanilla code.
         // public bool BlockedOpenMomentary
