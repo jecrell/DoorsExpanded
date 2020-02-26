@@ -1,9 +1,11 @@
 ﻿//#define PATCH_CALL_REGISTRY
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using RimWorld;
 using UnityEngine;
@@ -83,10 +85,11 @@ namespace DoorsExpanded
             // Patches to redirect access from invis door def to its parent door def.
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
                 transpiler: nameof(InvisDoorCanBeSeenOverTranspiler));
-            Patch(original: AccessTools.FirstMethod(
-                    AccessTools.FirstInner(typeof(FloodFillerFog), inner => inner.Name.StartsWith("<FloodUnfog>")),
-                    method => method.Name.StartsWith("<") && method.ReturnType == typeof(bool)),
-                transpiler: nameof(InvisDoorMakeFogTranspiler));
+            foreach (var original in typeof(FloodFillerFog).FindLambdaMethods(nameof(FloodFillerFog.FloodUnfog), typeof(bool)))
+            {
+                Patch(original,
+                    transpiler: nameof(InvisDoorMakeFogTranspiler));
+            }
             Patch(original: AccessTools.Method(typeof(FogGrid), "FloodUnfogAdjacent"),
                 transpiler: nameof(InvisDoorMakeFogTranspiler));
             Patch(original: AccessTools.Method(typeof(Projectile), "ImpactSomething"),
@@ -114,8 +117,7 @@ namespace DoorsExpanded
                 transpiler: nameof(MouseoverReadoutTranspiler));
 
             // Patches for door expanded doors themselves.
-            Patch(original: AccessTools.Method(
-                    typeof(CoverUtility), nameof(CoverUtility.BaseBlockChance), new[] { typeof(Thing) }),
+            Patch(original: AccessTools.Method( typeof(CoverUtility), nameof(CoverUtility.BaseBlockChance), new[] { typeof(Thing) }),
                 transpiler: nameof(DoorExpandedBaseBlockChanceTranspiler));
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
                 transpiler: nameof(DoorExpandedCanBeSeenOverTranspiler));
@@ -137,11 +139,12 @@ namespace DoorsExpanded
                 transpiler: nameof(DoorExpandedTrashJobTranspiler));
 
             // Patches for ghost (pre-placement) and blueprints for door expanded.
-            Patch(original: AccessTools.FirstMethod(
-                    AccessTools.FirstInner(typeof(Designator_Place), inner => inner.Name.StartsWith("<DoExtraGuiControls>")),
-                    method => method.Name.StartsWith("<")),
-                transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
-                transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
+            foreach (var original in typeof(Designator_Place).FindLambdaMethods(nameof(Designator_Place.DoExtraGuiControls), typeof(void)))
+            {
+                Patch(original,
+                    transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
+                    transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
+            }
             Patch(original: AccessTools.Method(typeof(Designator_Place), "HandleRotationShortcuts"),
                 transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
                 transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
@@ -168,6 +171,57 @@ namespace DoorsExpanded
                 prefix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), prefix) { debug = harmonyDebug },
                 postfix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), postfix) { debug = harmonyDebug },
                 transpiler == null ? null : new HarmonyMethod(typeof(HarmonyPatches), transpiler) { debug = harmonyDebug });
+        }
+
+        private static IEnumerable<MethodInfo> FindLambdaMethods(this Type type, string parentMethodName, Type returnType,
+            Func<MethodInfo, bool> predicate = null)
+        {
+            // A lambda on RimWorld 1.0 on Unity 5.6.5f1 (mono .NET Framework 3.5 equivalent) is compiled into
+            // a CompilerGenerated-attributed non-public inner type with name prefix "<{parentMethodName}>"
+            // including an instance method with name prefix "<>".
+            // A lambda on RimWorld 1.1 on Unity 2019.2.17f1 (mono .NET Framework 4.7.2 equivalent) is compiled into
+            // a CompilerGenerated-attributed non-public inner type with name prefix "<>"
+            // including an instance method with name prefix "<{parentMethodName}>".
+            // Recent-ish versions of Visual Studio also compile this way.
+            // So to be generic enough, return methods of a declaring inner type that:
+            // a) either the method or the declaring inner type has name prefix "<{parentMethodName}>".
+            // b) has given return type
+            // c) satisfies predicate, if given
+            var innerTypes = type.GetNestedTypes(AccessTools.all)
+                .Where(innerType => innerType.IsDefined(typeof(CompilerGeneratedAttribute)));
+            var foundMethod = false;
+            foreach (var innerType in innerTypes)
+            {
+                if (innerType.Name.StartsWith("<" + parentMethodName + ">"))
+                {
+                    foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
+                    {
+                        if (method.Name.StartsWith("<") && method.ReturnType == returnType &&
+                            (predicate == null || predicate(method)))
+                        {
+                            foundMethod = true;
+                            yield return method;
+                        }
+                    }
+                }
+                else if (innerType.Name.StartsWith("<"))
+                {
+                    foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
+                    {
+                        if (method.Name.StartsWith("<" + parentMethodName + ">") && method.ReturnType == returnType &&
+                            (predicate == null || predicate(method)))
+                        {
+                            foundMethod = true;
+                            yield return method;
+                        }
+                    }
+                }
+            }
+            if (!foundMethod)
+            {
+                throw new ArgumentException($"Could not find any lambda method for type {type} and method {parentMethodName}" +
+                    " that satisfies given predicate");
+            }
         }
 
         private static bool IsDoorExpandedDef(Def def) =>
@@ -529,15 +583,12 @@ namespace DoorsExpanded
             //  for (...)
             //  {
             //      var thing = ...;
-            //      if (...)
+            //      if (... && !thing.LabelMouseover.IsNullOrEmpty())
             //      {
             //          var rect = ...;
             //          var labelMouseover = thing.LabelMouseover;
-            //          if (!labelMouseover.IsNullOrEmpty())
-            //          {
-            //              Widgets.Label(rect, labelMouseover);
-            //              y += YInterval;
-            //          }
+            //          Widgets.Label(rect, labelMouseover);
+            //          y += YInterval;
             //      }
             //  }
 
@@ -545,23 +596,27 @@ namespace DoorsExpanded
                 AccessTools.Property(typeof(Entity), nameof(Entity.LabelMouseover)).GetGetMethod();
             var instructionList = instructions.AsList();
 
-            var index = instructionList.FindIndex(instr => instr.Calls(methodof_Entity_get_LabelMouseover));
+            var labelMouseoverIndex = instructionList.FindIndex(instr => instr.Calls(methodof_Entity_get_LabelMouseover));
             // This relies on the fact that there's a conditional within the loop that acts as a loop continue,
             // and we're going to piggyback on that.
-            var loopContinueLabelIndex = instructionList.FindIndex(index + 1, instr => instr.labels.Count > 0);
+            var loopContinueLabelIndex = instructionList.FindIndex(labelMouseoverIndex + 1, instr => instr.labels.Count > 0);
             var loopContinueLabel = instructionList[loopContinueLabelIndex].labels[0];
-            // We can't simply do a brtrue to loopContinueLabel after the string.IsNullOrEmpty call,
-            // since we need to pop off the LabelMouseover value from the CIL stack.
-            // So we need a brfalse to the (current) next instruction, followed by a pop and then the br to loopContinueLabel.
-            var nextInstructionLabel = ilGen.DefineLabel();
-            instructionList[index + 1].labels.Add(nextInstructionLabel);
-            instructionList.InsertRange(index + 1, new[]
+            // Unfortunately, we can't simply do a brtrue to loopContinueLabel after a string.IsNullOrEmpty check,
+            // since we there is at least the LabelMouseover value that needs to be popped from the CIL stack.
+            // While we can deduce the exact amount of stack pops needed, this is fragile, so we insert the check
+            // right after the afore-mentioned conditional, such that there's no need for stack pops.
+            var loopContinueBranchIndex = instructionList.FindLastIndex(labelMouseoverIndex - 1,
+                instr => instr.OperandIs(loopContinueLabel));
+            // We also need the var that has the Thing on which Entity.LabelMouseover is called.
+            // Assume this is just a ldloc(.s) right before the Entity.LabelMouseover callvirt.
+            var thingVar = (LocalBuilder)instructionList[labelMouseoverIndex - 1].operand;
+
+            instructionList.InsertRange(loopContinueBranchIndex + 1, new[]
             {
-                new CodeInstruction(OpCodes.Dup),
+                new CodeInstruction(OpCodes.Ldloc, thingVar),
+                new CodeInstruction(OpCodes.Callvirt, methodof_Entity_get_LabelMouseover),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.IsNullOrEmpty))),
-                new CodeInstruction(OpCodes.Brfalse, nextInstructionLabel),
-                new CodeInstruction(OpCodes.Pop),
-                new CodeInstruction(OpCodes.Br, loopContinueLabel),
+                new CodeInstruction(OpCodes.Brtrue, loopContinueLabel),
             });
 
             return instructionList;
@@ -725,7 +780,12 @@ namespace DoorsExpanded
                 { labels = instructionList[twoWayArgFalseIndex].labels.PopAll() },
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(HarmonyPatches), nameof(GetAdjacentCellsForTemperature))),
-                new CodeInstruction(OpCodes.Starg_S, adjCellsVar),
+                // XXX: TIL that RW 1.0's version of mono/.NET didn't actually require that
+                // ILGenerator.Emit(OpCode opcode, LocalBuilder local) have opcode be a ldloc/stloc-type opcode
+                // and worked just fine with ldarg/starg-type opcode.
+                // RW 1.1+'s version of mono/.NET requires the opcode to be a ldloc/stloc-type opcode,
+                // revealing this bug... oops!
+                new CodeInstruction(OpCodes.Stloc_S, adjCellsVar),
             };
             instructionList.InsertRange(twoWayArgFalseIndex, newInstructions);
 
@@ -735,7 +795,7 @@ namespace DoorsExpanded
                 instr => instr.opcode == OpCodes.Stloc_S);
             newInstructions = new[]
             {
-                new CodeInstruction(OpCodes.Ldarg_S, adjCellsVar)
+                new CodeInstruction(OpCodes.Ldloc_S, adjCellsVar)
                 { labels = instructionList[buildingArgIndex].labels.PopAll() },
                 new CodeInstruction(OpCodes.Ldloc_S, loopIndexVar),
                 new CodeInstruction(OpCodes.Ldelem, typeof(IntVec3)),
@@ -746,7 +806,7 @@ namespace DoorsExpanded
                 instr => instr.opcode == OpCodes.Ldc_I4_4);
             instructionList.ReplaceRange(loopEndIndexIndex, 1, new[]
             {
-                new CodeInstruction(OpCodes.Ldarg_S, adjCellsVar),
+                new CodeInstruction(OpCodes.Ldloc_S, adjCellsVar),
                 new CodeInstruction(OpCodes.Ldlen),
             });
 
