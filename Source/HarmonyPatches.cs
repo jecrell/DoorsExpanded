@@ -365,7 +365,7 @@ namespace DoorsExpanded
             // in another method, so we have to just replace thing.def with GetActualDoor(thing).def.
             foreach (var instruction in instructions)
             {
-                if (instruction.OperandIs(fieldof_Thing_def))
+                if (instruction.LoadsField(fieldof_Thing_def))
                 {
                     yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
                 }
@@ -379,11 +379,11 @@ namespace DoorsExpanded
             GetActualDoorForDefTranspiler(instructions, AccessTools.Field(typeof(ThingDef), nameof(ThingDef.blockLight)));
 
         private static IEnumerable<CodeInstruction> GetActualDoorForDefTranspiler(IEnumerable<CodeInstruction> instructions,
-            object defMember)
+            MemberInfo defMember)
         {
             // This transforms the following code:
             //  thing.def.<defMember>
-            // to:
+            // into:
             //  GetActualDoor(thing).def.<defMember>
 
             var enumerator = instructions.GetEnumerator();
@@ -393,7 +393,7 @@ namespace DoorsExpanded
             while (enumerator.MoveNext())
             {
                 var instruction = enumerator.Current;
-                if (prevInstruction.OperandIs(fieldof_Thing_def) && instruction.OperandIs(defMember))
+                if (prevInstruction.LoadsField(fieldof_Thing_def) && instruction.OperandIs(defMember))
                 {
                     yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
                 }
@@ -464,7 +464,7 @@ namespace DoorsExpanded
         }
 
         private static bool IsinstDoorInstruction(CodeInstruction instruction) =>
-            instruction.opcode == OpCodes.Isinst && instruction.OperandIs(typeof(Building_Door));
+            instruction.Is(OpCodes.Isinst, typeof(Building_Door));
 
         // GenSpawn.WipeExistingThings
         public static bool InvisDoorWipeExistingThingsPrefix(BuildableDef thingDef)
@@ -497,13 +497,41 @@ namespace DoorsExpanded
         public static IEnumerable<CodeInstruction> MouseoverReadoutTranspiler(IEnumerable<CodeInstruction> instructions,
             ILGenerator ilGen)
         {
+            // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
+            // In particular, this makes it skip invis doors, which have null LabelMouseover.
+            // This transforms the following code:
+            //  for (...)
+            //  {
+            //      var thing = ...;
+            //      if (...)
+            //      {
+            //          var rect = ...;
+            //          var labelMouseover = thing.LabelMouseover;
+            //          Widgets.Label(rect, labelMouseover);
+            //          y += YInterval;
+            //      }
+            //  }
+            // into:
+            //  for (...)
+            //  {
+            //      var thing = ...;
+            //      if (...)
+            //      {
+            //          var rect = ...;
+            //          var labelMouseover = thing.LabelMouseover;
+            //          if (!labelMouseover.IsNullOrEmpty())
+            //          {
+            //              Widgets.Label(rect, labelMouseover);
+            //              y += YInterval;
+            //          }
+            //      }
+            //  }
+
             var methodof_Entity_get_LabelMouseover =
                 AccessTools.Property(typeof(Entity), nameof(Entity.LabelMouseover)).GetGetMethod();
             var instructionList = instructions.AsList();
 
-            // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
-            // In particular, this makes it skip invis doors, which have null LabelMouseover.
-            var index = instructionList.FindIndex(instr => instr.OperandIs(methodof_Entity_get_LabelMouseover));
+            var index = instructionList.FindIndex(instr => instr.Calls(methodof_Entity_get_LabelMouseover));
             // This relies on the fact that there's a conditional within the loop that acts as a loop continue,
             // and we're going to piggyback on that.
             var loopContinueLabelIndex = instructionList.FindIndex(index + 1, instr => instr.labels.Count > 0);
@@ -639,7 +667,7 @@ namespace DoorsExpanded
             //  }
             //  if (roomGroupCount == 0)
             //      return;
-            // to:
+            // into:
             //  int roomGroupCount = 0;
             //  float temperatureSum = 0f;
             //  if (twoWay)
@@ -769,7 +797,7 @@ namespace DoorsExpanded
         {
             // This transforms the following code:
             //  designatorPlace.placingRot.Rotate(rotDirection);
-            // to:
+            // into:
             //  designatorPlace.placingRot.Rotate(rotDirection);
             //  DoorExpandedRotateAgainIfNeeded(designatorPlace, ref designatorPlace.placingRot, rotDirection);
 
@@ -781,14 +809,14 @@ namespace DoorsExpanded
 
             var searchIndex = 0;
             var placingRotFieldIndex = instructionList.FindIndex(
-                instr => instr.OperandIs(fieldof_Designator_Place_placingRot));
+                instr => instr.LoadsField(fieldof_Designator_Place_placingRot, byAddress: true));
             while (placingRotFieldIndex >= 0)
             {
                 searchIndex = placingRotFieldIndex + 1;
                 var rotateIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.OperandIs(methodof_Rot4_Rotate));
+                    instr => instr.Calls(methodof_Rot4_Rotate));
                 var nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.OperandIs(fieldof_Designator_Place_placingRot));
+                    instr => instr.LoadsField(fieldof_Designator_Place_placingRot, byAddress: true));
                 if (rotateIndex >= 0 && (nextPlacingRotFieldIndex < 0 || rotateIndex < nextPlacingRotFieldIndex))
                 {
                     var replaceInstructions = new List<CodeInstruction>();
@@ -814,7 +842,7 @@ namespace DoorsExpanded
                         replaceInstructions);
                     searchIndex += replaceInstructions.Count - 1;
                     nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
-                        instr => instr.OperandIs(fieldof_Designator_Place_placingRot));
+                        instr => instr.LoadsField(fieldof_Designator_Place_placingRot, byAddress: true));
                 }
                 placingRotFieldIndex = nextPlacingRotFieldIndex;
             }
@@ -871,13 +899,13 @@ namespace DoorsExpanded
             // For door expanded, we always want to return a Graphic_Multi based off thingDef.graphic.
             // This transforms the following code:
             //  if (... || thingDef.IsDoor)
-            // to:
+            // into:
             //  if (... || (thingDef.IsDoor && !IsDoorExpandedDef(thingDef))
 
             var methodof_ThingDef_IsDoor = AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod();
             var instructionList = instructions.AsList();
 
-            var isDoorIndex = instructionList.FindIndex(instr => instr.OperandIs(methodof_ThingDef_IsDoor));
+            var isDoorIndex = instructionList.FindIndex(instr => instr.Calls(methodof_ThingDef_IsDoor));
             // Assume prev instruction is ldarg(.s) or ldloc(.s) for thingDef argument.
             var thingDefLoadInstruction = instructionList[isDoorIndex - 1];
             // Assume the next brfalse(.s) operand is a label that skips the Graphic_Single code path.
@@ -969,7 +997,7 @@ namespace DoorsExpanded
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door door && door.Open
-        // to:
+        // into:
         //  IsOpenDoor(thing)
         private static IEnumerable<CodeInstruction> DoorExpandedIsOpenDoorTranspiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -981,7 +1009,7 @@ namespace DoorsExpanded
             {
                 searchIndex = isinstDoorIndex + 1;
                 var doorOpenIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.OperandIs(methodof_Building_Door_get_Open));
+                    instr => instr.Calls(methodof_Building_Door_get_Open));
                 var nextIsinstDoorIndex = instructionList.FindIndex(searchIndex, IsinstDoorInstruction);
                 if (doorOpenIndex >= 0 && (nextIsinstDoorIndex < 0 || doorOpenIndex < nextIsinstDoorIndex))
                 {
@@ -1008,7 +1036,7 @@ namespace DoorsExpanded
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door
-        // to:
+        // into:
         //  IsDoor(thing)
         private static IEnumerable<CodeInstruction> DoorExpandedIsDoorTranspiler(IEnumerable<CodeInstruction> instructions)
         {

@@ -72,7 +72,7 @@ namespace DoorsExpanded
             {
                 instruction = enumerator.Current;
                 yield return instruction;
-                if (instruction.OperandIs(methodof_Dialog_DebugSettingsMenu_DoField))
+                if (instruction.Calls(methodof_Dialog_DebugSettingsMenu_DoField))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_0); // Dialog_DebugSettingsMenu instance
                     yield return prevInstruction.Clone(); // assumed to be ldloc(.s) for the current field
@@ -117,21 +117,21 @@ namespace DoorsExpanded
             var methodof_object_ToString = AccessTools.Method(typeof(object), nameof(ToString));
             var instructionList = instructions.AsList();
 
-            var mouseCellIndex = instructionList.FindIndex(instr => instr.OperandIs(methodof_UI_MouseCell));
+            var mouseCellIndex = instructionList.FindIndex(instr => instr.Calls(methodof_UI_MouseCell));
             var mouseCellVar = (LocalBuilder)instructionList[mouseCellIndex + 1].operand;
 
             var mouseCellToStringIndex = instructionList.FindSequenceIndex(
-                instr => instr.OperandIs(mouseCellVar),
-                instr => instr.opcode == OpCodes.Constrained && instr.OperandIs(typeof(IntVec3)),
-                instr => instr.OperandIs(methodof_object_ToString));
+                instr => instr.IsLdloc(mouseCellVar),
+                instr => instr.Is(OpCodes.Constrained, typeof(IntVec3)),
+                instr => instr.Calls(methodof_object_ToString));
             instructionList.ReplaceRange(mouseCellToStringIndex, 3, new[]
             {
                 new CodeInstruction(OpCodes.Call,
-                AccessTools.Method(typeof(DebugInspectorPatches), nameof(MousePositionToString))),
+                    AccessTools.Method(typeof(DebugInspectorPatches), nameof(MousePositionToString))),
             });
 
             var writePathCostsFlagIndex = instructionList.FindIndex(
-                instr => instr.OperandIs(fieldof_DebugViewSettings_writePathCosts));
+                instr => instr.LoadsField(fieldof_DebugViewSettings_writePathCosts));
             var nextFlagIndex = instructionList.FindIndex(writePathCostsFlagIndex + 1, IsDebugViewSettingFlagAccess);
             instructionList.InsertRange(nextFlagIndex - 1, new[]
             {

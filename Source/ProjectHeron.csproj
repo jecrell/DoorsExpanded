@@ -41,6 +41,7 @@
     <Compile Include="Building_DoorRemoteButton.cs" />
     <Compile Include="DebugInspectorPatches.cs" />
     <Compile Include="DoorExpandedDef.cs" />
+    <Compile Include="HarmonyExtensions.cs" />
     <Compile Include="HarmonyPatches.cs" />
     <Compile Include="HeronDefOf.cs" />
     <Compile Include="JobDriver_PushButton.cs" />
