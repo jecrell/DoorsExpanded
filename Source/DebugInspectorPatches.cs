@@ -212,7 +212,7 @@ namespace DoorsExpanded
                         debugString.AppendLine("- SlowsPawns: " + door.SlowsPawns);
                         debugString.AppendLine("- TicksToOpenNow: " + door.TicksToOpenNow);
                         debugString.AppendLine("- FriendlyTouchedRecently: " +
-                            methodof_Building_Door_FriendlyTouchedRecently.Invoke(door, new object[0]));
+                            methodof_Building_Door_FriendlyTouchedRecently.Invoke(door, Array.Empty<object>()));
                         debugString.AppendLine("- lastFriendlyTouchTick: " + Building_Door_lastFriendlyTouchTick(door));
                         debugString.AppendLine("- ticksUntilClose: " + Building_Door_ticksUntilClose(door));
                         debugString.AppendLine("- ticksSinceOpen: " + Building_Door_ticksSinceOpen(door));

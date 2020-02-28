@@ -60,7 +60,7 @@ namespace DoorsExpanded
         // For purposes of determining whether a door can be closed automatically,
         // treat a powered door that's linked to an enabled button as always being "friendly touched".
         internal protected override bool FriendlyTouchedRecently =>
-            (button?.IsEnabled ?? false) && DoorPowerOn || base.FriendlyTouchedRecently;
+            (!button?.NeedsPower ?? false) && DoorPowerOn || base.FriendlyTouchedRecently;
 
         public override void ExposeData()
         {
@@ -111,29 +111,25 @@ namespace DoorsExpanded
                     // Insert all our custom gizmos right after hold open toggle gizmo,
                     // with the secured remotely gizmo being the first.
 
-                    string securedRemotelyDisableReason = null;
-                    if (Button == null)
-                        securedRemotelyDisableReason = "PH_ButtonNeeded".Translate();
-                    if (!DoorPowerOn)
-                        securedRemotelyDisableReason = "PH_PowerNeeded".Translate();
-                    yield return new Command_Toggle
+                    var toggle = new Command_Toggle
                     {
                         defaultLabel = "PH_RemoteDoorSecuredRemotely".Translate(),
                         defaultDesc = "PH_RemoteDoorSecuredRemotelyDesc".Translate(),
                         icon = TexButton.SecuredRemotely,
-                        disabled = securedRemotelyDisableReason != null,
-                        disabledReason = securedRemotelyDisableReason,
                         isActive = () => SecuredRemotely,
                         toggleAction = () => SecuredRemotely = !SecuredRemotely,
                     };
+                    if (Button == null)
+                        toggle.Disable("PH_ButtonNeeded".Translate());
+                    if (!DoorPowerOn)
+                        toggle.Disable("PH_PowerNeeded".Translate());
+                    yield return toggle;
 
                     yield return new Command_Action
                     {
                         defaultLabel = "PH_ButtonConnect".Translate(),
                         defaultDesc = "PH_ButtonConnectDesc".Translate(),
                         icon = TexButton.ConnectToButton,
-                        disabled = false,
-                        disabledReason = "",
                         action = ButtonConnect,
                     };
 
@@ -144,8 +140,6 @@ namespace DoorsExpanded
                             defaultLabel = "PH_ButtonDisconnect".Translate(),
                             defaultDesc = "PH_ButtonDisconnectDesc".Translate(),
                             icon = TexButton.DisconnectButton,
-                            disabled = false,
-                            disabledReason = "",
                             action = ButtonDisconnect,
                         };
                     }

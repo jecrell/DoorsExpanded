@@ -6,59 +6,56 @@ using Verse.AI;
 
 namespace DoorsExpanded
 {
+    // TODO: Rename WorkGiverDef and class to be consistent with the corresponding JobGiver.
     public class WorkGiver_PressOrFlip : WorkGiver_Scanner
     {
         public override ThingRequest PotentialWorkThingRequest => ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial);
 
-        public static IEnumerable<Thing> ButtonsOrLevers(Pawn pawn)
+        private static IEnumerable<Thing> ButtonsOrLevers(Pawn pawn, bool forced)
         {
             var buttonsOrLevers =
                 from Building_DoorRemoteButton t
                 in pawn.Map.listerBuildings.AllBuildingsColonistOfClass<Building_DoorRemoteButton>()
-                where t.NeedsToBeSwitched == true
-                select (Thing)t;
+                where forced || t.NeedsToBeSwitched
+                select t;
             return new HashSet<Thing>(buttonsOrLevers);
         }
 
-        public override PathEndMode PathEndMode => PathEndMode.Touch;
+        public override PathEndMode PathEndMode => PathEndMode.InteractionCell;
+
+        public override Danger MaxPathDanger(Pawn pawn) => Danger.Deadly;
 
         public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
         {
-            return ButtonsOrLevers(pawn);
+            return ButtonsOrLevers(pawn, forced: true);
         }
 
         public override bool ShouldSkip(Pawn pawn, bool forced = false)
         {
-            return ButtonsOrLevers(pawn).Count() == 0;
+            return ButtonsOrLevers(pawn, forced).Count() == 0;
         }
 
         public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
         {
-            if (!(t is Building_DoorRemoteButton building))
+            if (!(t is Building_DoorRemoteButton remote))
             {
                 return false;
             }
-            if (!building.NeedsToBeSwitched)
+            if (remote.IsDisabledForJob(forced, out var reason))
+            {
+                JobFailReason.Is(reason);
+                return false;
+            }
+            if (!pawn.CanReserve(t, 1, -1, null, forced))
             {
                 return false;
             }
-            if (t.Faction != pawn.Faction)
-            {
-                return false;
-            }
-            if (pawn.Faction == Faction.OfPlayer && !pawn.Map.areaManager.Home[t.Position])
-            {
-                JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
-                return false;
-            }
-            if (!pawn.CanReserve(t))
-                return false;
             return true;
         }
 
         public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
         {
-            return new Job(DefDatabase<JobDef>.GetNamed("PH_FlipOrPress"), t);
+            return JobMaker.MakeJob(HeronDefOf.PH_FlipOrPress, t);
         }
     }
 }

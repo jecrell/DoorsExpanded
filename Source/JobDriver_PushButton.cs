@@ -3,19 +3,29 @@ using Verse.AI;
 
 namespace DoorsExpanded
 {
+    // TODO: Rename JobDef and class to be consistent with the corresponding WorkGiver.
     public class JobDriver_PushButton : JobDriver
     {
-        protected Building_DoorRemoteButton Button => (Building_DoorRemoteButton)job.targetA.Thing;
+        private Building_DoorRemoteButton Remote => (Building_DoorRemoteButton)TargetThingA;
 
         public override bool TryMakePreToilReservations(bool errorOnFailed)
         {
-            return pawn.Reserve(Button, job, 1, -1, null, errorOnFailed);
+            return pawn.Reserve(job.targetA, job, 1, -1, null, errorOnFailed);
         }
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
+            this.FailOnDespawnedOrNull(TargetIndex.A);
+            this.FailOn(() => Remote.IsDisabledForJob(job.playerForced, out var _));
             yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
-            yield return Toils_General.Do(() => Button.PushButton());
+            // Note: 15 tick delay copied from JobDriver_Flick.
+            yield return Toils_General.Wait(15).FailOnCannotTouch(TargetIndex.A, PathEndMode.InteractionCell);
+            yield return Toils_General.Do(() =>
+            {
+                var remote = Remote;
+                if (!remote.IsDisabledForJob(job.playerForced, out var _))
+                    remote.PushButton();
+            });
         }
     }
 }

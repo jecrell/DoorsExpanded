@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <JobDef>
-    <defName>PH_PushButton</defName>
-    <driverClass>DoorsExpanded.JobDriver_PushButton</driverClass>
-    <reportString>pushing TargetA.</reportString>
-    <casualInterruptible>false</casualInterruptible>
-    <allowOpportunisticPrefix>true</allowOpportunisticPrefix>
-  </JobDef>
-
   <ThingDef ParentName="BuildingBase">
     <defName>PH_DoorButton</defName>
     <label>door button</label>

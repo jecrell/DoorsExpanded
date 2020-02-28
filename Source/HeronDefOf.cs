@@ -7,5 +7,9 @@ namespace DoorsExpanded
     public class HeronDefOf
     {
         public static ThingDef HeronInvisibleDoor;
+
+        public static WorkGiverDef PH_PressOrFlip;
+
+        public static JobDef PH_FlipOrPress;
     }
 }

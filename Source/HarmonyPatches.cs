@@ -157,6 +157,10 @@ namespace DoorsExpanded
                 prefix: nameof(DoorExpandedBlueprintSpawnSetupPrefix));
             Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.Draw)),
                 prefix: nameof(DoorExpandedBlueprintDrawPrefix));
+
+            // Patches related to door remotes.
+            Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
+                transpiler: nameof(DoorRemoteAddJobGiverWorkOrdersTranspiler));
         }
 
         private static Harmony harmony;
@@ -192,24 +196,24 @@ namespace DoorsExpanded
             var foundMethod = false;
             foreach (var innerType in innerTypes)
             {
-                if (innerType.Name.StartsWith("<" + parentMethodName + ">"))
+                if (innerType.Name.StartsWith("<" + parentMethodName + ">", StringComparison.Ordinal))
                 {
                     foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
                     {
-                        if (method.Name.StartsWith("<") && method.ReturnType == returnType &&
-                            (predicate == null || predicate(method)))
+                        if (method.Name.StartsWith("<", StringComparison.Ordinal) &&
+                            method.ReturnType == returnType && (predicate == null || predicate(method)))
                         {
                             foundMethod = true;
                             yield return method;
                         }
                     }
                 }
-                else if (innerType.Name.StartsWith("<"))
+                else if (innerType.Name.StartsWith("<", StringComparison.Ordinal))
                 {
                     foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
                     {
-                        if (method.Name.StartsWith("<" + parentMethodName + ">") && method.ReturnType == returnType &&
-                            (predicate == null || predicate(method)))
+                        if (method.Name.StartsWith("<" + parentMethodName + ">", StringComparison.Ordinal) &&
+                            method.ReturnType == returnType && (predicate == null || predicate(method)))
                         {
                             foundMethod = true;
                             yield return method;
@@ -1067,7 +1071,56 @@ namespace DoorsExpanded
 
         private static readonly FastInvokeHandler Comps_PostDraw =
             MethodInvoker.GetHandler(AccessTools.Method(typeof(ThingWithComps), "Comps_PostDraw"));
-        private static readonly object[] emptyObjArray = new object[0];
+        private static readonly object[] emptyObjArray = Array.Empty<object>();
+
+        // FloatMenuMakerMap.AddJobGiverWorkOrders
+        public static IEnumerable<CodeInstruction> DoorRemoteAddJobGiverWorkOrdersTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // Workaround to remove the "Prioritize" prefix for the remote press/flip job in the float menu.
+            // This transforms the following code:
+            //  TranslatorFormattedStringExtensions.Translate("PrioritizeGeneric", ...)
+            // into:
+            //  TranslateRemovePrioritizeJobLabelPrefix("PrioritizeGeneric".Translate(...))
+
+            var methodof_TranslatorFormattedStringExtensions_Translate =
+                AccessTools.Method(typeof(TranslatorFormattedStringExtensions), nameof(TranslatorFormattedStringExtensions.Translate),
+                    new[] { typeof(string), typeof(NamedArgument), typeof(NamedArgument) });
+            var enumerator = instructions.GetEnumerator();
+
+            while (enumerator.MoveNext())
+            {
+                var instruction = enumerator.Current;
+                yield return instruction;
+                if (instruction.Is(OpCodes.Ldstr, "PrioritizeGeneric"))
+                    break;
+            }
+
+            while (enumerator.MoveNext())
+            {
+                var instruction = enumerator.Current;
+                if (instruction.Calls(methodof_TranslatorFormattedStringExtensions_Translate))
+                    break;
+                if (instruction.IsLdloc())
+                    yield return instruction;
+            }
+
+            yield return new CodeInstruction(OpCodes.Call,
+                AccessTools.Method(typeof(HarmonyPatches), nameof(TranslateCustomizeUseDoorRemoteJobLabel)));
+
+            while (enumerator.MoveNext())
+            {
+                yield return enumerator.Current;
+            }
+        }
+
+        private static TaggedString TranslateCustomizeUseDoorRemoteJobLabel(string translationKey, WorkGiver_Scanner scanner,
+            Job job, Thing thing)
+        {
+            if (scanner is WorkGiver_PressOrFlip)
+                return "PH_UseButtonOrLever".Translate(thing.Label);
+            // Following is copied from FloatMenuMakerMap.AddJobGiverWorkOrders.
+            return translationKey.Translate(scanner.PostProcessedGerund(job), thing.Label);
+        }
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door door && door.Open
