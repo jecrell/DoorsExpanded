@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.1.2552" />
-    <PackageReference Include="Lib.Harmony" Version="2.0.0.6" />
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.1.2558" />
+    <PackageReference Include="Lib.Harmony" Version="2.0.0.7" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Building_DoorRemote.cs" />
@@ -41,7 +41,6 @@
     <Compile Include="Building_DoorRemoteButton.cs" />
     <Compile Include="DebugInspectorPatches.cs" />
     <Compile Include="DoorExpandedDef.cs" />
-    <Compile Include="HarmonyExtensions.cs" />
     <Compile Include="HarmonyPatches.cs" />
     <Compile Include="HeronDefOf.cs" />
     <Compile Include="JobDriver_PushButton.cs" />
