@@ -4,7 +4,7 @@ using Verse;
 namespace DoorsExpanded
 {
     [DefOf]
-    public class HeronDefOf
+    public static class HeronDefOf
     {
         public static ThingDef HeronInvisibleDoor;
 

@@ -3,16 +3,11 @@
 
   <ResearchProjectDef Name="ProjectHeronResearch" Abstract="True">
     <tab>Heron_ResearchTab</tab>
-    <!-- No longer possible to use string tags to flag research for other mods
-    <tags>
-      <li>ta-ignore</li>
-    </tags>
-    -->
   </ResearchProjectDef>
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_Curtains</defName>
-    <label>Simple Curtains</label>
+    <label>simple curtains</label>
     <description>Unlocks simple construction techniques to make rings, simple hooks, and poles for the production of curtains, which open far faster than standard doors, but slowly vent temperatures between rooms.</description>
     <techLevel>Neolithic</techLevel>
     <baseCost>200</baseCost>
@@ -26,7 +21,7 @@
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_PrisonDoors</defName>
-    <label>Prisoner Containment</label>
+    <label>prisoner containment</label>
     <description>Provides simple prison doors to keep inmates safe, well, mostly.</description>
     <baseCost>500</baseCost>
     <techLevel>Neolithic</techLevel>
@@ -36,7 +31,7 @@
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_RemoteDoors</defName>
-    <label>Remote doors</label>
+    <label>remote doors</label>
     <description>Unlocks remote doors for remote containment as well as buttons and levers to manipulate them.</description>
     <baseCost>800</baseCost>
     <techLevel>Industrial</techLevel>
@@ -46,7 +41,7 @@
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_Gates</defName>
-    <label>Hinges and Gates</label>
+    <label>hinges and gates</label>
     <description>Hinges and fastening techniques allow for the construction of swinging doors, such as large gates.</description>
     <baseCost>200</baseCost>
     <techLevel>Neolithic</techLevel>
@@ -59,7 +54,7 @@
 
   <ResearchProjectDef ParentName="ProjectHeronResearch">
     <defName>ProjectHeron_BlastDoors</defName>
-    <label>Blast Doors</label>
+    <label>blast doors</label>
     <description>Allows for the production of blast absorbing pressurized blast doors.</description>
     <baseCost>3000</baseCost>
     <techLevel>Industrial</techLevel>

@@ -1,6 +1,6 @@
 1.22.0.0 (28-02-2020)
 ========================
-RimWorld 1.1 compatibility (RimWorld 1.0 still works, but in feature freeze).
+RimWorld 1.1 compatibility (RimWorld 1.0 still works, but in feature freeze). Engineered by lbmaian.
 No longer requires JecsTools in either RimWorld 1.0 or 1.1.
 Also revamp door remote button/lever job so that it consistently respects whether door remote button/lever is enabled throughout the job, and fixes related pathing issues.
 
