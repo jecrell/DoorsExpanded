@@ -38,6 +38,12 @@ Maaxar, Shibby Says, TheJagermeister, Cory Bonifay, Kiya Nicoll, Matt Harris, Pa
 ========================
 Changelog
 ========================
+1.22.0.0 (28-02-2020)
+========================
+RimWorld 1.1 compatibility (RimWorld 1.0 still works, but in feature freeze).
+The 1.1 version no longer requires JecsTools.
+Also revamp door remote button/lever job so that it consistently respects whether door remote button/lever is enabled throughout the job, and fixes related pathing issues.
+
 1.21.0.0 (01-31-2020)
 ========================
 Rewrite and fully rebase code onto 1.0 RimWorld, fixing several bugs. Engineered by lbmaian.
