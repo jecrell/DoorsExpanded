@@ -1116,7 +1116,7 @@ namespace DoorsExpanded
         private static TaggedString TranslateCustomizeUseDoorRemoteJobLabel(string translationKey, WorkGiver_Scanner scanner,
             Job job, Thing thing)
         {
-            if (scanner is WorkGiver_PressOrFlip)
+            if (scanner is WorkGiver_UseRemoteButton)
                 return "PH_UseButtonOrLever".Translate(thing.Label);
             // Following is copied from FloatMenuMakerMap.AddJobGiverWorkOrders.
             return translationKey.Translate(scanner.PostProcessedGerund(job), thing.Label);

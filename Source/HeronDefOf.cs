@@ -8,8 +8,8 @@ namespace DoorsExpanded
     {
         public static ThingDef HeronInvisibleDoor;
 
-        public static WorkGiverDef PH_PressOrFlip;
+        public static JobDef PH_UseRemoteButton;
 
-        public static JobDef PH_FlipOrPress;
+        static HeronDefOf() => DefOfHelper.EnsureInitializedInCtor(typeof(HeronDefOf));
     }
 }

@@ -6,8 +6,7 @@ using Verse.AI;
 
 namespace DoorsExpanded
 {
-    // TODO: Rename WorkGiverDef and class to be consistent with the corresponding JobGiver.
-    public class WorkGiver_PressOrFlip : WorkGiver_Scanner
+    public class WorkGiver_UseRemoteButton : WorkGiver_Scanner
     {
         public override ThingRequest PotentialWorkThingRequest => ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial);
 
@@ -55,7 +54,7 @@ namespace DoorsExpanded
 
         public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
         {
-            return JobMaker.MakeJob(HeronDefOf.PH_FlipOrPress, t);
+            return JobMaker.MakeJob(HeronDefOf.PH_UseRemoteButton, t);
         }
     }
 }

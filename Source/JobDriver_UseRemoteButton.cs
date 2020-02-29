@@ -3,8 +3,7 @@ using Verse.AI;
 
 namespace DoorsExpanded
 {
-    // TODO: Rename JobDef and class to be consistent with the corresponding WorkGiver.
-    public class JobDriver_PushButton : JobDriver
+    public class JobDriver_UseRemoteButton : JobDriver
     {
         private Building_DoorRemoteButton Remote => (Building_DoorRemoteButton)TargetThingA;
 
