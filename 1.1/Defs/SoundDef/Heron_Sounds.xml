@@ -4,7 +4,6 @@
   <SoundDef>
     <defName>HeronGarageOpen</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -14,14 +13,8 @@
             <clipPath>Misc/RemoteDoor/GarageOpen</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.8852941</min>
-          <max>1.114706</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -29,7 +22,6 @@
   <SoundDef>
     <defName>HeronGarageClose</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -39,14 +31,8 @@
             <clipPath>Misc/RemoteDoor/GarageClose</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.862353</min>
-          <max>1.137647</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -54,7 +40,6 @@
   <SoundDef>
     <defName>HeronCurtainOpen</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -64,14 +49,8 @@
             <clipPath>Misc/Curtain/CurtainOpen</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.8852941</min>
-          <max>1.114706</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -79,7 +58,6 @@
   <SoundDef>
     <defName>HeronCurtainClose</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -89,14 +67,8 @@
             <clipPath>Misc/Curtain/CurtainClose</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.862353</min>
-          <max>1.137647</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -105,7 +77,6 @@
   <SoundDef>
     <defName>HeronJailDoorOpen</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -115,14 +86,8 @@
             <clipPath>Misc/JailDoor/JailDoorOpen</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.8852941</min>
-          <max>1.114706</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -130,7 +95,6 @@
   <SoundDef>
     <defName>HeronJailDoorClose</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -140,14 +104,8 @@
             <clipPath>Misc/JailDoor/JailDoorClose</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.862353</min>
-          <max>1.137647</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -156,7 +114,6 @@
   <SoundDef>
     <defName>HeronBlastDoorOpen</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -166,14 +123,8 @@
             <clipPath>Misc/BlastDoor/BlastDoorOpen</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.8852941</min>
-          <max>1.114706</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -181,7 +132,6 @@
   <SoundDef>
     <defName>HeronBlastDoorClose</defName>
     <context>MapOnly</context>
-    <eventNames />
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
@@ -191,14 +141,8 @@
             <clipPath>Misc/BlastDoor/BlastDoorClose</clipPath>
           </li>
         </grains>
-        <volumeRange>
-          <min>3</min>
-          <max>4</max>
-        </volumeRange>
-        <pitchRange>
-          <min>0.862353</min>
-          <max>1.137647</max>
-        </pitchRange>
+        <volumeRange>3</volumeRange>
+        <pitchRange>0.85~1.15</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
