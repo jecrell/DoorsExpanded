@@ -1,4 +1,4 @@
-Next
+1.22.1.0 (29-02-2020)
 ========================
 Balance pass based on ~b18~r1.1 changes and consistency:
 - All doors (except blast doors and curtains) MaxHitPoints were reduced, typically by about a quarter to match the B19 change to vanilla doors.
