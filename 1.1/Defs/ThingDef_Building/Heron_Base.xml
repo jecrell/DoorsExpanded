@@ -13,20 +13,12 @@
       <li>Fabric</li>
       <li>Leathery</li>
     </stuffCategories>
-    <statBases>
-      <MaxHitPoints>250</MaxHitPoints>
-      <Flammability>1.0</Flammability>
-    </statBases>
   </ThingDef>
 
   <ThingDef ParentName="AbstractHeronDoorBase" Name="HeronMetalDoorBase" Abstract="True">
     <stuffCategories>
       <li>Metallic</li>
     </stuffCategories>
-    <statBases>
-      <MaxHitPoints>250</MaxHitPoints>
-      <Flammability>1.0</Flammability>
-    </statBases>
   </ThingDef>
 
   <ThingDef ParentName="AbstractHeronDoorBase" Name="HeronDoorBase" Abstract="True">
@@ -35,11 +27,6 @@
       <li>Woody</li>
       <li>Stony</li>
     </stuffCategories>
-    <statBases>
-      <Mass>40</Mass>
-      <MaxHitPoints>250</MaxHitPoints>
-      <Flammability>1.0</Flammability>
-    </statBases>
   </ThingDef>
 
   <ThingDef Name="AbstractHeronDoorBase" ParentName="BuildingBase" Abstract="True">
@@ -48,12 +35,17 @@
     <altitudeLayer>DoorMoveable</altitudeLayer>
     <fillPercent>1</fillPercent>
     <useHitPoints>true</useHitPoints>
+    <statBases>
+      <MaxHitPoints>250</MaxHitPoints>
+      <Flammability>1.0</Flammability>
+    </statBases>
     <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
     <selectable>true</selectable>
     <tickerType>Normal</tickerType>
     <!-- Note: rotatable should be false for 1x1 doors since they're auto-rotated -->
     <rotatable>true</rotatable>
     <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
+    <!-- Note: Vanilla door terrainAffordanceNeeded is Light despite being constructable from stone, so doing the same here  -->
     <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
     <designationCategory>Structure</designationCategory>
     <holdsRoof>true</holdsRoof>
