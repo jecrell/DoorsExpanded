@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <JobDef>
-    <defName>PH_PushButton</defName>
-    <driverClass>DoorsExpanded.JobDriver_PushButton</driverClass>
-    <reportString>pushing TargetA.</reportString>
-    <casualInterruptible>false</casualInterruptible>
-    <allowOpportunisticPrefix>true</allowOpportunisticPrefix>
-  </JobDef>
-
   <ThingDef ParentName="BuildingBase">
     <defName>PH_DoorButton</defName>
     <label>door button</label>
@@ -151,23 +143,20 @@
     </researchPrerequisites>
   </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef Name="HeronDoorRemote" ParentName="HeronDoorBase">
+  <DoorsExpanded.DoorExpandedDef Name="HeronDoorRemote" ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteSingle</defName>
     <label>remote door (1x1)</label>
     <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
-    <description>Vertical sliding metal door. Divides rooms. Can be opened and closed from a distance with a button.</description>
+    <description>Vertical sliding metal door. Divides rooms. Can be opened and closed from a distance with a button or lever.</description>
     <building>
       <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
     <statBases>
-      <Mass>60</Mass>
-      <MaxHitPoints>300</MaxHitPoints>
-      <WorkToBuild>850</WorkToBuild>
+      <Mass>20</Mass>
+      <MaxHitPoints>160</MaxHitPoints>
+      <WorkToBuild>1100</WorkToBuild>
     </statBases>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
     <size>(1,1)</size>
     <rotatable>false</rotatable>
     <graphicData>
@@ -188,9 +177,6 @@
     </comps>
     <uiIconPath>Things/Building/Door/DoorRemote_icon</uiIconPath>
     <costStuffCount>50</costStuffCount>
-    <stuffCategories Inherit="False">
-      <li>Metallic</li>
-    </stuffCategories>
     <costList>
       <Steel>5</Steel>
       <ComponentIndustrial>1</ComponentIndustrial>
@@ -204,19 +190,19 @@
     </researchPrerequisites>
   </DoorsExpanded.DoorExpandedDef>
 
-  <DoorsExpanded.DoorExpandedDef Name="HeronDoorDoubleRemote" ParentName="HeronDoorBase">
+  <DoorsExpanded.DoorExpandedDef Name="HeronDoorDoubleRemote" ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteDouble</defName>
     <label>remote door (2x1)</label>
     <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
-    <description>Vertical sliding metal door. Divides rooms. Can be opened and closed from a distance with a button.</description>
+    <description>Vertical sliding metal door. Divides rooms. Can be opened and closed from a distance with a button or lever.</description>
     <building>
       <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
     <statBases>
-      <Mass>60</Mass>
-      <MaxHitPoints>300</MaxHitPoints>
-      <WorkToBuild>850</WorkToBuild>
+      <Mass>20</Mass>
+      <MaxHitPoints>320</MaxHitPoints>
+      <WorkToBuild>1400</WorkToBuild>
     </statBases>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
@@ -241,9 +227,6 @@
     </comps>
     <uiIconPath>Things/Building/Door/DoorDoubleRemoteUI_icon</uiIconPath>
     <costStuffCount>100</costStuffCount>
-    <stuffCategories Inherit="False">
-      <li>Metallic</li>
-    </stuffCategories>
     <costList>
       <Steel>10</Steel>
       <ComponentIndustrial>2</ComponentIndustrial>

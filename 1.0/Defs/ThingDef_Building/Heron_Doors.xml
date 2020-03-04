@@ -48,12 +48,11 @@
   <DoorsExpanded.DoorExpandedDef Name="HeronDoor" ParentName="HeronDoorBase">
     <defName>PH_DoorDouble</defName>
     <label>door (1x2)</label>
-    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
-    <description>Divides rooms. Must be manually opened and closed, which slows people down.</description>
+    <description>Divides rooms. Simple doors must be manually opened, which slows people down. The amount of slowdown depends on what the door is made of.</description>
     <statBases>
-      <Mass>60</Mass>
-      <MaxHitPoints>400</MaxHitPoints>
-      <WorkToBuild>850</WorkToBuild>
+      <Mass>40</Mass>
+      <MaxHitPoints>320</MaxHitPoints>
+      <WorkToBuild>1250</WorkToBuild>
     </statBases>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
@@ -80,13 +79,13 @@
     <defName>PH_DoorTriple</defName>
     <label>door (3x1)</label>
     <size>(3,1)</size>
-    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
+    <description>Divides rooms. Simple doors must be manually opened, which slows people down. The amount of slowdown depends on what the door is made of.</description>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
     <statBases>
-      <Mass>75</Mass>
-      <MaxHitPoints>600</MaxHitPoints>
+      <Mass>60</Mass>
+      <MaxHitPoints>480</MaxHitPoints>
       <WorkToBuild>1600</WorkToBuild>
     </statBases>
     <rotatable>true</rotatable>
@@ -109,7 +108,6 @@
     <defName>PH_AutodoorDouble</defName>
     <label>autodoor (1x2)</label>
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
-    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
     <size>(2,1)</size>
     <statBases>
       <WorkToBuild>1100</WorkToBuild>
@@ -146,10 +144,9 @@
     <defName>PH_AutodoorTriple</defName>
     <label>autodoor (1x3)</label>
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
-    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
     <size>(3,1)</size>
     <statBases>
-      <WorkToBuild>1100</WorkToBuild>
+      <WorkToBuild>1400</WorkToBuild>
     </statBases>
     <graphicData>
       <texPath>Things/Building/Door/Autodoor_Mover</texPath>
@@ -184,15 +181,11 @@
     <defName>PH_DoorJail</defName>
     <label>jail door</label>
     <description>Sliding jail cell door with strong bars.</description>
-    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
     <statBases>
-      <Mass>50</Mass>
-      <MaxHitPoints>420</MaxHitPoints>
+      <Mass>30</Mass>
+      <MaxHitPoints>300</MaxHitPoints>
       <WorkToBuild>1500</WorkToBuild>
     </statBases>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
     <size>(1,1)</size>
     <rotatable>false</rotatable>
     <graphicData>
@@ -207,13 +200,11 @@
       </damageData>
     </graphicData>
     <building>
-      <isInert>true</isInert>
-      <canPlaceOverWall>true</canPlaceOverWall>
       <soundDoorOpenManual>HeronJailDoorOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronJailDoorClose</soundDoorCloseManual>
     </building>
     <uiIconPath>Things/Building/Door/JailCell_Mover</uiIconPath>
-    <costStuffCount>100</costStuffCount>
+    <costStuffCount>50</costStuffCount>
     <costList>
       <Steel>30</Steel>
       <ComponentIndustrial>2</ComponentIndustrial>
@@ -240,18 +231,14 @@
     <defName>HeronCurtainTribal</defName>
     <label>curtain (tribal)</label>
     <description>Divides rooms. Curtains are much faster to open than standard doors, but are flammable and slowly vent temperatures between rooms.</description>
-    <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
     <statBases>
       <Mass>10</Mass>
       <MaxHitPoints>50</MaxHitPoints>
-      <WorkToBuild>900</WorkToBuild>
-      <Flammability>2.0</Flammability>
+      <WorkToBuild>850</WorkToBuild>
     </statBases>
     <size>(1,1)</size>
     <rotatable>false</rotatable>
     <building>
-      <isInert>true</isInert>
-      <canPlaceOverWall>true</canPlaceOverWall>
       <soundDoorOpenManual>HeronCurtainOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronCurtainClose</soundDoorCloseManual>
     </building>
@@ -289,14 +276,10 @@
     <defName>PH_GateDoubleThick</defName>
     <label>gate (2x1)</label>
     <size>(2,1)</size>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
     <statBases>
-      <Mass>70</Mass>
-      <MaxHitPoints>700</MaxHitPoints>
-      <WorkToBuild>1700</WorkToBuild>
-      <Flammability>2.0</Flammability>
+      <Mass>60</Mass>
+      <MaxHitPoints>500</MaxHitPoints>
+      <WorkToBuild>1600</WorkToBuild>
     </statBases>
     <uiIconPath>Things/Building/Door/Gate_MenuUI</uiIconPath>
     <graphicData>
@@ -312,7 +295,7 @@
     <doorType>DoubleSwing</doorType>
     <rotatesSouth>false</rotatesSouth>
     <fixedPerspective>true</fixedPerspective>
-    <costStuffCount>180</costStuffCount>
+    <costStuffCount>80</costStuffCount>
     <researchPrerequisites>
       <li>ProjectHeron_Gates</li>
     </researchPrerequisites>
@@ -338,18 +321,17 @@
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
-    <stuffCategories>
-      <li>Metallic</li>
-    </stuffCategories>
     <statBases>
-      <Mass>300</Mass>
-      <MaxHitPoints>1000</MaxHitPoints>
+      <Mass>115</Mass>
+      <MaxHitPoints>1150</MaxHitPoints>
       <WorkToBuild>2000</WorkToBuild>
     </statBases>
+    <!-- Same terrain affordance property values as Wall -->
+    <terrainAffordanceNeeded>Medium</terrainAffordanceNeeded>
     <costStuffCount>200</costStuffCount>
     <costList>
       <Steel>100</Steel>
-      <ComponentIndustrial>10</ComponentIndustrial>
+      <ComponentIndustrial>8</ComponentIndustrial>
     </costList>
     <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
     <graphicData>
@@ -393,6 +375,7 @@
     <researchPrerequisites>
       <li>ProjectHeron_BlastDoors</li>
     </researchPrerequisites>
+    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
   </DoorsExpanded.DoorExpandedDef>
 
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
@@ -407,17 +390,16 @@
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
-    <stuffCategories>
-      <li>Metallic</li>
-    </stuffCategories>
     <statBases>
-      <Mass>4000</Mass>
+      <Mass>200</Mass>
       <MaxHitPoints>2000</MaxHitPoints>
-      <WorkToBuild>2400</WorkToBuild>
+      <WorkToBuild>3000</WorkToBuild>
     </statBases>
+    <!-- Same terrain affordance property values as Wall -->
+    <terrainAffordanceNeeded>Medium</terrainAffordanceNeeded>
     <costStuffCount>350</costStuffCount>
     <costList>
-      <Steel>170</Steel>
+      <Steel>175</Steel>
       <ComponentIndustrial>14</ComponentIndustrial>
     </costList>
     <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
@@ -461,6 +443,7 @@
     <researchPrerequisites>
       <li>ProjectHeron_BlastDoors</li>
     </researchPrerequisites>
+    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
   </DoorsExpanded.DoorExpandedDef>
 
 </Defs>

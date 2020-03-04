@@ -2,9 +2,11 @@
 <Defs>
 
   <JobDef>
-    <defName>PH_FlipOrPress</defName>
-    <driverClass>DoorsExpanded.JobDriver_PushButton</driverClass>
+    <defName>PH_UseRemoteButton</defName>
+    <driverClass>DoorsExpanded.JobDriver_UseRemoteButton</driverClass>
     <reportString>using TargetA.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <allowOpportunisticPrefix>true</allowOpportunisticPrefix>
   </JobDef>
 
 </Defs>

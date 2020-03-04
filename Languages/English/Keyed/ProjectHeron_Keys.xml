@@ -1,26 +1,22 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
 
   <PH_ButtonDisconnect>Disconnect button or lever</PH_ButtonDisconnect>
   <PH_ButtonDisconnectDesc>Disconnects any connected button or lever.</PH_ButtonDisconnectDesc>
   <PH_CannotOpenRemotelyWithoutPower>{0} requires power to be opened remotely.</PH_CannotOpenRemotelyWithoutPower>
-  <PH_PowerSourceRequired>A power source is required.</PH_PowerSourceRequired>
-  <PH_NeedsLinkedDoorsFirst>A linked remote door is required.</PH_NeedsLinkedDoorsFirst>
-  <PH_UseButtonOrLever>Use button or lever</PH_UseButtonOrLever>
-  <PH_UseButtonOrLeverDesc>Toggles whether or not a colonist should make their way over to activate or deactivate the button or lever.</PH_UseButtonOrLeverDesc>
+  <PH_UseButtonOrLever>Use {0}</PH_UseButtonOrLever>
+  <PH_UseButtonOrLeverDesc>Toggles whether or not a colonist should make their way over to activate or deactivate {0}.</PH_UseButtonOrLeverDesc>
   <PH_PowerNeeded>Connect a power source to secure remotely.</PH_PowerNeeded>
   <PH_ButtonNeeded>Connect a button or lever to secure remotely.</PH_ButtonNeeded>
   <PH_ButtonConnect>Connect to a button or lever</PH_ButtonConnect>
-  <PH_ButtonConnectDesc>Instantly links the remote door to a button</PH_ButtonConnectDesc>
-  <PH_ButtonConnectSuccess>Successfully set new button at {0}</PH_ButtonConnectSuccess>
-  <PH_ButtonConnectFailed>Failed to set new button from {0}</PH_ButtonConnectFailed>
-  <PH_ButtonUnlinked>Unlinked previously connected button at {0}</PH_ButtonUnlinked>
-  <PH_ButtonUnlinkedUnspawned>Unlinked previous connected button</PH_ButtonUnlinkedUnspawned>
-  <PH_ButtonPress>Press {0}</PH_ButtonPress>
-  <PH_ButtonPressManipulationFailure>{0} is incapable of manipulation.</PH_ButtonPressManipulationFailure>
-  <PH_ButtonPressNoConnection>Must be connected to a remote door</PH_ButtonPressNoConnection>
-  <PH_ButtonPressNoPower>Must be connected to power</PH_ButtonPressNoPower>
-  <PH_RemoteDoorSecuredRemotely>Secured Remotely</PH_RemoteDoorSecuredRemotely>
-  <PH_RemoteDoorSecuredRemotelyDesc>With this setting on, the door may only be opened remotely by pressing the corresponding button. The door will act like it is in a locked state, no entry or exit, while closed. When this setting is off, characters may freely open and close the door like normal doors.</PH_RemoteDoorSecuredRemotelyDesc>
+  <PH_ButtonConnectDesc>Instantly links the remote door to a button or lever</PH_ButtonConnectDesc>
+  <PH_ButtonConnectSuccess>Successfully set new button or lever at {0}</PH_ButtonConnectSuccess>
+  <PH_ButtonConnectFailed>Failed to set new button or lever from {0}</PH_ButtonConnectFailed>
+  <PH_ButtonUnlinked>Unlinked previously connected button or lever at {0}</PH_ButtonUnlinked>
+  <PH_ButtonUnlinkedUnspawned>Unlinked previous connected button or lever</PH_ButtonUnlinkedUnspawned>
+  <PH_UseButtonOrLeverNoConnection>Must be connected to a remote door</PH_UseButtonOrLeverNoConnection>
+  <PH_UseButtonOrLeverNoPower>Must be connected to power</PH_UseButtonOrLeverNoPower>
+  <PH_RemoteDoorSecuredRemotely>Secured remotely</PH_RemoteDoorSecuredRemotely>
+  <PH_RemoteDoorSecuredRemotelyDesc>With this setting on, the door may only be opened remotely by using the corresponding button or lever. The door will act like it is in a locked state, no entry or exit, while closed. When this setting is off, characters may freely open and close the door like normal doors.</PH_RemoteDoorSecuredRemotelyDesc>
 
 </LanguageData>
