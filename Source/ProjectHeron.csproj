@@ -55,5 +55,11 @@
   <ItemGroup>
     <Folder Include="Building_Door_Reference\" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\**\*" Exclude="..\.git\**\*;..\..\Source\**\*">
+      <Link>!ModFolder\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
