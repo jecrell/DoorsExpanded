@@ -18,25 +18,18 @@
   </modDependencies>
   <description><![CDATA[1.22.1.0 (29-02-2020)
 
-  Adds new types and sizes of doors to RimWorld.
-  
-  Currently included:
-  * Doors (1x2) - Double sized doors.
-  * Doors (1x3) - Triple sized doors.
-  
-  * Curtains (Tribal)
-   -Fragile, flammable, and made of fabric, these curtains provide fast movement through buildings.
-  
-  * Jail Door
-    -Stronger door to keep prisoners inside.
-  
-  * Gates
-   -Stylized doors perfect for meeting pre-industrial needs.
-  
-  * Blast Doors
-   -Incredibly large and secure doors used to keep greater threats at bay.
-  
-  Commissioned by CMDR Toss Antilles.
+Adds new types and sizes of doors to RimWorld and an extensible framework for other mods to add such doors.
+
+Currently included:
+* Doors (1x2) - Double sized doors.
+* Doors (1x3) - Triple sized doors.
+* Curtains (Tribal) - Fragile, flammable, and made of fabric, these curtains provide fast movement through buildings.
+* Jail Door - Stronger door to keep prisoners inside.
+* Gates - Stylized doors perfect for meeting pre-industrial needs.
+* Remote Doors - Garage-style doors that can be opened by remote buttons or levers.
+* Blast Doors - Incredibly large and secure doors used to keep greater threats at bay.
+
+Commissioned by CMDR Toss Antilles.
 
 Thank you to my Patrons for supporting me in my efforts. Without you, none of this would be possible.
 
