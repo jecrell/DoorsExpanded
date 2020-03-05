@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>jecrell.doorsexpanded</packageId>
   <name>Doors Expanded</name>
@@ -42,6 +42,7 @@ Changelog
 1.22.1.1 (04-03-2020)
 ========================
 Backport tweaks and fixes to RimWorld 1.0 version. From this point forward, the RimWorld 1.0 version is in feature freeze. Engineered by lbmaian.
+"JT_PlaceWorker_OnTopOfWalls" is now translated if JecsTools isn't loaded.
 
 1.22.1.0 (29-02-2020)
 ========================

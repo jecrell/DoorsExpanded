@@ -19,4 +19,7 @@
   <PH_RemoteDoorSecuredRemotely>Ferngesteuert</PH_RemoteDoorSecuredRemotely>
   <PH_RemoteDoorSecuredRemotelyDesc>Wenn diese Einstellung aktiviert ist, kann die Tür nur durch Drücken der entsprechenden Taste aus der Ferne geöffnet werden. Die Tür verhält sich so, als wäre sie verriegelt, kein Ein- oder Ausgang, solange sie geschlossen ist. Wenn diese Einstellung deaktiviert ist, können Menschen die Tür wie normale Türen frei öffnen und schließen..</PH_RemoteDoorSecuredRemotelyDesc>
 
+  <!-- Copied from JecsTools -->
+  <JT_PlaceWorker_OnTopOfWalls>Muss an eine Wand gestellt werden.</JT_PlaceWorker_OnTopOfWalls> <!-- Google Translate -->
+
 </LanguageData>
