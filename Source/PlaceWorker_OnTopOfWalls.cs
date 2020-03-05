@@ -13,7 +13,8 @@ namespace JecsTools
             if (loc.GetThingList(map).FirstOrDefault(x =>
                     x.def.defName.Contains("Wall")) != null)
                 return true;
-            return new AcceptanceReport("JT_PlaceWorker_OnTopOfWalls".Translate());
+            // Note: Using different translation key ("JT" => "PH") to avoid "duplicate keyed translation key" warnings.
+            return new AcceptanceReport("PH_PlaceWorker_OnTopOfWalls".Translate());
         }
     }
 }

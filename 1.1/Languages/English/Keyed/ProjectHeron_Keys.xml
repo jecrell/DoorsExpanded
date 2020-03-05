@@ -19,7 +19,7 @@
   <PH_RemoteDoorSecuredRemotely>Secured remotely</PH_RemoteDoorSecuredRemotely>
   <PH_RemoteDoorSecuredRemotelyDesc>With this setting on, the door may only be opened remotely by using the corresponding button or lever. The door will act like it is in a locked state, no entry or exit, while closed. When this setting is off, characters may freely open and close the door like normal doors.</PH_RemoteDoorSecuredRemotelyDesc>
 
-  <!-- Copied from JecsTools -->
-  <JT_PlaceWorker_OnTopOfWalls>Must be placed on a wall.</JT_PlaceWorker_OnTopOfWalls>
+  <!-- Copied from JecsTools (note: using different translation key ("JT" => "PH") to avoid "duplicate keyed translation key" warnings) -->
+  <PH_PlaceWorker_OnTopOfWalls>Must be placed on a wall.</PH_PlaceWorker_OnTopOfWalls>
 
 </LanguageData>

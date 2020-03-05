@@ -19,7 +19,7 @@
   <PH_RemoteDoorSecuredRemotely>遠隔ドアを施錠</PH_RemoteDoorSecuredRemotely>
   <PH_RemoteDoorSecuredRemotelyDesc>この設定がオンの場合、ドアは対応するボタンを押すことによってのみ遠隔操作で開くことができます。閉じられている間、ドアはロックされた状態、つまり出入り口とはならない状態になります。この設定がオフの場合、ポーン(人間や動物)は通常のドアのようにドアを自由に開閉できます。</PH_RemoteDoorSecuredRemotelyDesc>
 
-  <!-- Copied from JecsTools -->
-  <JT_PlaceWorker_OnTopOfWalls>壁に置く必要があります。</JT_PlaceWorker_OnTopOfWalls>
+  <!-- Copied from JecsTools (note: using different translation key ("JT" => "PH") to avoid "duplicate keyed translation key" warnings) -->
+  <PH_PlaceWorker_OnTopOfWalls>壁に置く必要があります。</PH_PlaceWorker_OnTopOfWalls>
 
 </LanguageData>
