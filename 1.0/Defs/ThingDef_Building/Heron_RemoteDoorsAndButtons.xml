@@ -202,7 +202,7 @@
     <statBases>
       <Mass>20</Mass>
       <MaxHitPoints>320</MaxHitPoints>
-      <WorkToBuild>1400</WorkToBuild>
+      <WorkToBuild>2200</WorkToBuild>
     </statBases>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>

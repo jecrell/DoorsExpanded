@@ -52,7 +52,7 @@
     <statBases>
       <Mass>40</Mass>
       <MaxHitPoints>320</MaxHitPoints>
-      <WorkToBuild>1250</WorkToBuild>
+      <WorkToBuild>1700</WorkToBuild>
     </statBases>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
@@ -86,7 +86,7 @@
     <statBases>
       <Mass>60</Mass>
       <MaxHitPoints>480</MaxHitPoints>
-      <WorkToBuild>1600</WorkToBuild>
+      <WorkToBuild>2550</WorkToBuild>
     </statBases>
     <rotatable>true</rotatable>
     <graphicData>
@@ -110,7 +110,7 @@
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
     <size>(2,1)</size>
     <statBases>
-      <WorkToBuild>1100</WorkToBuild>
+      <WorkToBuild>2200</WorkToBuild>
     </statBases>
     <graphicData>
       <texPath>Things/Building/Door/Autodoor_Mover</texPath>
@@ -146,7 +146,7 @@
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
     <size>(3,1)</size>
     <statBases>
-      <WorkToBuild>1400</WorkToBuild>
+      <WorkToBuild>3300</WorkToBuild>
     </statBases>
     <graphicData>
       <texPath>Things/Building/Door/Autodoor_Mover</texPath>
@@ -279,7 +279,7 @@
     <statBases>
       <Mass>60</Mass>
       <MaxHitPoints>500</MaxHitPoints>
-      <WorkToBuild>1600</WorkToBuild>
+      <WorkToBuild>2500</WorkToBuild>
     </statBases>
     <uiIconPath>Things/Building/Door/Gate_MenuUI</uiIconPath>
     <graphicData>
@@ -295,7 +295,7 @@
     <doorType>DoubleSwing</doorType>
     <rotatesSouth>false</rotatesSouth>
     <fixedPerspective>true</fixedPerspective>
-    <costStuffCount>80</costStuffCount>
+    <costStuffCount>100</costStuffCount>
     <researchPrerequisites>
       <li>ProjectHeron_Gates</li>
     </researchPrerequisites>
@@ -322,16 +322,16 @@
       <li>JecsTools.PlaceWorker_Outline</li>
     </placeWorkers>
     <statBases>
-      <Mass>115</Mass>
-      <MaxHitPoints>1150</MaxHitPoints>
-      <WorkToBuild>2000</WorkToBuild>
+      <Mass>100</Mass>
+      <MaxHitPoints>1000</MaxHitPoints>
+      <WorkToBuild>4000</WorkToBuild>
     </statBases>
     <!-- Same terrain affordance property values as Wall -->
     <terrainAffordanceNeeded>Medium</terrainAffordanceNeeded>
-    <costStuffCount>200</costStuffCount>
+    <costStuffCount>175</costStuffCount>
     <costList>
-      <Steel>100</Steel>
-      <ComponentIndustrial>8</ComponentIndustrial>
+      <Steel>50</Steel>
+      <ComponentIndustrial>7</ComponentIndustrial>
     </costList>
     <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
     <graphicData>
@@ -393,13 +393,13 @@
     <statBases>
       <Mass>200</Mass>
       <MaxHitPoints>2000</MaxHitPoints>
-      <WorkToBuild>3000</WorkToBuild>
+      <WorkToBuild>8000</WorkToBuild>
     </statBases>
     <!-- Same terrain affordance property values as Wall -->
     <terrainAffordanceNeeded>Medium</terrainAffordanceNeeded>
     <costStuffCount>350</costStuffCount>
     <costList>
-      <Steel>175</Steel>
+      <Steel>100</Steel>
       <ComponentIndustrial>14</ComponentIndustrial>
     </costList>
     <uiIconPath>Things/Building/Door/BlastDoorUI</uiIconPath>
