@@ -49,6 +49,8 @@ namespace DoorsExpanded
 
         public DoorExpandedDef Def => (DoorExpandedDef)def;
 
+        public List<Building_DoorRegionHandler> InvisDoors => invisDoors;
+
         public bool Open => Def.doorType == DoorType.FreePassage || openInt;
 
         protected virtual bool OpenInt
@@ -251,13 +253,33 @@ namespace DoorsExpanded
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
-            foreach (var invisDoor in invisDoors)
+            var spawnedInvisDoors = invisDoors.Where(invisDoor => invisDoor.Spawned).ToArray();
+            foreach (var invisDoor in spawnedInvisDoors)
             {
-                if (invisDoor.Spawned)
-                    invisDoor.DeSpawn(mode);
+                invisDoor.DeSpawn(mode);
             }
             invisDoors.Clear();
             var map = Map;
+            // Note: To be safe, this room notifying is done after all invis doors are despawned.
+            // See also HarmonyPatches.InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix.
+            foreach (var invisDoor in spawnedInvisDoors)
+            {
+                // Following partially copied from Thing.DeSpawn.
+                map.regionGrid.GetValidRegionAt_NoRebuild(Position)?.Room?.Notify_ContainedThingSpawnedOrDespawned(invisDoor);
+            }
+            // Following conditions copied from Building.DeSpawn.
+            if (mode != DestroyMode.WillReplace && def.MakeFog)
+            {
+                // FogGrid.Notify_FogBlockerRemoved needs to be called on all invis door positions (same as OccupiedRect()),
+                // or else there can be some cases where despawning a large door doesn't properly defog rooms.
+                // Building.DeSpawn only calls this on the single Position location.
+                // See also HarmonyPatches.InvisDoorMakeFogTranspiler.
+                // Following is kinda inefficient, but this isn't perfomance critical code, so it shouldn't matter.
+                foreach (var c in this.OccupiedRect())
+                {
+                    map.fogGrid.Notify_FogBlockerRemoved(c);
+                }
+            }
             base.DeSpawn(mode);
             ClearReachabilityCache(map);
         }

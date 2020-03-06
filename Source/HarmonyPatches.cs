@@ -50,6 +50,42 @@ namespace DoorsExpanded
             // JobGiver_Manhunter.TryGiveJob
             // JobGiver_SeekAllowedArea.TryGiveJob
 
+            // Notes on what methods don't need patching despite def.Fillage being potentially used on invis doors,
+            // but that method ultimately use def.Fillage on every thing at the cell to the net effect of no negative impact:
+            // SymbolResolver_Clear.Resolve
+            // BeautyUtility.CellBeauty
+            // GenConstruct.BlocksConstruction
+            // Skyfaller.SpawnThings
+            // BuildingsDamageSectionLayerUtility.UsesLinkableCornersAndEdges
+            // DamageWorker.ExplosionAffectCell
+            // ForGrid.Unfog (also see InvisDoorMakeFogTranspiler)
+            // RegionTypeUtility.GetExpectedRegionType
+
+            // Notes on what methods don't need patching despite def.Fillage being potentially used on invis doors
+            // for other reasons:
+            // Designator_RemoveFloor.CanDesignateCell
+            // - def.Fillage usage is only for determining Impassible def.passibility (walls),
+            //   and doesn't return false for invis doors, which is wanted behavior.
+            // Designator_SmoothSurface.CanDesignateCell/SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder
+            // - def.Fillage usage is only for determining whether floors can be smoothed,
+            //   SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder returns true for invis doors, which is wanted behavior.
+            // Sketch.CanBeSeenOver (and other Sketch* methods)
+            // - Assume that ThingDefs used in Sketch objects are never invis doors.
+            // PawnPathUtility.FirstBlockingBuilding
+            // - def.Fillage usage is only for determining PassThroughOnly def.passibility, which doors should never have.
+            // CoverGrid.Register/DeRegister/RecalculateCell
+            // - This will do nothing for an invis door, and ultimately be called for the parent door,
+            //   with the algorithm uses all cells within the parent door.
+            //   The net effect is parent doors, not invis doors, will be in the cover grid.
+            // SectionLayer_Snow.Filled
+            // - Method is unused.
+            // SnowGrid.CanCoexistWithSnow
+            // - See InvisDoorCanHaveSnowTranspiler.
+            // - Only other use of the method is for determining snow depth at cell and is ultimately called for the parent door.
+            // Verb.CanHitFromCellIgnoringRange (and other Verb* methods)
+            // - Target should never be an invis door.
+            // TODO: Fill above section out more for documentation purposes.
+
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.FreePassage)).GetGetMethod(),
                 prefix: nameof(InvisDoorFreePassagePrefix));
@@ -83,25 +119,28 @@ namespace DoorsExpanded
                 transpilerRelated: nameof(InvisDoorStartManualCloseBy));
 
             // Patches to redirect access from invis door def to its parent door def.
+            Patch(original: AccessTools.Method(typeof(GenStep_Terrain), nameof(GenStep_Terrain.Generate)),
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
-                transpiler: nameof(InvisDoorCanBeSeenOverTranspiler));
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
+            Patch(original: AccessTools.Method(typeof(GridsUtility), nameof(GridsUtility.Filled)),
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
+            Patch(original: AccessTools.Method(typeof(Projectile), "ImpactSomething"),
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
+            Patch(original: AccessTools.Method(rwAssembly.GetType("Verse.SectionLayer_IndoorMask"), "HideRainPrimary"),
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
             foreach (var original in typeof(FloodFillerFog).FindLambdaMethods(nameof(FloodFillerFog.FloodUnfog), typeof(bool)))
             {
                 Patch(original,
-                    transpiler: nameof(InvisDoorMakeFogTranspiler));
+                    transpiler: nameof(InvisDoorDefMakeFogTranspiler));
             }
             Patch(original: AccessTools.Method(typeof(FogGrid), "FloodUnfogAdjacent"),
-                transpiler: nameof(InvisDoorMakeFogTranspiler));
-            Patch(original: AccessTools.Method(typeof(Projectile), "ImpactSomething"),
-                transpiler: nameof(InvisDoorProjectileImpactSomethingTranspiler));
-            Patch(original: AccessTools.Method(rwAssembly.GetType("Verse.SectionLayer_IndoorMask"), "HideRainPrimary"),
-                transpiler: nameof(InvisDoorSectionLayerIndoorMaskHideRainPrimaryTranspiler));
+                transpiler: nameof(InvisDoorDefMakeFogTranspiler));
             Patch(original: AccessTools.Method(typeof(SnowGrid), "CanHaveSnow"),
                 transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
             Patch(original: AccessTools.Method(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
-            Patch(original: AccessTools.Method(
-                    typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
+            Patch(original: AccessTools.Method( typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
 
             // Other patches for invis doors.
@@ -113,6 +152,8 @@ namespace DoorsExpanded
                 prefix: nameof(InvisDoorSpawningWipesPrefix));
             Patch(original: AccessTools.Method(typeof(PathFinder), nameof(PathFinder.IsDestroyable)),
                 postfix: nameof(InvisDoorIsDestroyablePostfix));
+            Patch(original: AccessTools.Method(typeof(Room), nameof(Room.Notify_ContainedThingSpawnedOrDespawned)),
+                prefix: nameof(InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix));
             Patch(original: AccessTools.Method(typeof(MouseoverReadout), nameof(MouseoverReadout.MouseoverReadoutOnGUI)),
                 transpiler: nameof(MouseoverReadoutTranspiler));
 
@@ -407,28 +448,21 @@ namespace DoorsExpanded
                 AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
                 AccessTools.Method(typeof(HarmonyPatches), nameof(InvisDoorStartManualCloseBy)));
 
+        // GenStep_Terrain.Generate
         // GenGrid.CanBeSeenOver
-        public static IEnumerable<CodeInstruction> InvisDoorCanBeSeenOverTranspiler(IEnumerable<CodeInstruction> instructions) =>
+        // GridsUtility.Filled
+        // Projectile.ImpactSomething
+        // SectionLayer_IndoorMask.HideRainPrimary
+        public static IEnumerable<CodeInstruction> InvisDoorDefFillageTranspiler(
+            IEnumerable<CodeInstruction> instructions) =>
             GetActualDoorForDefTranspiler(instructions,
                 AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
 
         // FloodFillerFog.FloodUnfog
         // FogGrid.FloodUnfogAdjacent
-        public static IEnumerable<CodeInstruction> InvisDoorMakeFogTranspiler(IEnumerable<CodeInstruction> instructions) =>
+        public static IEnumerable<CodeInstruction> InvisDoorDefMakeFogTranspiler(IEnumerable<CodeInstruction> instructions) =>
             GetActualDoorForDefTranspiler(instructions,
                 AccessTools.Property(typeof(ThingDef), nameof(ThingDef.MakeFog)).GetGetMethod());
-
-        // Projectile.ImpactSomething
-        public static IEnumerable<CodeInstruction> InvisDoorProjectileImpactSomethingTranspiler(
-            IEnumerable<CodeInstruction> instructions) =>
-            GetActualDoorForDefTranspiler(instructions,
-                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
-
-        // SectionLayer_IndoorMask.HideRainPrimary
-        public static IEnumerable<CodeInstruction> InvisDoorSectionLayerIndoorMaskHideRainPrimaryTranspiler(
-            IEnumerable<CodeInstruction> instructions) =>
-            GetActualDoorForDefTranspiler(instructions,
-                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
 
         // SnowGrid.CanHaveSnow
         public static IEnumerable<CodeInstruction> InvisDoorCanHaveSnowTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -563,6 +597,18 @@ namespace DoorsExpanded
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorIsDestroyablePostfix));
             return result || th is Building_DoorRegionHandler;
+        }
+
+        // Room.Notify_ContainedThingSpawnedOrDespawned
+        public static bool InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix(Thing th)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix));
+            // If an invis door's DeSpawn is somehow called before the parent door's DeSpawn is called,
+            // this can result in a NRE since region links are cleared prematurely
+            // (specifically RegionLink.GetOtherRegion can return null, unexpectedly for the algorithm).
+            // So skip if the given Thing is an invis door, and let parent door's DeSpawn handle calling
+            // Room.Notify_ContainedThingSpawnedOrDespawned for each invis door's Room after they're all despawned.
+            return !(th.Spawned && th is Building_DoorRegionHandler);
         }
 
         // MouseoverReadout.MouseoverReadoutOnGUI

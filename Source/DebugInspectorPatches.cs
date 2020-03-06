@@ -217,6 +217,7 @@ namespace DoorsExpanded
                         debugString.AppendLine("- ticksUntilClose: " + Building_Door_ticksUntilClose(door));
                         debugString.AppendLine("- ticksSinceOpen: " + Building_Door_ticksSinceOpen(door));
                         debugString.AppendLine("- IsForbidden(player): " + door.IsForbidden(Faction.OfPlayer));
+                        debugString.AppendLine("- def.Fillage: " + door.def.Fillage);
                         debugString.AppendLine("- CanBeSeenOver: " + door.CanBeSeenOver());
                         debugString.AppendLine("- BaseBlockChance: " + door.BaseBlockChance());
 
@@ -264,6 +265,7 @@ namespace DoorsExpanded
                             debugString.AppendLine("  - ticksUntilClose: " + Building_DoorExpanded_ticksUntilClose(parentDoor));
                             debugString.AppendLine("  - ticksSinceOpen: " + Building_DoorExpanded_ticksSinceOpen(parentDoor));
                             debugString.AppendLine("  - Forbidden: " + parentDoor.Forbidden);
+                            debugString.AppendLine("  - def.Fillage: " + parentDoor.def.Fillage);
                             debugString.AppendLine("  - CanBeSeenOver: " + parentDoor.CanBeSeenOver());
                             debugString.AppendLine("  - BaseBlockChance: " + parentDoor.BaseBlockChance());
 
