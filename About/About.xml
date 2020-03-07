@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>jecrell.doorsexpanded</packageId>
   <name>Doors Expanded</name>
@@ -16,7 +16,7 @@
       <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
     </li>
   </modDependencies>
-  <description><![CDATA[1.22.1.2 (06-03-2020)
+  <description>1.3.0.0 (03-07-2020)
 
 Adds new types and sizes of doors to RimWorld and an extensible framework for other mods to add such doors.
 
@@ -31,14 +31,19 @@ Currently included:
 
 Commissioned by CMDR Toss Antilles.
 
+
 Thank you to my Patrons for supporting me in my efforts. Without you, none of this would be possible.
 
 These are the most excellent rim dwellers who support me: 
-Maaxar, Shibby Says, TheJagermeister, Cory Bonifay, Kiya Nicoll, Matt Harris, Paul Fenwick, Grendalloffen, Martin K. Bonde, Bentley Alsup, Eric Idema, MasterScootie, GoSu, Josh McCabe, spook, Clifford Campbell, J, CrankyPeanut, E_T, Finwej, Jan Koutsky, Audrin Navarro, Михаил Юрченко, John Kanady, Luis Figueroa, Midgeman, Nate Haug, Nemuri Hime, Richard Paul, SilentWeirdo, Calum, Calhoun Cattell, Keith Thoma, Tim Stillson, Dick Jones, Patrick, Nathan Getman, Populous25, Sharp Spook, Steven James, Marcus Sireanu, Mark, Emily Shaw, Drachken, Zalson, Baron Xot, Nicholas Bateman, Christopher, Justin Andres, Luis Salvatierra, TinyFloatingTurtle, George Chong Chuang Ming, John Boehr, Oliver White, roxxploxx, Robin Hager, Brachiaraidos, That Guy, Toc Anastar, Karol Rybak, Allic, Austin Harbert, Yewty, Evan Hwang, Ryan Brock, Jonathan Holzinger, MC, Alexander, Kevin Reagan, Alex Mederer, Toss Antilles, Chelsea Archambeau, Aron Glasser, Dan Winn, Fredric Sundberg, Sarah Banks, ted stevens
+Marcus Bell, RainerWingel, Dalton Johnson, Chris Seieroe, Robin Gleeson, Robert Alessi, Lea Stannard, Teres, David Silberstein, Sam, Kiya Nicoll, Matt Harris, Paul Fenwick, Grendalloffen, Don Homer, Josh McCabe, Elodie, Gothi, J, Michael Paugh, Audrin Navarro, Михаил Юрченко, Calum, Tim Stillson, Adam Bliss, Populous25, Marcus Sireanu, Maaxar, John Kanady, Midgeman, Dick Jones, Patrick, TinyFloatingTurtle, Nathan Getman, LionsFate, Sharp Spook, Cristina Shaver, Mark, George Chong Chuang Ming, Oliver White, roxxploxx, Emily Shaw, Karol Rybak, Justin Andres, Marcus Regan, Robin Hager, Allic, Austin Harbert, E_T, Alex Mederer, Alexander, Toss Antilles
 
 ========================
 Changelog
 ========================
+1.3.0.0 (03-07-2020)
+========================
+A 1.1 compatible version of Doors Expanded, rewritten and recreated by lbmaian to be even better than before.
+
 1.22.1.2 (06-03-2020)
 ========================
 Fix potential NRE and room unfogging in edge cases involving large doors, and fix more potential subtle issues related to Fillage. Engineered by lbmaian.
@@ -72,7 +77,7 @@ Rewrite and fully rebase code onto 1.0 RimWorld, fixing several bugs. Engineered
 - fixes pathing issues, including enemies warping through large doors
 - forbid/unforbid has immediate effect (instead of having to wait a tick)
 - fixes behavior inconsistent with vanilla doors, including default door opening/closing speeds, previously held open door closing behavior, whether enemies set fire to doors, heat transfer rates through open/closed doors
-- allow <1.0 fillPercent doors with correct cover/snow/etc. calculations
+- allow &lt;1.0 fillPercent doors with correct cover/snow/etc. calculations
 - doors are non-minifiable (non-uninstallable) by default
 - doors block light by default
 - door opening speed stat now appears in door expanded doors' info dialog (note: def.doorOpenSpeedRate value currently isn't reflected in this)
@@ -126,5 +131,5 @@ This should fix the issue where animals do not want to walk through the doors fo
 ========================
 Initial release for RimWorld 1.0
 
-]]></description>
+</description>
 </ModMetaData>

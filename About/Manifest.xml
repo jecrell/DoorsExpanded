@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Manifest>
   <identifier>DoorsExpanded</identifier>
-  <version>1.22.1.2</version>
+  <version>1.3.0.0</version>
   <dependencies />
   <incompatibleWith />
   <!-- TODO: Shouldn't the following belong in dependencies/loadAfter sections of the referenced mods rather than be listed here in loadBefore? -->
