@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using Harmony;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
@@ -24,7 +24,7 @@ namespace DoorsExpanded
 
     public static class DebugInspectorPatches
     {
-        public static void PatchDebugInspector(HarmonyInstance harmony)
+        public static void PatchDebugInspector(Harmony harmony)
         {
             harmony.Patch(original: AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoListingItems"),
                 transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(DebugSettingsMenuDoListingItemsTranspiler)));
@@ -63,7 +63,7 @@ namespace DoorsExpanded
             {
                 instruction = enumerator.Current;
                 yield return instruction;
-                if (instruction.operand == typeof(DebugViewSettings))
+                if (instruction.OperandIs(typeof(DebugViewSettings)))
                     break;
             }
 
@@ -72,7 +72,7 @@ namespace DoorsExpanded
             {
                 instruction = enumerator.Current;
                 yield return instruction;
-                if (instruction.operand == methodof_Dialog_DebugSettingsMenu_DoField)
+                if (instruction.Calls(methodof_Dialog_DebugSettingsMenu_DoField))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_0); // Dialog_DebugSettingsMenu instance
                     yield return prevInstruction.Clone(); // assumed to be ldloc(.s) for the current field
@@ -117,21 +117,21 @@ namespace DoorsExpanded
             var methodof_object_ToString = AccessTools.Method(typeof(object), nameof(ToString));
             var instructionList = instructions.AsList();
 
-            var mouseCellIndex = instructionList.FindIndex(instr => instr.operand == methodof_UI_MouseCell);
+            var mouseCellIndex = instructionList.FindIndex(instr => instr.Calls(methodof_UI_MouseCell));
             var mouseCellVar = (LocalBuilder)instructionList[mouseCellIndex + 1].operand;
 
             var mouseCellToStringIndex = instructionList.FindSequenceIndex(
-                instr => instr.operand == mouseCellVar,
-                instr => instr.opcode == OpCodes.Constrained && instr.operand == typeof(IntVec3),
-                instr => instr.operand == methodof_object_ToString);
+                instr => instr.IsLdloc(mouseCellVar),
+                instr => instr.Is(OpCodes.Constrained, typeof(IntVec3)),
+                instr => instr.Calls(methodof_object_ToString));
             instructionList.ReplaceRange(mouseCellToStringIndex, 3, new[]
             {
                 new CodeInstruction(OpCodes.Call,
-                AccessTools.Method(typeof(DebugInspectorPatches), nameof(MousePositionToString))),
+                    AccessTools.Method(typeof(DebugInspectorPatches), nameof(MousePositionToString))),
             });
 
             var writePathCostsFlagIndex = instructionList.FindIndex(
-                instr => instr.operand == fieldof_DebugViewSettings_writePathCosts);
+                instr => instr.LoadsField(fieldof_DebugViewSettings_writePathCosts));
             var nextFlagIndex = instructionList.FindIndex(writePathCostsFlagIndex + 1, IsDebugViewSettingFlagAccess);
             instructionList.InsertRange(nextFlagIndex - 1, new[]
             {
@@ -212,11 +212,12 @@ namespace DoorsExpanded
                         debugString.AppendLine("- SlowsPawns: " + door.SlowsPawns);
                         debugString.AppendLine("- TicksToOpenNow: " + door.TicksToOpenNow);
                         debugString.AppendLine("- FriendlyTouchedRecently: " +
-                            methodof_Building_Door_FriendlyTouchedRecently.Invoke(door, new object[0]));
+                            methodof_Building_Door_FriendlyTouchedRecently.Invoke(door, Array.Empty<object>()));
                         debugString.AppendLine("- lastFriendlyTouchTick: " + Building_Door_lastFriendlyTouchTick(door));
                         debugString.AppendLine("- ticksUntilClose: " + Building_Door_ticksUntilClose(door));
-                        debugString.AppendLine("- visualTicksOpen: " + Building_Door_visualTicksOpen(door));
+                        debugString.AppendLine("- ticksSinceOpen: " + Building_Door_ticksSinceOpen(door));
                         debugString.AppendLine("- IsForbidden(player): " + door.IsForbidden(Faction.OfPlayer));
+                        debugString.AppendLine("- def.Fillage: " + door.def.Fillage);
                         debugString.AppendLine("- CanBeSeenOver: " + door.CanBeSeenOver());
                         debugString.AppendLine("- BaseBlockChance: " + door.BaseBlockChance());
 
@@ -262,8 +263,9 @@ namespace DoorsExpanded
                             debugString.AppendLine("  - FriendlyTouchedRecently: " + parentDoor.FriendlyTouchedRecently);
                             debugString.AppendLine("  - lastFriendlyTouchTick: " + Building_DoorExpanded_lastFriendlyTouchTick(parentDoor));
                             debugString.AppendLine("  - ticksUntilClose: " + Building_DoorExpanded_ticksUntilClose(parentDoor));
-                            debugString.AppendLine("  - visualTicksOpen: " + Building_DoorExpanded_visualTicksOpen(parentDoor));
+                            debugString.AppendLine("  - ticksSinceOpen: " + Building_DoorExpanded_ticksSinceOpen(parentDoor));
                             debugString.AppendLine("  - Forbidden: " + parentDoor.Forbidden);
+                            debugString.AppendLine("  - def.Fillage: " + parentDoor.def.Fillage);
                             debugString.AppendLine("  - CanBeSeenOver: " + parentDoor.CanBeSeenOver());
                             debugString.AppendLine("  - BaseBlockChance: " + parentDoor.BaseBlockChance());
 
@@ -319,18 +321,18 @@ namespace DoorsExpanded
 
         private static readonly MethodInfo methodof_Building_Door_FriendlyTouchedRecently =
             AccessTools.Property(typeof(Building_Door), "FriendlyTouchedRecently").GetGetMethod(true);
-        private static readonly AccessTools.FieldRef<Building_Door, bool> Building_Door_lastFriendlyTouchTick =
-            AccessTools.FieldRefAccess<Building_Door, bool>("lastFriendlyTouchTick");
-        private static readonly AccessTools.FieldRef<Building_DoorExpanded, bool> Building_DoorExpanded_lastFriendlyTouchTick =
-            AccessTools.FieldRefAccess<Building_DoorExpanded, bool>("lastFriendlyTouchTick");
+        private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_lastFriendlyTouchTick =
+            AccessTools.FieldRefAccess<Building_Door, int>("lastFriendlyTouchTick");
+        private static readonly AccessTools.FieldRef<Building_DoorExpanded, int> Building_DoorExpanded_lastFriendlyTouchTick =
+            AccessTools.FieldRefAccess<Building_DoorExpanded, int>("lastFriendlyTouchTick");
         private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_ticksUntilClose =
             AccessTools.FieldRefAccess<Building_Door, int>("ticksUntilClose");
         private static readonly AccessTools.FieldRef<Building_DoorExpanded, int> Building_DoorExpanded_ticksUntilClose =
             AccessTools.FieldRefAccess<Building_DoorExpanded, int>("ticksUntilClose");
-        private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_visualTicksOpen =
-            AccessTools.FieldRefAccess<Building_Door, int>("visualTicksOpen");
-        private static readonly AccessTools.FieldRef<Building_DoorExpanded, int> Building_DoorExpanded_visualTicksOpen =
-            AccessTools.FieldRefAccess<Building_DoorExpanded, int>("visualTicksOpen");
+        private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_ticksSinceOpen =
+            AccessTools.FieldRefAccess<Building_Door, int>("ticksSinceOpen");
+        private static readonly AccessTools.FieldRef<Building_DoorExpanded, int> Building_DoorExpanded_ticksSinceOpen =
+            AccessTools.FieldRefAccess<Building_DoorExpanded, int>("ticksSinceOpen");
 
         // Room.DebugString
         public static string RoomMoreDebugString(string result, Room __instance)

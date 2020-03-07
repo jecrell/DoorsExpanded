@@ -1,32 +1,35 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
+  <packageId>jecrell.doorsexpanded</packageId>
   <name>Doors Expanded</name>
-  <author>Jecrell</author>
+  <author>Jecrell,lbmaian</author>
+  <url>https://discord.gg/AaVFA7V</url>
   <supportedVersions>
     <li>1.0</li>
+    <li>1.1</li>
   </supportedVersions>
-  <url>https://discord.gg/AaVFA7V</url>
-  <description><![CDATA[1.21.0.0 (01-31-2020)
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+      <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+    </li>
+  </modDependencies>
+  <description><![CDATA[1.22.1.2 (06-03-2020)
 
-  Adds new types and sizes of doors to RimWorld.
-  
-  Currently included:
-  * Doors (1x2) - Double sized doors.
-  * Doors (1x3) - Triple sized doors.
-  
-  * Curtains (Tribal)
-   -Fragile, flammable, and made of fabric, these curtains provide fast movement through buildings.
-  
-  * Jail Door
-    -Stronger door to keep prisoners inside.
-  
-  * Gates
-   -Stylized doors perfect for meeting pre-industrial needs.
-  
-  * Blast Doors
-   -Incredibly large and secure doors used to keep greater threats at bay.
-  
-  Commissioned by CMDR Toss Antilles.
+Adds new types and sizes of doors to RimWorld and an extensible framework for other mods to add such doors.
+
+Currently included:
+* Doors (1x2) - Double sized doors.
+* Doors (1x3) - Triple sized doors.
+* Curtains (Tribal) - Fragile, flammable, and made of fabric, these curtains provide fast movement through buildings.
+* Jail Door - Stronger door to keep prisoners inside.
+* Gates - Stylized doors perfect for meeting pre-industrial needs.
+* Remote Doors - Garage-style doors that can be opened by remote buttons or levers.
+* Blast Doors - Incredibly large and secure doors used to keep greater threats at bay.
+
+Commissioned by CMDR Toss Antilles.
 
 Thank you to my Patrons for supporting me in my efforts. Without you, none of this would be possible.
 
@@ -36,6 +39,33 @@ Maaxar, Shibby Says, TheJagermeister, Cory Bonifay, Kiya Nicoll, Matt Harris, Pa
 ========================
 Changelog
 ========================
+1.22.1.2 (06-03-2020)
+========================
+Fix potential NRE and room unfogging in edge cases involving large doors, and fix more potential subtle issues related to Fillage. Engineered by lbmaian.
+Scale WorkToBuild linearly like most of vanilla, rebalance thick gate and blast door costs
+
+1.22.1.1 (04-03-2020)
+========================
+Backport tweaks and fixes to RimWorld 1.0 version. From this point forward, the RimWorld 1.0 version is in feature freeze. Engineered by lbmaian.
+"JT_PlaceWorker_OnTopOfWalls" is now translated if JecsTools isn't loaded.
+
+1.22.1.0 (29-02-2020)
+========================
+Balance pass based on ~b18~r1.1 changes and consistency. Engineered by lbmaian.
+- All doors (except blast doors and curtains) MaxHitPoints were reduced, typically by about a quarter to match the B19 change to vanilla doors.
+- All doors (except curtains) Mass have reduced, with the assumption that vanilla doors have 20 mass (only relevant if a mod like MinifyEverything is installed).
+- Related 1-wide vs 2-wide vs 3-wide door stats and costs have been rescaled for consistency.
+- Blast doors have same terrain affordance as walls, and same construction skill requirement as autodoors.
+- Prisoner containment research requires medieval tech level.
+- Blast door research requires hi-tech research bench.
+Also add dependency to the Harmony mod.
+
+1.22.0.0 (28-02-2020)
+========================
+RimWorld 1.1 compatibility (RimWorld 1.0 still works, but in feature freeze). Engineered by lbmaian.
+No longer requires JecsTools in either RimWorld 1.0 or 1.1.
+Also revamp door remote button/lever job so that it consistently respects whether door remote button/lever is enabled throughout the job, and fixes related pathing issues.
+
 1.21.0.0 (01-31-2020)
 ========================
 Rewrite and fully rebase code onto 1.0 RimWorld, fixing several bugs. Engineered by lbmaian.

@@ -43,11 +43,13 @@ namespace DoorsExpanded
         private bool holdOpenInt;
         private int lastFriendlyTouchTick = -9999;
         protected int ticksUntilClose;
-        protected int visualTicksOpen;
+        protected int ticksSinceOpen;
         private bool freePassageWhenClearedReachabilityCache;
         private bool lastForbiddenState;
 
         public DoorExpandedDef Def => (DoorExpandedDef)def;
+
+        public List<Building_DoorRegionHandler> InvisDoors => invisDoors;
 
         public bool Open => Def.doorType == DoorType.FreePassage || openInt;
 
@@ -69,6 +71,19 @@ namespace DoorsExpanded
         public virtual bool HoldOpen => holdOpenInt;
 
         public bool FreePassage => Open && (HoldOpen || !WillCloseSoon);
+
+        public int TicksTillFullyOpened
+        {
+            get
+            {
+                var ticksTillFullyOpened = TicksToOpenNow - ticksSinceOpen;
+                if (ticksTillFullyOpened < 0)
+                {
+                    ticksTillFullyOpened = 0;
+                }
+                return ticksTillFullyOpened;
+            }
+        }
 
         public bool WillCloseSoon
         {
@@ -163,8 +178,6 @@ namespace DoorsExpanded
         internal protected virtual bool FriendlyTouchedRecently =>
             Find.TickManager.TicksGame < lastFriendlyTouchTick + MaxTicksSinceFriendlyTouchToAutoClose;
 
-        internal int VisualTicksToOpen => TicksToOpenNow;
-
         public override bool FireBulwark => !Open && base.FireBulwark;
 
         public virtual bool Forbidden => forbiddenComp?.Forbidden ?? false;
@@ -240,13 +253,33 @@ namespace DoorsExpanded
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
-            foreach (var invisDoor in invisDoors)
+            var spawnedInvisDoors = invisDoors.Where(invisDoor => invisDoor.Spawned).ToArray();
+            foreach (var invisDoor in spawnedInvisDoors)
             {
-                if (invisDoor.Spawned)
-                    invisDoor.DeSpawn(mode);
+                invisDoor.DeSpawn(mode);
             }
             invisDoors.Clear();
             var map = Map;
+            // Note: To be safe, this room notifying is done after all invis doors are despawned.
+            // See also HarmonyPatches.InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix.
+            foreach (var invisDoor in spawnedInvisDoors)
+            {
+                // Following partially copied from Thing.DeSpawn.
+                map.regionGrid.GetValidRegionAt_NoRebuild(Position)?.Room?.Notify_ContainedThingSpawnedOrDespawned(invisDoor);
+            }
+            // Following conditions copied from Building.DeSpawn.
+            if (mode != DestroyMode.WillReplace && def.MakeFog)
+            {
+                // FogGrid.Notify_FogBlockerRemoved needs to be called on all invis door positions (same as OccupiedRect()),
+                // or else there can be some cases where despawning a large door doesn't properly defog rooms.
+                // Building.DeSpawn only calls this on the single Position location.
+                // See also HarmonyPatches.InvisDoorMakeFogTranspiler.
+                // Following is kinda inefficient, but this isn't perfomance critical code, so it shouldn't matter.
+                foreach (var c in this.OccupiedRect())
+                {
+                    map.fogGrid.Notify_FogBlockerRemoved(c);
+                }
+            }
             base.DeSpawn(mode);
             ClearReachabilityCache(map);
         }
@@ -260,7 +293,7 @@ namespace DoorsExpanded
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
             if (Scribe.mode == LoadSaveMode.LoadingVars && Open)
             {
-                visualTicksOpen = VisualTicksToOpen;
+                ticksSinceOpen = TicksToOpenNow;
             }
         }
 
@@ -289,9 +322,9 @@ namespace DoorsExpanded
             }
             if (!Open)
             {
-                if (visualTicksOpen > 0)
+                if (ticksSinceOpen > 0)
                 {
-                    visualTicksOpen--;
+                    ticksSinceOpen--;
                 }
                 var closedTempLeakRate = Def.tempLeakRate;
                 if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
@@ -301,9 +334,9 @@ namespace DoorsExpanded
             }
             else
             {
-                if (visualTicksOpen < VisualTicksToOpen)
+                if (ticksSinceOpen < TicksToOpenNow)
                 {
-                    visualTicksOpen++;
+                    ticksSinceOpen++;
                 }
                 var isPawnPresent = false;
                 foreach (var c in this.OccupiedRect())
@@ -352,18 +385,19 @@ namespace DoorsExpanded
         public void Notify_PawnApproaching(Pawn p, int moveCost)
         {
             CheckFriendlyTouched(p);
-            if (PawnCanOpen(p))
+            var pawnCanOpen = PawnCanOpen(p);
+            if (pawnCanOpen || Open)
             {
                 // Following is kinda inefficient, but this isn't perfomance critical code, so it shouldn't matter.
                 foreach (var invisDoor in invisDoors)
                 {
                     Map.fogGrid.Notify_PawnEnteringDoor(invisDoor, p);
                 }
-                if (!SlowsPawns)
-                {
-                    var ticksToClose = Mathf.Max(ApproachCloseDelayTicks, moveCost + 1);
-                    DoorOpen(ticksToClose);
-                }
+            }
+            if (pawnCanOpen && !SlowsPawns)
+            {
+                var ticksToClose = Mathf.Max(ApproachCloseDelayTicks, moveCost + 1);
+                DoorOpen(ticksToClose);
             }
         }
 
@@ -476,7 +510,8 @@ namespace DoorsExpanded
 
         public override void Draw()
         {
-            var percentOpen = VisualTicksToOpen == 0 ? 1f : Mathf.Clamp01((float)visualTicksOpen / VisualTicksToOpen);
+            var ticksToOpenNow = TicksToOpenNow;
+            var percentOpen = ticksToOpenNow == 0 ? 1f : Mathf.Clamp01((float)ticksSinceOpen / ticksToOpenNow);
             var def = Def;
 
             var rotation = DoorRotationAt(def, Position, Rotation, Map);

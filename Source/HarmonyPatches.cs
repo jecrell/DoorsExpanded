@@ -1,10 +1,12 @@
 ﻿//#define PATCH_CALL_REGISTRY
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Harmony;
+using System.Runtime.CompilerServices;
+using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -20,7 +22,7 @@ namespace DoorsExpanded
     {
         static HarmonyPatchesOnStartup()
         {
-            var harmony = HarmonyInstance.Create("rimworld.jecrell.doorsexpanded");
+            var harmony = new Harmony("rimworld.jecrell.doorsexpanded");
             HarmonyPatches.PatchAll(harmony);
             DebugInspectorPatches.PatchDebugInspector(harmony);
         }
@@ -28,7 +30,7 @@ namespace DoorsExpanded
 
     public static class HarmonyPatches
     {
-        public static void PatchAll(HarmonyInstance harmony)
+        public static void PatchAll(Harmony harmony)
         {
             HarmonyPatches.harmony = harmony;
             var rwAssembly = typeof(Building_Door).Assembly;
@@ -48,9 +50,47 @@ namespace DoorsExpanded
             // JobGiver_Manhunter.TryGiveJob
             // JobGiver_SeekAllowedArea.TryGiveJob
 
+            // Notes on what methods don't need patching despite def.Fillage being potentially used on invis doors,
+            // but that method ultimately use def.Fillage on every thing at the cell to the net effect of no negative impact:
+            // SymbolResolver_Clear.Resolve
+            // BeautyUtility.CellBeauty
+            // GenConstruct.BlocksConstruction
+            // Skyfaller.SpawnThings
+            // BuildingsDamageSectionLayerUtility.UsesLinkableCornersAndEdges
+            // DamageWorker.ExplosionAffectCell
+            // ForGrid.Unfog (also see InvisDoorMakeFogTranspiler)
+            // RegionTypeUtility.GetExpectedRegionType
+
+            // Notes on what methods don't need patching despite def.Fillage being potentially used on invis doors
+            // for other reasons:
+            // Designator_RemoveFloor.CanDesignateCell
+            // - def.Fillage usage is only for determining Impassible def.passibility (walls),
+            //   and doesn't return false for invis doors, which is wanted behavior.
+            // Designator_SmoothSurface.CanDesignateCell/SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder
+            // - def.Fillage usage is only for determining whether floors can be smoothed,
+            //   SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder returns true for invis doors, which is wanted behavior.
+            // Sketch.CanBeSeenOver (and other Sketch* methods)
+            // - Assume that ThingDefs used in Sketch objects are never invis doors.
+            // PawnPathUtility.FirstBlockingBuilding
+            // - def.Fillage usage is only for determining PassThroughOnly def.passibility, which doors should never have.
+            // CoverGrid.Register/DeRegister/RecalculateCell
+            // - This will do nothing for an invis door, and ultimately be called for the parent door,
+            //   with the algorithm uses all cells within the parent door.
+            //   The net effect is parent doors, not invis doors, will be in the cover grid.
+            // SectionLayer_Snow.Filled
+            // - Method is unused.
+            // SnowGrid.CanCoexistWithSnow
+            // - See InvisDoorCanHaveSnowTranspiler.
+            // - Only other use of the method is for determining snow depth at cell and is ultimately called for the parent door.
+            // Verb.CanHitFromCellIgnoringRange (and other Verb* methods)
+            // - Target should never be an invis door.
+            // TODO: Fill above section out more for documentation purposes.
+
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.FreePassage)).GetGetMethod(),
                 prefix: nameof(InvisDoorFreePassagePrefix));
+            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.TicksTillFullyOpened)).GetGetMethod(),
+                prefix: nameof(InvisDoorTicksTillFullyOpenedPrefix));
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.WillCloseSoon)).GetGetMethod(),
                 prefix: nameof(InvisDoorWillCloseSoonPrefix));
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.BlockedOpenMomentary)).GetGetMethod(),
@@ -79,24 +119,28 @@ namespace DoorsExpanded
                 transpilerRelated: nameof(InvisDoorStartManualCloseBy));
 
             // Patches to redirect access from invis door def to its parent door def.
+            Patch(original: AccessTools.Method(typeof(GenStep_Terrain), nameof(GenStep_Terrain.Generate)),
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
-                transpiler: nameof(InvisDoorCanBeSeenOverTranspiler));
-            Patch(original: AccessTools.FirstMethod(
-                    AccessTools.FirstInner(typeof(FloodFillerFog), inner => inner.Name.StartsWith("<FloodUnfog>")),
-                    method => method.Name.StartsWith("<") && method.ReturnType == typeof(bool)),
-                transpiler: nameof(InvisDoorMakeFogTranspiler));
-            Patch(original: AccessTools.Method(typeof(FogGrid), "FloodUnfogAdjacent"),
-                transpiler: nameof(InvisDoorMakeFogTranspiler));
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
+            Patch(original: AccessTools.Method(typeof(GridsUtility), nameof(GridsUtility.Filled)),
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
             Patch(original: AccessTools.Method(typeof(Projectile), "ImpactSomething"),
-                transpiler: nameof(InvisDoorProjectileImpactSomethingTranspiler));
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
             Patch(original: AccessTools.Method(rwAssembly.GetType("Verse.SectionLayer_IndoorMask"), "HideRainPrimary"),
-                transpiler: nameof(InvisDoorSectionLayerIndoorMaskHideRainPrimaryTranspiler));
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
+            foreach (var original in typeof(FloodFillerFog).FindLambdaMethods(nameof(FloodFillerFog.FloodUnfog), typeof(bool)))
+            {
+                Patch(original,
+                    transpiler: nameof(InvisDoorDefMakeFogTranspiler));
+            }
+            Patch(original: AccessTools.Method(typeof(FogGrid), "FloodUnfogAdjacent"),
+                transpiler: nameof(InvisDoorDefMakeFogTranspiler));
             Patch(original: AccessTools.Method(typeof(SnowGrid), "CanHaveSnow"),
                 transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
             Patch(original: AccessTools.Method(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
-            Patch(original: AccessTools.Method(
-                    typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
+            Patch(original: AccessTools.Method( typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
 
             // Other patches for invis doors.
@@ -108,12 +152,13 @@ namespace DoorsExpanded
                 prefix: nameof(InvisDoorSpawningWipesPrefix));
             Patch(original: AccessTools.Method(typeof(PathFinder), nameof(PathFinder.IsDestroyable)),
                 postfix: nameof(InvisDoorIsDestroyablePostfix));
+            Patch(original: AccessTools.Method(typeof(Room), nameof(Room.Notify_ContainedThingSpawnedOrDespawned)),
+                prefix: nameof(InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix));
             Patch(original: AccessTools.Method(typeof(MouseoverReadout), nameof(MouseoverReadout.MouseoverReadoutOnGUI)),
                 transpiler: nameof(MouseoverReadoutTranspiler));
 
             // Patches for door expanded doors themselves.
-            Patch(original: AccessTools.Method(
-                    typeof(CoverUtility), nameof(CoverUtility.BaseBlockChance), new[] { typeof(Thing) }),
+            Patch(original: AccessTools.Method( typeof(CoverUtility), nameof(CoverUtility.BaseBlockChance), new[] { typeof(Thing) }),
                 transpiler: nameof(DoorExpandedBaseBlockChanceTranspiler));
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
                 transpiler: nameof(DoorExpandedCanBeSeenOverTranspiler));
@@ -135,11 +180,12 @@ namespace DoorsExpanded
                 transpiler: nameof(DoorExpandedTrashJobTranspiler));
 
             // Patches for ghost (pre-placement) and blueprints for door expanded.
-            Patch(original: AccessTools.FirstMethod(
-                    AccessTools.FirstInner(typeof(Designator_Place), inner => inner.Name.StartsWith("<DoExtraGuiControls>")),
-                    method => method.Name.StartsWith("<")),
-                transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
-                transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
+            foreach (var original in typeof(Designator_Place).FindLambdaMethods(nameof(Designator_Place.DoExtraGuiControls), typeof(void)))
+            {
+                Patch(original,
+                    transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
+                    transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
+            }
             Patch(original: AccessTools.Method(typeof(Designator_Place), "HandleRotationShortcuts"),
                 transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
                 transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
@@ -152,9 +198,13 @@ namespace DoorsExpanded
                 prefix: nameof(DoorExpandedBlueprintSpawnSetupPrefix));
             Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.Draw)),
                 prefix: nameof(DoorExpandedBlueprintDrawPrefix));
+
+            // Patches related to door remotes.
+            Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
+                transpiler: nameof(DoorRemoteAddJobGiverWorkOrdersTranspiler));
         }
 
-        private static HarmonyInstance harmony;
+        private static Harmony harmony;
 
         private static void Patch(MethodInfo original, string prefix = null, string postfix = null, string transpiler = null,
             string transpilerRelated = null, bool harmonyDebug = false)
@@ -162,17 +212,60 @@ namespace DoorsExpanded
             DebugInspectorPatches.RegisterPatch(prefix);
             DebugInspectorPatches.RegisterPatch(postfix);
             DebugInspectorPatches.RegisterPatch(transpilerRelated);
-            HarmonyInstance.DEBUG = harmonyDebug;
-            try
+            harmony.Patch(original,
+                prefix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), prefix) { debug = harmonyDebug },
+                postfix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), postfix) { debug = harmonyDebug },
+                transpiler == null ? null : new HarmonyMethod(typeof(HarmonyPatches), transpiler) { debug = harmonyDebug });
+        }
+
+        private static IEnumerable<MethodInfo> FindLambdaMethods(this Type type, string parentMethodName, Type returnType,
+            Func<MethodInfo, bool> predicate = null)
+        {
+            // A lambda on RimWorld 1.0 on Unity 5.6.5f1 (mono .NET Framework 3.5 equivalent) is compiled into
+            // a CompilerGenerated-attributed non-public inner type with name prefix "<{parentMethodName}>"
+            // including an instance method with name prefix "<>".
+            // A lambda on RimWorld 1.1 on Unity 2019.2.17f1 (mono .NET Framework 4.7.2 equivalent) is compiled into
+            // a CompilerGenerated-attributed non-public inner type with name prefix "<>"
+            // including an instance method with name prefix "<{parentMethodName}>".
+            // Recent-ish versions of Visual Studio also compile this way.
+            // So to be generic enough, return methods of a declaring inner type that:
+            // a) either the method or the declaring inner type has name prefix "<{parentMethodName}>".
+            // b) has given return type
+            // c) satisfies predicate, if given
+            var innerTypes = type.GetNestedTypes(AccessTools.all)
+                .Where(innerType => innerType.IsDefined(typeof(CompilerGeneratedAttribute)));
+            var foundMethod = false;
+            foreach (var innerType in innerTypes)
             {
-                harmony.Patch(original,
-                    prefix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), prefix),
-                    postfix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), postfix),
-                    transpiler == null ? null : new HarmonyMethod(typeof(HarmonyPatches), transpiler));
+                if (innerType.Name.StartsWith("<" + parentMethodName + ">", StringComparison.Ordinal))
+                {
+                    foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
+                    {
+                        if (method.Name.StartsWith("<", StringComparison.Ordinal) &&
+                            method.ReturnType == returnType && (predicate == null || predicate(method)))
+                        {
+                            foundMethod = true;
+                            yield return method;
+                        }
+                    }
+                }
+                else if (innerType.Name.StartsWith("<", StringComparison.Ordinal))
+                {
+                    foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
+                    {
+                        if (method.Name.StartsWith("<" + parentMethodName + ">", StringComparison.Ordinal) &&
+                            method.ReturnType == returnType && (predicate == null || predicate(method)))
+                        {
+                            foundMethod = true;
+                            yield return method;
+                        }
+                    }
+                }
             }
-            finally
+            if (!foundMethod)
             {
-                HarmonyInstance.DEBUG = false;
+                throw new ArgumentException($"Could not find any lambda method for type {type} and method {parentMethodName}" +
+                    " that satisfies given predicate");
             }
         }
 
@@ -195,6 +288,18 @@ namespace DoorsExpanded
             if (__instance is Building_DoorRegionHandler invisDoor)
             {
                 __result = invisDoor.ParentDoor?.FreePassage ?? true;
+                return false;
+            }
+            return true;
+        }
+
+        // Building_Door.TicksTillFullyOpened
+        public static bool InvisDoorTicksTillFullyOpenedPrefix(Building_Door __instance, ref int __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorTicksTillFullyOpenedPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
+            {
+                __result = invisDoor.ParentDoor?.TicksTillFullyOpened ?? 0;
                 return false;
             }
             return true;
@@ -339,32 +444,25 @@ namespace DoorsExpanded
         // Pawn_PathFollower.TryEnterNextPathCell
         public static IEnumerable<CodeInstruction> InvisDoorManualCloseCallTranspiler(
             IEnumerable<CodeInstruction> instructions) =>
-            Transpilers.MethodReplacer(instructions,
+            instructions.MethodReplacer(
                 AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
                 AccessTools.Method(typeof(HarmonyPatches), nameof(InvisDoorStartManualCloseBy)));
 
+        // GenStep_Terrain.Generate
         // GenGrid.CanBeSeenOver
-        public static IEnumerable<CodeInstruction> InvisDoorCanBeSeenOverTranspiler(IEnumerable<CodeInstruction> instructions) =>
+        // GridsUtility.Filled
+        // Projectile.ImpactSomething
+        // SectionLayer_IndoorMask.HideRainPrimary
+        public static IEnumerable<CodeInstruction> InvisDoorDefFillageTranspiler(
+            IEnumerable<CodeInstruction> instructions) =>
             GetActualDoorForDefTranspiler(instructions,
                 AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
 
         // FloodFillerFog.FloodUnfog
         // FogGrid.FloodUnfogAdjacent
-        public static IEnumerable<CodeInstruction> InvisDoorMakeFogTranspiler(IEnumerable<CodeInstruction> instructions) =>
+        public static IEnumerable<CodeInstruction> InvisDoorDefMakeFogTranspiler(IEnumerable<CodeInstruction> instructions) =>
             GetActualDoorForDefTranspiler(instructions,
                 AccessTools.Property(typeof(ThingDef), nameof(ThingDef.MakeFog)).GetGetMethod());
-
-        // Projectile.ImpactSomething
-        public static IEnumerable<CodeInstruction> InvisDoorProjectileImpactSomethingTranspiler(
-            IEnumerable<CodeInstruction> instructions) =>
-            GetActualDoorForDefTranspiler(instructions,
-                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
-
-        // SectionLayer_IndoorMask.HideRainPrimary
-        public static IEnumerable<CodeInstruction> InvisDoorSectionLayerIndoorMaskHideRainPrimaryTranspiler(
-            IEnumerable<CodeInstruction> instructions) =>
-            GetActualDoorForDefTranspiler(instructions,
-                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
 
         // SnowGrid.CanHaveSnow
         public static IEnumerable<CodeInstruction> InvisDoorCanHaveSnowTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -373,7 +471,7 @@ namespace DoorsExpanded
             // in another method, so we have to just replace thing.def with GetActualDoor(thing).def.
             foreach (var instruction in instructions)
             {
-                if (instruction.operand == fieldof_Thing_def)
+                if (instruction.LoadsField(fieldof_Thing_def))
                 {
                     yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
                 }
@@ -387,11 +485,11 @@ namespace DoorsExpanded
             GetActualDoorForDefTranspiler(instructions, AccessTools.Field(typeof(ThingDef), nameof(ThingDef.blockLight)));
 
         private static IEnumerable<CodeInstruction> GetActualDoorForDefTranspiler(IEnumerable<CodeInstruction> instructions,
-            object defMember)
+            MemberInfo defMember)
         {
             // This transforms the following code:
             //  thing.def.<defMember>
-            // to:
+            // into:
             //  GetActualDoor(thing).def.<defMember>
 
             var enumerator = instructions.GetEnumerator();
@@ -401,7 +499,7 @@ namespace DoorsExpanded
             while (enumerator.MoveNext())
             {
                 var instruction = enumerator.Current;
-                if (prevInstruction.operand == fieldof_Thing_def && instruction.operand == defMember)
+                if (prevInstruction.LoadsField(fieldof_Thing_def) && instruction.OperandIs(defMember))
                 {
                     yield return new CodeInstruction(OpCodes.Call, methodof_GetActualDoor);
                 }
@@ -472,7 +570,7 @@ namespace DoorsExpanded
         }
 
         private static bool IsinstDoorInstruction(CodeInstruction instruction) =>
-            instruction.opcode == OpCodes.Isinst && instruction.operand == typeof(Building_Door);
+            instruction.Is(OpCodes.Isinst, typeof(Building_Door));
 
         // GenSpawn.WipeExistingThings
         public static bool InvisDoorWipeExistingThingsPrefix(BuildableDef thingDef)
@@ -501,33 +599,74 @@ namespace DoorsExpanded
             return result || th is Building_DoorRegionHandler;
         }
 
+        // Room.Notify_ContainedThingSpawnedOrDespawned
+        public static bool InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix(Thing th)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix));
+            // If an invis door's DeSpawn is somehow called before the parent door's DeSpawn is called,
+            // this can result in a NRE since region links are cleared prematurely
+            // (specifically RegionLink.GetOtherRegion can return null, unexpectedly for the algorithm).
+            // So skip if the given Thing is an invis door, and let parent door's DeSpawn handle calling
+            // Room.Notify_ContainedThingSpawnedOrDespawned for each invis door's Room after they're all despawned.
+            return !(th.Spawned && th is Building_DoorRegionHandler);
+        }
+
         // MouseoverReadout.MouseoverReadoutOnGUI
         public static IEnumerable<CodeInstruction> MouseoverReadoutTranspiler(IEnumerable<CodeInstruction> instructions,
             ILGenerator ilGen)
         {
+            // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
+            // In particular, this makes it skip invis doors, which have null LabelMouseover.
+            // This transforms the following code:
+            //  for (...)
+            //  {
+            //      var thing = ...;
+            //      if (...)
+            //      {
+            //          var rect = ...;
+            //          var labelMouseover = thing.LabelMouseover;
+            //          Widgets.Label(rect, labelMouseover);
+            //          y += YInterval;
+            //      }
+            //  }
+            // into:
+            //  for (...)
+            //  {
+            //      var thing = ...;
+            //      if (... && !thing.LabelMouseover.IsNullOrEmpty())
+            //      {
+            //          var rect = ...;
+            //          var labelMouseover = thing.LabelMouseover;
+            //          Widgets.Label(rect, labelMouseover);
+            //          y += YInterval;
+            //      }
+            //  }
+
             var methodof_Entity_get_LabelMouseover =
                 AccessTools.Property(typeof(Entity), nameof(Entity.LabelMouseover)).GetGetMethod();
             var instructionList = instructions.AsList();
 
-            // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
-            // In particular, this makes it skip invis doors, which have null LabelMouseover.
-            var index = instructionList.FindIndex(instr => instr.operand == methodof_Entity_get_LabelMouseover);
+            var labelMouseoverIndex = instructionList.FindIndex(instr => instr.Calls(methodof_Entity_get_LabelMouseover));
             // This relies on the fact that there's a conditional within the loop that acts as a loop continue,
             // and we're going to piggyback on that.
-            var loopContinueLabelIndex = instructionList.FindIndex(index + 1, instr => instr.labels.Count > 0);
+            var loopContinueLabelIndex = instructionList.FindIndex(labelMouseoverIndex + 1, instr => instr.labels.Count > 0);
             var loopContinueLabel = instructionList[loopContinueLabelIndex].labels[0];
-            // We can't simply do a brtrue to loopContinueLabel after the string.IsNullOrEmpty call,
-            // since we need to pop off the LabelMouseover value from the CIL stack.
-            // So we need a brfalse to the (current) next instruction, followed by a pop and then the br to loopContinueLabel.
-            var nextInstructionLabel = ilGen.DefineLabel();
-            instructionList[index + 1].labels.Add(nextInstructionLabel);
-            instructionList.InsertRange(index + 1, new[]
+            // Unfortunately, we can't simply do a brtrue to loopContinueLabel after a string.IsNullOrEmpty check,
+            // since we there is at least the LabelMouseover value that needs to be popped from the CIL stack.
+            // While we can deduce the exact amount of stack pops needed, this is fragile, so we insert the check
+            // right after the afore-mentioned conditional, such that there's no need for stack pops.
+            var loopContinueBranchIndex = instructionList.FindLastIndex(labelMouseoverIndex - 1,
+                instr => instr.OperandIs(loopContinueLabel));
+            // We also need the var that has the Thing on which Entity.LabelMouseover is called.
+            // Assume this is just a ldloc(.s) right before the Entity.LabelMouseover callvirt.
+            var thingVar = (LocalBuilder)instructionList[labelMouseoverIndex - 1].operand;
+
+            instructionList.InsertRange(loopContinueBranchIndex + 1, new[]
             {
-                new CodeInstruction(OpCodes.Dup),
+                new CodeInstruction(OpCodes.Ldloc, thingVar),
+                new CodeInstruction(OpCodes.Callvirt, methodof_Entity_get_LabelMouseover),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.IsNullOrEmpty))),
-                new CodeInstruction(OpCodes.Brfalse, nextInstructionLabel),
-                new CodeInstruction(OpCodes.Pop),
-                new CodeInstruction(OpCodes.Br, loopContinueLabel),
+                new CodeInstruction(OpCodes.Brtrue, loopContinueLabel),
             });
 
             return instructionList;
@@ -647,7 +786,7 @@ namespace DoorsExpanded
             //  }
             //  if (roomGroupCount == 0)
             //      return;
-            // to:
+            // into:
             //  int roomGroupCount = 0;
             //  float temperatureSum = 0f;
             //  if (twoWay)
@@ -691,7 +830,12 @@ namespace DoorsExpanded
                 { labels = instructionList[twoWayArgFalseIndex].labels.PopAll() },
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(HarmonyPatches), nameof(GetAdjacentCellsForTemperature))),
-                new CodeInstruction(OpCodes.Starg_S, adjCellsVar),
+                // XXX: TIL that RW 1.0's version of mono/.NET didn't actually require that
+                // ILGenerator.Emit(OpCode opcode, LocalBuilder local) have opcode be a ldloc/stloc-type opcode
+                // and worked just fine with ldarg/starg-type opcode.
+                // RW 1.1+'s version of mono/.NET requires the opcode to be a ldloc/stloc-type opcode,
+                // revealing this bug... oops!
+                new CodeInstruction(OpCodes.Stloc_S, adjCellsVar),
             };
             instructionList.InsertRange(twoWayArgFalseIndex, newInstructions);
 
@@ -701,7 +845,7 @@ namespace DoorsExpanded
                 instr => instr.opcode == OpCodes.Stloc_S);
             newInstructions = new[]
             {
-                new CodeInstruction(OpCodes.Ldarg_S, adjCellsVar)
+                new CodeInstruction(OpCodes.Ldloc_S, adjCellsVar)
                 { labels = instructionList[buildingArgIndex].labels.PopAll() },
                 new CodeInstruction(OpCodes.Ldloc_S, loopIndexVar),
                 new CodeInstruction(OpCodes.Ldelem, typeof(IntVec3)),
@@ -712,7 +856,7 @@ namespace DoorsExpanded
                 instr => instr.opcode == OpCodes.Ldc_I4_4);
             instructionList.ReplaceRange(loopEndIndexIndex, 1, new[]
             {
-                new CodeInstruction(OpCodes.Ldarg_S, adjCellsVar),
+                new CodeInstruction(OpCodes.Ldloc_S, adjCellsVar),
                 new CodeInstruction(OpCodes.Ldlen),
             });
 
@@ -777,7 +921,7 @@ namespace DoorsExpanded
         {
             // This transforms the following code:
             //  designatorPlace.placingRot.Rotate(rotDirection);
-            // to:
+            // into:
             //  designatorPlace.placingRot.Rotate(rotDirection);
             //  DoorExpandedRotateAgainIfNeeded(designatorPlace, ref designatorPlace.placingRot, rotDirection);
 
@@ -789,14 +933,14 @@ namespace DoorsExpanded
 
             var searchIndex = 0;
             var placingRotFieldIndex = instructionList.FindIndex(
-                instr => instr.operand == fieldof_Designator_Place_placingRot);
+                instr => instr.LoadsField(fieldof_Designator_Place_placingRot, byAddress: true));
             while (placingRotFieldIndex >= 0)
             {
                 searchIndex = placingRotFieldIndex + 1;
                 var rotateIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.operand == methodof_Rot4_Rotate);
+                    instr => instr.Calls(methodof_Rot4_Rotate));
                 var nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.operand == fieldof_Designator_Place_placingRot);
+                    instr => instr.LoadsField(fieldof_Designator_Place_placingRot, byAddress: true));
                 if (rotateIndex >= 0 && (nextPlacingRotFieldIndex < 0 || rotateIndex < nextPlacingRotFieldIndex))
                 {
                     var replaceInstructions = new List<CodeInstruction>();
@@ -822,7 +966,7 @@ namespace DoorsExpanded
                         replaceInstructions);
                     searchIndex += replaceInstructions.Count - 1;
                     nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
-                        instr => instr.operand == fieldof_Designator_Place_placingRot);
+                        instr => instr.LoadsField(fieldof_Designator_Place_placingRot, byAddress: true));
                 }
                 placingRotFieldIndex = nextPlacingRotFieldIndex;
             }
@@ -843,7 +987,7 @@ namespace DoorsExpanded
         // GhostDrawer.DrawGhostThing
         public static IEnumerable<CodeInstruction> DoorExpandedDrawGhostThingTranspiler(
             IEnumerable<CodeInstruction> instructions) =>
-            Transpilers.MethodReplacer(instructions,
+            instructions.MethodReplacer(
                 AccessTools.Method(typeof(Graphic), nameof(Graphic.DrawFromDef)),
                 AccessTools.Method(typeof(HarmonyPatches), nameof(DoorExpandedDrawGhostGraphicFromDef)));
 
@@ -879,13 +1023,13 @@ namespace DoorsExpanded
             // For door expanded, we always want to return a Graphic_Multi based off thingDef.graphic.
             // This transforms the following code:
             //  if (... || thingDef.IsDoor)
-            // to:
+            // into:
             //  if (... || (thingDef.IsDoor && !IsDoorExpandedDef(thingDef))
 
             var methodof_ThingDef_IsDoor = AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod();
             var instructionList = instructions.AsList();
 
-            var isDoorIndex = instructionList.FindIndex(instr => instr.operand == methodof_ThingDef_IsDoor);
+            var isDoorIndex = instructionList.FindIndex(instr => instr.Calls(methodof_ThingDef_IsDoor));
             // Assume prev instruction is ldarg(.s) or ldloc(.s) for thingDef argument.
             var thingDefLoadInstruction = instructionList[isDoorIndex - 1];
             // Assume the next brfalse(.s) operand is a label that skips the Graphic_Single code path.
@@ -973,11 +1117,60 @@ namespace DoorsExpanded
 
         private static readonly FastInvokeHandler Comps_PostDraw =
             MethodInvoker.GetHandler(AccessTools.Method(typeof(ThingWithComps), "Comps_PostDraw"));
-        private static readonly object[] emptyObjArray = new object[0];
+        private static readonly object[] emptyObjArray = Array.Empty<object>();
+
+        // FloatMenuMakerMap.AddJobGiverWorkOrders
+        public static IEnumerable<CodeInstruction> DoorRemoteAddJobGiverWorkOrdersTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // Workaround to remove the "Prioritize" prefix for the remote press/flip job in the float menu.
+            // This transforms the following code:
+            //  TranslatorFormattedStringExtensions.Translate("PrioritizeGeneric", ...)
+            // into:
+            //  TranslateRemovePrioritizeJobLabelPrefix("PrioritizeGeneric".Translate(...))
+
+            var methodof_TranslatorFormattedStringExtensions_Translate =
+                AccessTools.Method(typeof(TranslatorFormattedStringExtensions), nameof(TranslatorFormattedStringExtensions.Translate),
+                    new[] { typeof(string), typeof(NamedArgument), typeof(NamedArgument) });
+            var enumerator = instructions.GetEnumerator();
+
+            while (enumerator.MoveNext())
+            {
+                var instruction = enumerator.Current;
+                yield return instruction;
+                if (instruction.Is(OpCodes.Ldstr, "PrioritizeGeneric"))
+                    break;
+            }
+
+            while (enumerator.MoveNext())
+            {
+                var instruction = enumerator.Current;
+                if (instruction.Calls(methodof_TranslatorFormattedStringExtensions_Translate))
+                    break;
+                if (instruction.IsLdloc())
+                    yield return instruction;
+            }
+
+            yield return new CodeInstruction(OpCodes.Call,
+                AccessTools.Method(typeof(HarmonyPatches), nameof(TranslateCustomizeUseDoorRemoteJobLabel)));
+
+            while (enumerator.MoveNext())
+            {
+                yield return enumerator.Current;
+            }
+        }
+
+        private static TaggedString TranslateCustomizeUseDoorRemoteJobLabel(string translationKey, WorkGiver_Scanner scanner,
+            Job job, Thing thing)
+        {
+            if (scanner is WorkGiver_UseRemoteButton)
+                return "PH_UseButtonOrLever".Translate(thing.Label);
+            // Following is copied from FloatMenuMakerMap.AddJobGiverWorkOrders.
+            return translationKey.Translate(scanner.PostProcessedGerund(job), thing.Label);
+        }
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door door && door.Open
-        // to:
+        // into:
         //  IsOpenDoor(thing)
         private static IEnumerable<CodeInstruction> DoorExpandedIsOpenDoorTranspiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -989,7 +1182,7 @@ namespace DoorsExpanded
             {
                 searchIndex = isinstDoorIndex + 1;
                 var doorOpenIndex = instructionList.FindIndex(searchIndex,
-                    instr => instr.operand == methodof_Building_Door_get_Open);
+                    instr => instr.Calls(methodof_Building_Door_get_Open));
                 var nextIsinstDoorIndex = instructionList.FindIndex(searchIndex, IsinstDoorInstruction);
                 if (doorOpenIndex >= 0 && (nextIsinstDoorIndex < 0 || doorOpenIndex < nextIsinstDoorIndex))
                 {
@@ -1016,7 +1209,7 @@ namespace DoorsExpanded
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door
-        // to:
+        // into:
         //  IsDoor(thing)
         private static IEnumerable<CodeInstruction> DoorExpandedIsDoorTranspiler(IEnumerable<CodeInstruction> instructions)
         {

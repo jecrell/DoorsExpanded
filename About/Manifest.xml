@@ -1,11 +1,10 @@
-﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Manifest>
   <identifier>DoorsExpanded</identifier>
-  <version>1.21.0.0</version>
-  <dependencies>
-    <li>JecsTools</li>
-  </dependencies>
+  <version>1.22.1.2</version>
+  <dependencies />
   <incompatibleWith />
+  <!-- TODO: Shouldn't the following belong in dependencies/loadAfter sections of the referenced mods rather than be listed here in loadBefore? -->
   <loadBefore>
     <li>CoC-Factions</li>
     <li>CoC-Cults</li>
@@ -26,10 +25,7 @@
     <li>SW-Lightsabers</li>
     <li>SW-TheForce</li>
   </loadBefore>
-  <loadAfter>
-    <li>HugsLib</li>
-    <li>JecsTools</li>
-  </loadAfter>
+  <loadAfter />
   <manifestUri>https://raw.githubusercontent.com/jecrell/DoorsExpanded/master/About/Manifest.xml</manifestUri>
   <downloadUri>https://github.com/jecrell/DoorsExpanded/releases</downloadUri>
 </Manifest>
