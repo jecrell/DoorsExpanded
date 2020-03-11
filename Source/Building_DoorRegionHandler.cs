@@ -93,6 +93,22 @@ namespace DoorsExpanded
         private static readonly MethodInfo methodof_Building_SpawnSetup =
             AccessTools.Method(typeof(Building), nameof(Building.SpawnSetup));
 
+        public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
+        {
+            // This check is necessary to prevent errors during operations that despawn all things in the same cell,
+            // since despawning/destroying parent doors also destroys their invis doors.
+            if (Spawned)
+                base.DeSpawn(mode);
+        }
+
+        public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
+        {
+            // This check is necessary to prevent errors during operations that delete all things in the same cell,
+            // since despawning/destroying parent doors also destroys their invis doors.
+            if (!Destroyed)
+                base.Destroy(mode);
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();
@@ -110,6 +126,15 @@ namespace DoorsExpanded
 
         public override void Tick()
         {
+            // Sanity checks. These are inexpensive and thus done every tick.
+            if (ParentDoor == null || !ParentDoor.Spawned)
+            {
+                Destroy(DestroyMode.Vanish);
+                return;
+            }
+            if (Faction != ParentDoor.Faction)
+                SetFaction(ParentDoor.Faction);
+
             // We're delegating all the Tick logic to Building_DoorExpanded, which syncs its fields with its invis doors as needed.
             // So we skip calling Building_Door.Tick (via base.Tick()) and instead call Building.Tick (actually ThingWithComps.Tick).
             // Not replicating the logic in ThingWithComps.Tick, in case the logic changes or another mod patches that method.
@@ -117,16 +142,6 @@ namespace DoorsExpanded
                 Building_Tick = (Action)Activator.CreateInstance(typeof(Action), this,
                     methodof_Building_Tick.MethodHandle.GetFunctionPointer());
             Building_Tick();
-
-            // Periodic sanity checks.
-            if (Find.TickManager.TicksGame % 2500 == 0)
-            {
-                if (ParentDoor == null)
-                    Destroy();
-
-                if (Faction != ParentDoor.Faction)
-                    SetFaction(ParentDoor.Faction);
-            }
         }
 
         private static readonly MethodInfo methodof_Building_Tick =
@@ -153,6 +168,11 @@ namespace DoorsExpanded
         {
             // This invis door shouldn't be selectable to get gizmos, but just in case, return empty.
             return Enumerable.Empty<Gizmo>();
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + " of " + parentDoor;
         }
     }
 }

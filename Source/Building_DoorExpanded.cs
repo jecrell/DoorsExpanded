@@ -189,6 +189,11 @@ namespace DoorsExpanded
             forbiddenComp = GetComp<CompForbiddable>();
         }
 
+        public override void PostMapInit()
+        {
+            SpawnInvisDoorsAsNeeded(Map);
+        }
+
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             // Non-1x1 rotations change the footprint of the blueprint, so this needs to be done before that footprint is
@@ -198,15 +203,21 @@ namespace DoorsExpanded
             // this point, but better safe than sorry, especially if this is spawned without Designator_Place or Blueprint.
             Rotation = DoorRotationAt(Def, Position, Rotation, map);
 
+            // Note: We only want invisDoors to register in the edificeGrid (during its SpawnSetup).
+            // A harmony patch to EdificeGrid.Register, which is called in Building.SpawnSetup,
+            // prevents this Building_DoorExpanded from being registered in the edificeGrid.
             base.SpawnSetup(map, respawningAfterLoad);
 
-            powerComp = GetComp<CompPowerTrader>();
-            if (invisDoors.Count == 0)
+            // During game loading/initialization, we can't tell whether another door (including invis door) is actually spawned
+            // (and thus listed in GridsUtility.GetThingList()), since things are initially set to unspawned state and then spawned
+            // as the game is being initialized, so another door may have SpawnSetup called later than this.
+            // Therefore, we delay spawning (and the involved sanity checks) of invis doors until game is initialized.
+            if (!respawningAfterLoad)
             {
-                // Note: We only want invisDoors to register in the edificeGrid (during its SpawnSetup).
-                // A harmony patch prevents this Building_DoorExpanded from being registered in the edificeGrid.
-                SpawnDoors(map);
+                SpawnInvisDoorsAsNeeded(map);
             }
+
+            powerComp = GetComp<CompPowerTrader>();
             forbiddenComp = GetComp<CompForbiddable>();
             SetForbidden(Forbidden);
             ClearReachabilityCache(map);
@@ -216,38 +227,97 @@ namespace DoorsExpanded
             }
         }
 
-        private void SpawnDoors(Map map)
+        // Note: This method is also filled with sanity checks for invis doors that manifest as warnings.
+        private void SpawnInvisDoorsAsNeeded(Map map)
         {
-            foreach (var c in this.OccupiedRect())
+            //Log.Message($"SpawnInvisDoorsAsNeeded called in {this}.{new System.Diagnostics.StackFrame(1).GetMethod().Name}, " +
+            //    $"#invisDoors={invisDoors.Count}/{this.OccupiedRect().Area}");
+            var occupiedRect = this.OccupiedRect();
+            var invisDoorsToReposition = new List<Building_DoorRegionHandler>();
+
+            if (invisDoors.Count > 0)
             {
-                var invisDoor = c.GetThingList(map).OfType<Building_DoorRegionHandler>().FirstOrDefault();
-                var spawnInvisDoor = true;
-                if (invisDoor != null)
+                var invisDoorCells = new HashSet<IntVec3>(); // only for detecting multiple existing invis door at same cell
+                for (var i = invisDoors.Count - 1; i >= 0; i--)
                 {
-                    // Spawn over another door? Let's erase that door and add our own invis doors.
-                    if (invisDoor.ParentDoor != this && (invisDoor.ParentDoor?.Spawned ?? false))
+                    var invisDoor = invisDoors[i];
+                    if (invisDoor == null)
                     {
-                        invisDoor.ParentDoor.DeSpawn();
+                        Log.Warning($"{this}.invisDoors[{i}] is unexpectedly null - removing");
+                        invisDoors.RemoveAt(i);
+                    }
+                    else if (!invisDoor.Spawned)
+                    {
+                        var stateStr = invisDoor.Destroyed ? "destroyed" : "unspawned";
+                        Log.Warning($"{this}.invisDoors[{i}] is unexpectedly {stateStr} - removing");
+                        invisDoors.RemoveAt(i);
                     }
                     else
                     {
-                        spawnInvisDoor = false;
+                        if (!invisDoorCells.Add(invisDoor.Position) || !occupiedRect.Contains(invisDoor.Position))
+                        {
+                            invisDoorsToReposition.Add(invisDoor);
+                        }
+                        if (invisDoor.ParentDoor != this)
+                        {
+                            Log.Warning($"{invisDoor} has incorrect parent ({invisDoor.ParentDoor}) - fixing it");
+                            invisDoor.ParentDoor = this;
+                        }
+                        if (invisDoor.Faction != Faction)
+                        {
+                            Log.Warning($"{invisDoor} has incorrect faction ({invisDoor.Faction}) - fixing it");
+                            invisDoor.SetFactionDirect(Faction);
+                        }
                     }
                 }
-                if (spawnInvisDoor)
+            }
+
+            foreach (var cell in occupiedRect)
+            {
+                Building_DoorRegionHandler invisDoor = null;
+                foreach (var existingDoor in cell.GetThingList(map).OfType<Building_DoorRegionHandler>())
                 {
-                    invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
-                    invisDoor.ParentDoor = this;
-                    invisDoor.SetFactionDirect(Faction);
-                    GenSpawn.Spawn(invisDoor, c, map);
+                    if (existingDoor.ParentDoor != this)
+                    {
+                        Log.Warning($"Unexpected {invisDoor} already spawned at {cell} - destroying it (including parent)");
+                        existingDoor.ParentDoor.Destroy(DestroyMode.Vanish);
+                    }
+                    else
+                    {
+                        // Note: multiple existing invis doors with ParentDoor == this are handled via invisDoorsToReposition.
+                        invisDoor = existingDoor;
+                    }
                 }
-                else
+
+                if (invisDoor == null)
                 {
-                    invisDoor.ParentDoor = this;
-                    invisDoor.SetFaction(Faction);
+                    if (invisDoorsToReposition.Count > 0)
+                    {
+                        invisDoor = invisDoorsToReposition.Pop();
+                        Log.Warning($"{invisDoor} has position outside of {occupiedRect} - setting position to {cell}");
+                        invisDoor.Position = cell;
+                    }
+                    else
+                    {
+                        invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
+                        invisDoor.ParentDoor = this;
+                        invisDoor.SetFactionDirect(Faction);
+                        GenSpawn.Spawn(invisDoor, cell, map);
+                        //Log.Message($"Spawned {invisDoor} at {cell}");
+                        invisDoors.Add(invisDoor);
+                    }
                 }
+
+                // Open is the only field that needs to be manually synced with the parent door;
+                // all other fields in the invis door are unused.
                 invisDoor.Open = Open;
-                invisDoors.Add(invisDoor);
+            }
+
+            foreach (var invisDoor in invisDoorsToReposition)
+            {
+                Log.Warning($"{invisDoor} has position outside of {occupiedRect} and is extraneous - destroying it");
+                // Invis doors are always despawned/destroyed in DestroyMode.Vanish mode.
+                invisDoor.Destroy(DestroyMode.Vanish);
             }
         }
 
@@ -256,7 +326,10 @@ namespace DoorsExpanded
             var spawnedInvisDoors = invisDoors.Where(invisDoor => invisDoor.Spawned).ToArray();
             foreach (var invisDoor in spawnedInvisDoors)
             {
-                invisDoor.DeSpawn(mode);
+                // If this parent door is respawned later, it will always recreate the invis doors,
+                // so destroy (rather than just despawn) existing invis doors.
+                // And invis doors are always despawned/destroyed in DestroyMode.Vanish mode.
+                invisDoor.Destroy(DestroyMode.Vanish);
             }
             invisDoors.Clear();
             var map = Map;
@@ -288,6 +361,10 @@ namespace DoorsExpanded
         {
             base.ExposeData();
             Scribe_Collections.Look(ref invisDoors, nameof(invisDoors), LookMode.Reference);
+            if (invisDoors == null) // in case a save file somehow has missing or null invisDoors
+            {
+                invisDoors = new List<Building_DoorRegionHandler>();
+            }
             Scribe_Values.Look(ref openInt, "open", false);
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
@@ -316,6 +393,16 @@ namespace DoorsExpanded
         public override void Tick()
         {
             base.Tick();
+
+            var occupiedRect = this.OccupiedRect();
+
+            // Periodic sanity checks.
+            if (invisDoors.Where(invisDoor => invisDoor != null && invisDoor.Spawned).Count() != occupiedRect.Area ||
+                this.IsHashIntervalTick(GenTicks.TickLongInterval))
+            {
+                SpawnInvisDoorsAsNeeded(Map);
+            }
+
             if (FreePassage != freePassageWhenClearedReachabilityCache)
             {
                 ClearReachabilityCache(Map);
@@ -339,7 +426,7 @@ namespace DoorsExpanded
                     ticksSinceOpen++;
                 }
                 var isPawnPresent = false;
-                foreach (var c in this.OccupiedRect())
+                foreach (var c in occupiedRect)
                 {
                     var thingList = c.GetThingList(Map);
                     for (var i = 0; i < thingList.Count; i++)
