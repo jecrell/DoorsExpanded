@@ -203,6 +203,12 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
                 transpiler: nameof(DoorRemoteAddJobGiverWorkOrdersTranspiler),
                 transpilerRelated: nameof(TranslateCustomizeUseDoorRemoteJobLabel));
+
+            // Workaround for MinifyEverything issue where reinstalling doors sometimes causes a transient and harmless NRE
+            // in GridsUtility.GetThingList. This patch fixes the issue for vanilla doors.
+            // Doors Expanded doors are fixed in Building_DoorExpanded.Tick.
+            Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Tick)),
+                prefix: nameof(BuildingDoorTickPrefix));
         }
 
         private static Harmony harmony;
@@ -1168,6 +1174,13 @@ namespace DoorsExpanded
                 return "PH_UseButtonOrLever".Translate(thing.Label);
             // Following is copied from FloatMenuMakerMap.AddJobGiverWorkOrders.
             return translationKey.Translate(scanner.PostProcessedGerund(job), thing.Label);
+        }
+
+        // Building_Door.Tick
+        public static bool BuildingDoorTickPrefix(Building_Door __instance)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(BuildingDoorTickPrefix));
+            return __instance.Spawned;
         }
 
         // Generic transpiler that transforms all following instances of code:
