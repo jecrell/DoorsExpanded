@@ -86,34 +86,57 @@ namespace DoorsExpanded
             // - Target should never be an invis door.
             // TODO: Fill above section out more for documentation purposes.
 
+            // Notes on usage of patch priority:
+            // - Destructive prefix patches (prefix patch that returns false, preventing remaining non-postfix/finalizer logic)
+            //   that simply prevent a method from running based off a simple filter have high priority yet NOT highest priority,
+            //   because poorly written destructive prefix patches that replicate and modify original logic typically have normal
+            //   priority, and for mod authors that are aware of the harmony priority system and use highest priority, assume they
+            //   know what they're doing and let their prefix patches run before our high priority ones.
+            // - Prefix patches that delegate calls to invis door methods to parent door methods have highest (first) priority
+            //   to get ahead of other mods' destructive prefix patches. Unfortunately, our Building_Door patches must be destructive
+            //   prefix patches, and there's no safe way to redirect other mods' Building_Door patches to Building_DoorExpanded patches.
+
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.FreePassage)).GetGetMethod(),
-                prefix: nameof(InvisDoorFreePassagePrefix));
+                prefix: nameof(InvisDoorFreePassagePrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.TicksTillFullyOpened)).GetGetMethod(),
-                prefix: nameof(InvisDoorTicksTillFullyOpenedPrefix));
+                prefix: nameof(InvisDoorTicksTillFullyOpenedPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.WillCloseSoon)).GetGetMethod(),
-                prefix: nameof(InvisDoorWillCloseSoonPrefix));
+                prefix: nameof(InvisDoorWillCloseSoonPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.BlockedOpenMomentary)).GetGetMethod(),
-                prefix: nameof(InvisDoorBlockedOpenMomentaryPrefix));
+                prefix: nameof(InvisDoorBlockedOpenMomentaryPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.SlowsPawns)).GetGetMethod(),
-                prefix: nameof(InvisDoorSlowsPawnsPrefix));
+                prefix: nameof(InvisDoorSlowsPawnsPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.TicksToOpenNow)).GetGetMethod(),
-                prefix: nameof(InvisDoorTicksToOpenNowPrefix));
+                prefix: nameof(InvisDoorTicksToOpenNowPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.CheckFriendlyTouched)),
-                prefix: nameof(InvisDoorCheckFriendlyTouchedPrefix));
+                prefix: nameof(InvisDoorCheckFriendlyTouchedPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Notify_PawnApproaching)),
-                prefix: nameof(InvisDoorNotifyPawnApproachingPrefix));
+                prefix: nameof(InvisDoorNotifyPawnApproachingPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.CanPhysicallyPass)),
-                prefix: nameof(InvisDoorCanPhysicallyPassPrefix));
+                prefix: nameof(InvisDoorCanPhysicallyPassPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Building_Door), "DoorOpen"),
-                prefix: nameof(InvisDoorDoorOpenPrefix));
+                prefix: nameof(InvisDoorDoorOpenPrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Building_Door), "DoorTryClose"),
-                prefix: nameof(InvisDoorDoorTryClosePrefix));
+                prefix: nameof(InvisDoorDoorTryClosePrefix),
+                priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualOpenBy)),
-                prefix: nameof(InvisDoorStartManualOpenByPrefix));
+                prefix: nameof(InvisDoorStartManualOpenByPrefix),
+                priority: Priority.First);
             // Building_Door.StartManualCloseBy gets inlined, so can only patch its caller Pawn_PathFollower.TryEnterNextPathCell.
             //Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
-            //    prefix: nameof(InvisDoorStartManualCloseByPrefix));
+            //    prefix: nameof(InvisDoorStartManualCloseByPrefix),
+            //    priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Pawn_PathFollower), "TryEnterNextPathCell"),
                 transpiler: nameof(InvisDoorManualCloseCallTranspiler),
                 transpilerRelated: nameof(InvisDoorStartManualCloseBy));
@@ -147,13 +170,16 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(PathGrid), nameof(PathGrid.CalculatedCostAt)),
                 transpiler: nameof(InvisDoorCalculatedCostAtTranspiler));
             Patch(original: AccessTools.Method(typeof(GenSpawn), nameof(GenSpawn.WipeExistingThings)),
-                prefix: nameof(InvisDoorWipeExistingThingsPrefix));
+                prefix: nameof(InvisDoorWipeExistingThingsPrefix),
+                priority: Priority.VeryHigh);
             Patch(original: AccessTools.Method(typeof(GenSpawn), nameof(GenSpawn.SpawningWipes)),
-                prefix: nameof(InvisDoorSpawningWipesPrefix));
+                prefix: nameof(InvisDoorSpawningWipesPrefix),
+                priority: Priority.VeryHigh);
             Patch(original: AccessTools.Method(typeof(PathFinder), nameof(PathFinder.IsDestroyable)),
                 postfix: nameof(InvisDoorIsDestroyablePostfix));
             Patch(original: AccessTools.Method(typeof(Room), nameof(Room.Notify_ContainedThingSpawnedOrDespawned)),
-                prefix: nameof(InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix));
+                prefix: nameof(InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix),
+                priority: Priority.VeryHigh);
             Patch(original: AccessTools.Method(typeof(MouseoverReadout), nameof(MouseoverReadout.MouseoverReadoutOnGUI)),
                 transpiler: nameof(MouseoverReadoutTranspiler));
 
@@ -163,7 +189,8 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
                 transpiler: nameof(DoorExpandedCanBeSeenOverTranspiler));
             Patch(original: AccessTools.Method(typeof(EdificeGrid), nameof(EdificeGrid.Register)),
-                prefix: nameof(DoorExpandedEdificeGridRegisterPrefix));
+                prefix: nameof(DoorExpandedEdificeGridRegisterPrefix),
+                priority: Priority.VeryHigh);
             Patch(original: AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod(),
                 postfix: nameof(DoorExpandedThingDefIsDoorPostfix));
             Patch(original: AccessTools.Property(typeof(CompForbiddable), nameof(CompForbiddable.Forbidden)).GetSetMethod(),
@@ -208,21 +235,30 @@ namespace DoorsExpanded
             // in GridsUtility.GetThingList. This patch fixes the issue for vanilla doors.
             // Doors Expanded doors are fixed in Building_DoorExpanded.Tick.
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Tick)),
-                prefix: nameof(BuildingDoorTickPrefix));
+                prefix: nameof(BuildingDoorTickPrefix),
+                priority: Priority.VeryHigh);
         }
 
         private static Harmony harmony;
 
         private static void Patch(MethodInfo original, string prefix = null, string postfix = null, string transpiler = null,
-            string transpilerRelated = null, bool harmonyDebug = false)
+            string transpilerRelated = null, int priority = Priority.Normal, string[] before = null, string[] after = null,
+            bool? debug = null)
         {
             DebugInspectorPatches.RegisterPatch(prefix);
             DebugInspectorPatches.RegisterPatch(postfix);
             DebugInspectorPatches.RegisterPatch(transpilerRelated);
             harmony.Patch(original,
-                prefix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), prefix) { debug = harmonyDebug },
-                postfix == null ? null : new HarmonyMethod(typeof(HarmonyPatches), postfix) { debug = harmonyDebug },
-                transpiler == null ? null : new HarmonyMethod(typeof(HarmonyPatches), transpiler) { debug = harmonyDebug });
+                NewHarmonyMethod(prefix, priority, before, after, debug),
+                NewHarmonyMethod(postfix, priority, before, after, debug),
+                NewHarmonyMethod(transpiler, priority, before, after, debug));
+        }
+
+        private static HarmonyMethod NewHarmonyMethod(string methodName, int priority, string[] before, string[] after, bool? debug)
+        {
+            if (methodName == null)
+                return null;
+            return new HarmonyMethod(AccessTools.Method(typeof(HarmonyPatches), methodName), priority, before, after, debug);
         }
 
         private static IEnumerable<MethodInfo> FindLambdaMethods(this Type type, string parentMethodName, Type returnType,
