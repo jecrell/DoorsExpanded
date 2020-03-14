@@ -2,17 +2,17 @@
 ========================
 A 1.1 compatible version of Doors Expanded, rewritten and recreated by lbmaian to be even better than before.
 
-1.22.1.2 (06-03-2020)
+1.22.1.2 (03-06-2020)
 ========================
 Fix potential NRE and room unfogging in edge cases involving large doors, and fix more potential subtle issues related to Fillage. Engineered by lbmaian.
 Scale WorkToBuild linearly like most of vanilla, rebalance thick gate and blast door costs
 
-1.22.1.1 (04-03-2020)
+1.22.1.1 (03-04-2020)
 ========================
 Backport tweaks and fixes to RimWorld 1.0 version. From this point forward, the RimWorld 1.0 version is in feature freeze. Engineered by lbmaian.
 "JT_PlaceWorker_OnTopOfWalls" is now translated if JecsTools isn't loaded.
 
-1.22.1.0 (29-02-2020)
+1.22.1.0 (02-29-2020)
 ========================
 Balance pass based on ~b18~r1.1 changes and consistency. Engineered by lbmaian.
 - All doors (except blast doors and curtains) MaxHitPoints were reduced, typically by about a quarter to match the B19 change to vanilla doors.
@@ -23,7 +23,7 @@ Balance pass based on ~b18~r1.1 changes and consistency. Engineered by lbmaian.
 - Blast door research requires hi-tech research bench.
 Also add dependency to the Harmony mod.
 
-1.22.0.0 (28-02-2020)
+1.22.0.0 (02-28-2020)
 ========================
 RimWorld 1.1 compatibility (RimWorld 1.0 still works, but in feature freeze). Engineered by lbmaian.
 No longer requires JecsTools in either RimWorld 1.0 or 1.1.
