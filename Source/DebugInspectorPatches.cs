@@ -262,8 +262,8 @@ namespace DoorsExpanded
                             debugString.AppendLine("  - TicksToOpenNow: " + parentDoor.TicksToOpenNow);
                             debugString.AppendLine("  - FriendlyTouchedRecently: " + parentDoor.FriendlyTouchedRecently);
                             debugString.AppendLine("  - lastFriendlyTouchTick: " + Building_DoorExpanded_lastFriendlyTouchTick(parentDoor));
-                            debugString.AppendLine("  - ticksUntilClose: " + Building_DoorExpanded_ticksUntilClose(parentDoor));
-                            debugString.AppendLine("  - ticksSinceOpen: " + Building_DoorExpanded_ticksSinceOpen(parentDoor));
+                            debugString.AppendLine("  - ticksUntilClose: " + parentDoor.TicksUntilClose);
+                            debugString.AppendLine("  - ticksSinceOpen: " + parentDoor.TicksSinceOpen);
                             debugString.AppendLine("  - Forbidden: " + parentDoor.Forbidden);
                             debugString.AppendLine("  - def.Fillage: " + parentDoor.def.Fillage);
                             debugString.AppendLine("  - CanBeSeenOver: " + parentDoor.CanBeSeenOver());
@@ -327,12 +327,8 @@ namespace DoorsExpanded
             AccessTools.FieldRefAccess<Building_DoorExpanded, int>("lastFriendlyTouchTick");
         private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_ticksUntilClose =
             AccessTools.FieldRefAccess<Building_Door, int>("ticksUntilClose");
-        private static readonly AccessTools.FieldRef<Building_DoorExpanded, int> Building_DoorExpanded_ticksUntilClose =
-            AccessTools.FieldRefAccess<Building_DoorExpanded, int>("ticksUntilClose");
         private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_ticksSinceOpen =
             AccessTools.FieldRefAccess<Building_Door, int>("ticksSinceOpen");
-        private static readonly AccessTools.FieldRef<Building_DoorExpanded, int> Building_DoorExpanded_ticksSinceOpen =
-            AccessTools.FieldRefAccess<Building_DoorExpanded, int>("ticksSinceOpen");
 
         // Room.DebugString
         public static string RoomMoreDebugString(string result, Room __instance)

@@ -161,8 +161,25 @@ namespace DoorsExpanded
                 transpiler: nameof(InvisDoorDefMakeFogTranspiler));
             Patch(original: AccessTools.Method(typeof(SnowGrid), "CanHaveSnow"),
                 transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
-            Patch(original: AccessTools.Method(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor)),
-                transpiler: nameof(InvisDoorBlockLightTranspiler));
+            if (AccessTools.TypeByName("OpenedDoorsDontBlockLight.GlowFlooder_Patch") is Type openedDoorsDontBlockLightGlowFlooderPatch)
+            {
+                foreach (var original in AccessTools.GetDeclaredMethods(openedDoorsDontBlockLightGlowFlooderPatch))
+                {
+                    if (original.GetParameters().Any(param => param.ParameterType == typeof(Thing)))
+                    {
+                        Patch(original,
+                            transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
+                    }
+                }
+                // Note: The transpiler in OpenedDoorsDontBlockLight.GlowFlooder_Patch matches on thing.def.blockLight
+                // and replaces that with a call to a custom method that checks thing.def.blockLight,
+                // so we don't want to patch GlowFlooder.AddFloodGlowFor ourselves in this case.
+            }
+            else
+            {
+                Patch(original: AccessTools.Method(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor)),
+                    transpiler: nameof(InvisDoorBlockLightTranspiler));
+            }
             Patch(original: AccessTools.Method( typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
 

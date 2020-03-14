@@ -135,6 +135,11 @@ namespace DoorsExpanded
             if (Faction != ParentDoor.Faction)
                 SetFaction(ParentDoor.Faction);
 
+            // Some mods (such as OpenedDoorsDontBlockLight) directly read ticksSinceOpen or ticksUntilClose fields,
+            // since no public accessor exists for those fields, so for compatibility with such mods, copy them from parent door here.
+            ticksSinceOpen = ParentDoor.TicksSinceOpen;
+            ticksUntilClose = ParentDoor.TicksUntilClose;
+
             // We're delegating all the Tick logic to Building_DoorExpanded, which syncs its fields with its invis doors as needed.
             // So we skip calling Building_Door.Tick (via base.Tick()) and instead call Building.Tick (actually ThingWithComps.Tick).
             // Not replicating the logic in ThingWithComps.Tick, in case the logic changes or another mod patches that method.
@@ -158,6 +163,12 @@ namespace DoorsExpanded
         public override bool PawnCanOpen(Pawn p) => ParentDoor.PawnCanOpen(p);
 
         public override bool BlocksPawn(Pawn p) => ParentDoor.BlocksPawn(p);
+
+        // Only for exposing public access to Building_Door.DoorOpen.
+        public new void DoorOpen(int ticksToClose) => base.DoorOpen(ticksToClose);
+
+        // Only for exposing public access to Building_Door.DoorTryClose.
+        public new void DoorTryClose() => base.DoorTryClose();
 
         public override void Draw()
         {

@@ -46,6 +46,8 @@ namespace DoorsExpanded
         protected int ticksSinceOpen;
         private bool freePassageWhenClearedReachabilityCache;
         private bool lastForbiddenState;
+        private bool preventDoorOpenRecursion;
+        private bool preventDoorTryCloseRecursion;
 
         public DoorExpandedDef Def => (DoorExpandedDef)def;
 
@@ -69,6 +71,10 @@ namespace DoorsExpanded
         }
 
         public virtual bool HoldOpen => holdOpenInt;
+
+        public int TicksUntilClose => ticksUntilClose;
+
+        public int TicksSinceOpen => ticksSinceOpen;
 
         public bool FreePassage => Open && (HoldOpen || !WillCloseSoon);
 
@@ -543,6 +549,23 @@ namespace DoorsExpanded
 
         protected internal void DoorOpen(int ticksToClose = CloseDelayTicks)
         {
+            // For compatibility with other mods that patch Building_Door.DoorOpen,
+            // which is only internally called within Building_Door, need to call DoorOpen on each invis door.
+            // However doing so would end up calling this DoorOpen recursively.
+            // preventDoorOpenRecursion is used to prevent this unwanted recursion.
+            if (preventDoorOpenRecursion)
+                return;
+            preventDoorOpenRecursion = true;
+            try
+            {
+                foreach (var invisDoor in invisDoors)
+                    invisDoor.DoorOpen(ticksToClose);
+            }
+            finally
+            {
+                preventDoorOpenRecursion = false;
+            }
+
             if (Open)
             {
                 ticksUntilClose = ticksToClose;
@@ -565,6 +588,23 @@ namespace DoorsExpanded
 
         protected internal bool DoorTryClose()
         {
+            // For compatibility with other mods that patch Building_Door.DoorTryClose,
+            // which is only internally called within Building_Door, need to call DoorTryClose on each invis door.
+            // However doing so would end up calling this DoorTryClose recursively.
+            // preventDoorTryCloseRecursion is used to prevent this unwanted recursion.
+            if (preventDoorTryCloseRecursion)
+                return false;
+            preventDoorTryCloseRecursion = true;
+            try
+            {
+                foreach (var invisDoor in invisDoors)
+                    invisDoor.DoorTryClose();
+            }
+            finally
+            {
+                preventDoorTryCloseRecursion = false;
+            }
+
             if (HoldOpen || BlockedOpenMomentary)
             {
                 return false;
