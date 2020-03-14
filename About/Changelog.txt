@@ -1,6 +1,6 @@
 1.3.0.1 (03-14-2020)
 ========================
-Updates from lbmaian: \n- Fix some changelog dates\n- Better way of including non-compiled reference Building_Door.cs\n- Also properly exclude Source folder from !ModFolder virtual folder\n- Invis doors: more/better sanity checks, and more
+Improves compatibility with other mods, including recovering from game-breaking errors that can somehow happen. Engineered by lbmaian.
 
 1.3.0.0 (03-07-2020)
 ========================
@@ -13,7 +13,7 @@ Scale WorkToBuild linearly like most of vanilla, rebalance thick gate and blast 
 
 1.22.1.1 (03-04-2020)
 ========================
-Backport tweaks and fixes to RimWorld 1.0 version. From this point forward, the RimWorld 1.0 version is in feature freeze. Engineered by lbmaian.
+Backport tweaks and fixes to RimWorld 1.0 version. Engineered by lbmaian.
 "JT_PlaceWorker_OnTopOfWalls" is now translated if JecsTools isn't loaded.
 
 1.22.1.0 (02-29-2020)
@@ -29,7 +29,7 @@ Also add dependency to the Harmony mod.
 
 1.22.0.0 (02-28-2020)
 ========================
-RimWorld 1.1 compatibility (RimWorld 1.0 still works, but in feature freeze). Engineered by lbmaian.
+RimWorld 1.1 compatibility (RimWorld 1.0 still works). Engineered by lbmaian.
 No longer requires JecsTools in either RimWorld 1.0 or 1.1.
 Also revamp door remote button/lever job so that it consistently respects whether door remote button/lever is enabled throughout the job, and fixes related pathing issues.
 
