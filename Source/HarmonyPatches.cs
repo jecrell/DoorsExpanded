@@ -161,7 +161,7 @@ namespace DoorsExpanded
                 transpiler: nameof(InvisDoorDefMakeFogTranspiler));
             Patch(original: AccessTools.Method(typeof(SnowGrid), "CanHaveSnow"),
                 transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
-            if (AccessTools.TypeByName("OpenedDoorsDontBlockLight.GlowFlooder_Patch") is Type openedDoorsDontBlockLightGlowFlooderPatch)
+            if (SafeTypeByName("OpenedDoorsDontBlockLight.GlowFlooder_Patch") is Type openedDoorsDontBlockLightGlowFlooderPatch)
             {
                 foreach (var original in AccessTools.GetDeclaredMethods(openedDoorsDontBlockLightGlowFlooderPatch))
                 {
@@ -254,6 +254,9 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Tick)),
                 prefix: nameof(BuildingDoorTickPrefix),
                 priority: Priority.VeryHigh);
+
+            // Following isn't actually a Harmony patch, but bundling this patch here anyway.
+            DefaultDoorMassPatch();
         }
 
         private static Harmony harmony;
@@ -276,6 +279,21 @@ namespace DoorsExpanded
             if (methodName == null)
                 return null;
             return new HarmonyMethod(AccessTools.Method(typeof(HarmonyPatches), methodName), priority, before, after, debug);
+        }
+
+        // Attempt to workaround weird issue in https://gist.github.com/HugsLibRecordKeeper/1f5317c8f1643df4593ad981a7e038df
+        // where Harmony patching apparently stopped at the AccessTools.TypeByName call for no apparent reason.
+        private static Type SafeTypeByName(string typeName)
+        {
+            try
+            {
+                return AccessTools.TypeByName(typeName);
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"Unexpected exception during AccessTools.TypeByName({typeName}): {e}");
+                return null;
+            }
         }
 
         private static IEnumerable<MethodInfo> FindLambdaMethods(this Type type, string parentMethodName, Type returnType,
@@ -1296,5 +1314,30 @@ namespace DoorsExpanded
         }
 
         private static bool IsDoor(Thing thing) => thing is Building_Door || thing is Building_DoorExpanded;
+
+        public const float DefaultDoorMass = 20f;
+
+        public static void DefaultDoorMassPatch()
+        {
+            // Although doors, including our custom doors, aren't uninstallable (minifiable) by default,
+            // we're defining masses for custom doors, so we might as well define a default for all doors
+            // if another mod hasn't already defined one yet.
+            // This way, if another mod like MinifyEverything does make doors uninstallable, they'll have a reasonable mass
+            // that looks consistent with the mass of our custom doors.
+            // This patch is done in code during StaticConstructorOnStartup rather than an XML patch since:
+            // a) A later-in-load-order mod's XML patch that also patches door mass without checking if it already exists,
+            //    would result in an error, albeit a harmless one.
+            // b) StaticConstructorOnStartup happens after XML patches for all mods are applied
+            //    and after ResolveReferences code for all mods is run, helping ensure default is only applied when necessary.
+            foreach (var thingDef in DefDatabase<ThingDef>.AllDefs)
+            {
+                if (typeof(Building_Door).IsAssignableFrom(thingDef.thingClass) &&
+                    thingDef.thingClass != typeof(Building_DoorRegionHandler) &&
+                    !thingDef.statBases.StatListContains(StatDefOf.Mass))
+                {
+                    StatUtility.SetStatValueInList(ref thingDef.statBases, StatDefOf.Mass, DefaultDoorMass);
+                }
+            }
+        }
     }
 }
