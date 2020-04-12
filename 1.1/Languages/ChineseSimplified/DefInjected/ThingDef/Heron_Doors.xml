@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <!-- Doors -->
+
+  <HeronInvisibleDoor.label>隐形门</HeronInvisibleDoor.label>
+
+  <PH_DoorDouble.label>门（1x2）</PH_DoorDouble.label>
+  <PH_DoorDouble.description>分割房间。简单的门必须由人工打开，因此会减慢人员的移动。减慢的程度和门的材料有关。</PH_DoorDouble.description>
+
+
+  <PH_DoorTriple.label>门（1x3）</PH_DoorTriple.label>
+  <PH_DoorTriple.description>分割房间。简单的门必须由人工打开，因此会减慢人员的移动。减慢的程度和门的材料有关。</PH_DoorTriple.description>
+
+  <PH_DoorJail.label>牢房门</PH_DoorJail.label>
+  <PH_DoorJail.description>滑动的牢房门，用金属杆加固。</PH_DoorJail.description>
+
+  <!-- Curtains -->
+
+  <HeronCurtainTribal.label>窗帘（部落）</HeronCurtainTribal.label>
+  <HeronCurtainTribal.description>分割房间。窗帘比普通的门更快的打开，但是更易燃，而且会缓慢地在房间之间泄露温度。</HeronCurtainTribal.description>
+
+  <!-- Gates -->
+
+  <PH_GateDoubleThick.label>大门（2x1）</PH_GateDoubleThick.label>
+
+  <!-- Blast Doors -->
+
+  <PH_DoorBlastDoor.label>防爆门（2x1）</PH_DoorBlastDoor.label>
+  <PH_DoorBlastDoor.description>一对沉重的门，对爆炸有两倍的抵抗力，对钝击和尖锐武器有三倍的抵抗力。</PH_DoorBlastDoor.description>
+
+  <PH_DoorThickBlastDoor.label>防爆门（3x2）</PH_DoorThickBlastDoor.label>
+  <PH_DoorThickBlastDoor.description>一对沉重的门，对爆炸有两倍的抵抗力，对钝击和尖锐武器有三倍的抵抗力。</PH_DoorThickBlastDoor.description>
+
+</LanguageData>

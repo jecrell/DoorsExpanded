@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <ProjectHeron_Curtains.label>简易窗帘</ProjectHeron_Curtains.label>
+  <ProjectHeron_Curtains.description>解锁环、钩子和杆子的工艺来制作简易的窗帘，它能比普通的门更快的打开，但是会缓慢地在房间之间泄露温度。</ProjectHeron_Curtains.description>
+
+  <ProjectHeron_PrisonDoors.label>囚犯收容</ProjectHeron_PrisonDoors.label>
+  <ProjectHeron_PrisonDoors.description>解锁简单的牢房门来确保囚犯的安全...大概吧...</ProjectHeron_PrisonDoors.description>
+
+  <ProjectHeron_RemoteDoors.label>遥控门</ProjectHeron_RemoteDoors.label>
+  <ProjectHeron_RemoteDoors.description>解锁遥控门，和能控制门的按钮和杠杆。</ProjectHeron_RemoteDoors.description>
+
+  <ProjectHeron_Gates.label>铰链和大门</ProjectHeron_Gates.label>
+  <ProjectHeron_Gates.description>铰链和加固工艺让制造平开门，比如大门。</ProjectHeron_Gates.description>
+
+  <ProjectHeron_BlastDoors.label>防爆门</ProjectHeron_BlastDoors.label>
+  <ProjectHeron_BlastDoors.description>解锁能吸收爆炸压力的防爆门。</ProjectHeron_BlastDoors.description>
+
+</LanguageData>

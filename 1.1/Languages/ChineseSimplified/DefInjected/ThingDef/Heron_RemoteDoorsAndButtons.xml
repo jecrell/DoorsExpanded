@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <PH_DoorButton.label>开门按钮</PH_DoorButton.label>
+  <PH_DoorButton.description>与门链接的按钮（与杠杆有同样功能）。</PH_DoorButton.description>
+
+  <PH_DoorLever.label>开门杠杆</PH_DoorLever.label>
+  <PH_DoorLever.description>与门链接的杠杆（与按钮有同样功能）。</PH_DoorLever.description>
+
+  <PH_DoorRemoteSingle.label>遥控门（1x1）</PH_DoorRemoteSingle.label>
+  <PH_DoorRemoteSingle.description>垂直打开的金属门，能分割房间。能被按钮或杠杆远程控制</PH_DoorRemoteSingle.description>
+
+  <PH_DoorRemoteDouble.label>遥控门（2x1）</PH_DoorRemoteDouble.label>
+  <PH_DoorRemoteDouble.description>垂直打开的金属门，能分割房间。能被按钮或杠杆远程控制</PH_DoorRemoteDouble.description>
+
+</LanguageData>
