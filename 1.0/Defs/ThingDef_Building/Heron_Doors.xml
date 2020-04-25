@@ -312,7 +312,8 @@
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
     <label>blast door (2x1)</label>
-    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons.</description>
+    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons. Can be opened and closed from a distance with a button or lever.</description>
+    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
     <size>(2,1)</size>
     <building>
       <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
@@ -325,6 +326,7 @@
       <Mass>100</Mass>
       <MaxHitPoints>1000</MaxHitPoints>
       <WorkToBuild>4000</WorkToBuild>
+      <Flammability>0.5</Flammability>
     </statBases>
     <!-- Same terrain affordance property values as Wall -->
     <terrainAffordanceNeeded>Medium</terrainAffordanceNeeded>
@@ -380,8 +382,9 @@
 
   <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorThickBlastDoor</defName>
-    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resiliant to standard blunt and sharpened weapons.</description>
     <label>blast door (3x2)</label>
+    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons. Can be opened and closed from a distance with a button or lever.</description>
+    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
     <size>(3,2)</size>
     <building>
       <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
@@ -394,6 +397,7 @@
       <Mass>200</Mass>
       <MaxHitPoints>2000</MaxHitPoints>
       <WorkToBuild>8000</WorkToBuild>
+      <Flammability>0.5</Flammability>
     </statBases>
     <!-- Same terrain affordance property values as Wall -->
     <terrainAffordanceNeeded>Medium</terrainAffordanceNeeded>

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using HarmonyLib;
 using RimWorld;
 using UnityEngine;
@@ -253,6 +254,11 @@ namespace DoorsExpanded
             // Doors Expanded doors are fixed in Building_DoorExpanded.Tick.
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Tick)),
                 prefix: nameof(BuildingDoorTickPrefix),
+                priority: Priority.VeryHigh);
+
+            // Backwards compatibility patches.
+            Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.GetBackCompatibleType)),
+                prefix: nameof(DoorExpandedGetBackCompatibleType),
                 priority: Priority.VeryHigh);
 
             // Following isn't actually a Harmony patch, but bundling this patch here anyway.
@@ -1253,6 +1259,22 @@ namespace DoorsExpanded
             DebugInspectorPatches.RegisterPatchCalled(nameof(BuildingDoorTickPrefix));
             return __instance.Spawned;
         }
+
+        // BackCompatibility.GetBackCompatibleType
+        public static bool DoorExpandedGetBackCompatibleType(Type baseType, string providedClassName, XmlNode node, ref Type __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedGetBackCompatibleType));
+            // To accommodate changes in the specific Building_DoorExpanded class (like blast doors now becoming Building_DoorRemote),
+            // always return a Building_DoorExpanded's actual def's thingClass.
+            if (baseType == typeof(Thing) && providedClassName == Building_DoorExpanded_FullName && node["def"] != null)
+            {
+                __result = DefDatabase<ThingDef>.GetNamedSilentFail(node["def"].InnerText).thingClass;
+                return false;
+            }
+            return true;
+        }
+
+        private static readonly string Building_DoorExpanded_FullName = typeof(Building_DoorExpanded).FullName;
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door door && door.Open
