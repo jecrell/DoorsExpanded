@@ -24,8 +24,9 @@ namespace DoorsExpanded
 
     public static class DebugInspectorPatches
     {
-        public static void PatchDebugInspector(Harmony harmony)
+        public static void PatchDebugInspector()
         {
+            var harmony = HarmonyPatches.harmony;
             harmony.Patch(original: AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoListingItems"),
                 transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(DebugSettingsMenuDoListingItemsTranspiler)));
             harmony.Patch(original: AccessTools.Method(typeof(EditWindow_DebugInspector), "CurrentDebugString"),

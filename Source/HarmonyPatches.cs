@@ -23,17 +23,62 @@ namespace DoorsExpanded
     {
         static HarmonyPatchesOnStartup()
         {
-            var harmony = new Harmony("rimworld.jecrell.doorsexpanded");
-            HarmonyPatches.PatchAll(harmony);
-            DebugInspectorPatches.PatchDebugInspector(harmony);
+            HarmonyPatches.PatchAll();
+            DebugInspectorPatches.PatchDebugInspector();
         }
     }
 
     public static class HarmonyPatches
     {
-        public static void PatchAll(Harmony harmony)
+        internal static Harmony harmony;
+
+        static HarmonyPatches()
         {
-            HarmonyPatches.harmony = harmony;
+            harmony = new Harmony("rimworld.jecrell.doorsexpanded");
+        }
+
+        // If an earlier loaded mod's StaticConstructorOnStartup-attributed class static constructor throws an exception,
+        // no later mods' StaticConstructorOnStartup-attributed class static constructors, including ours, will run
+        // within StaticConstructorOnStartupUtility.CallAll during game initialization/loading.
+        // So patch StaticConstructorOnStartupUtility.CallAll to effectively try/catch around each static constructor call
+        // to ensure that all StaticConstructorOnStartup-attributed class static constructors run regardless of earlier exceptions.
+        // This patching is done during Mod subclass instantiation (see DoorsExpandedMod constructor), which happens before
+        // StaticConstructorOnStartupUtility.CallAll is called.
+        public static void PatchStaticConstructorOnStartupUtility()
+        {
+            harmony.Patch(original: AccessTools.Method(typeof(StaticConstructorOnStartupUtility),
+                nameof(StaticConstructorOnStartupUtility.CallAll)),
+                transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(StaticConstructorOnStartupUtilityCallAllTranspiler)));
+        }
+
+        private static IEnumerable<CodeInstruction> StaticConstructorOnStartupUtilityCallAllTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            var methodof_RuntimeHelpers_RunClassConstructor =
+                AccessTools.Method(typeof(RuntimeHelpers), nameof(RuntimeHelpers.RunClassConstructor),
+                    new[] { typeof(RuntimeTypeHandle) });
+            foreach (var instruction in instructions)
+            {
+                if (instruction.Calls(methodof_RuntimeHelpers_RunClassConstructor))
+                    instruction.operand = AccessTools.Method(typeof(HarmonyPatches), nameof(SafeRunClassConstructor));
+                yield return instruction;
+            }
+        }
+
+        private static void SafeRunClassConstructor(RuntimeTypeHandle typeHandle)
+        {
+            try
+            {
+                RuntimeHelpers.RunClassConstructor(typeHandle);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Exception in StaticConstructorOnStartup-attributed class static constructor: " + e);
+            }
+        }
+
+        public static void PatchAll()
+        {
             var rwAssembly = typeof(Building_Door).Assembly;
 
             // Historical note: There used to be patches on the following methods that are no longer necessary since:
@@ -162,7 +207,16 @@ namespace DoorsExpanded
                 transpiler: nameof(InvisDoorDefMakeFogTranspiler));
             Patch(original: AccessTools.Method(typeof(SnowGrid), "CanHaveSnow"),
                 transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
-            if (SafeTypeByName("OpenedDoorsDontBlockLight.GlowFlooder_Patch") is Type openedDoorsDontBlockLightGlowFlooderPatch)
+
+            // Note: Not using AccessTools.TypeByName, since an invalid loaded assembly (e.g. wrong referenced assembly version) can cause
+            // AccessTools.TypeByName to fail as shown in the following example logs
+            // (note how there are no listed DoorsExpanded patches from InvisDoorBlockLightTranspiler onwards in above PatchAll):
+            // https://gist.github.com/HugsLibRecordKeeper/1f5317c8f1643df4593ad981a7e038df
+            // https://gist.github.com/HugsLibRecordKeeper/fa0fc17b6ddff4eb871e4ec946f7b834
+            // Using GenTypes.GetTypeInAnyAssembly instead, even if it's slower on first call for a given type name,
+            // since GenTypes.GetTypeInAnyAssembly only "valid" loaded assemblies (as determined via ModAssemblyHandler.AssemblyIsUsable).
+            if (GenTypes.GetTypeInAnyAssembly("OpenedDoorsDontBlockLight.GlowFlooder_Patch") is
+                Type openedDoorsDontBlockLightGlowFlooderPatch)
             {
                 foreach (var original in AccessTools.GetDeclaredMethods(openedDoorsDontBlockLightGlowFlooderPatch))
                 {
@@ -181,6 +235,7 @@ namespace DoorsExpanded
                 Patch(original: AccessTools.Method(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor)),
                     transpiler: nameof(InvisDoorBlockLightTranspiler));
             }
+
             Patch(original: AccessTools.Method( typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
 
@@ -265,8 +320,6 @@ namespace DoorsExpanded
             DefaultDoorMassPatch();
         }
 
-        private static Harmony harmony;
-
         private static void Patch(MethodInfo original, string prefix = null, string postfix = null, string transpiler = null,
             string transpilerRelated = null, int priority = Priority.Normal, string[] before = null, string[] after = null,
             bool? debug = null)
@@ -285,21 +338,6 @@ namespace DoorsExpanded
             if (methodName == null)
                 return null;
             return new HarmonyMethod(AccessTools.Method(typeof(HarmonyPatches), methodName), priority, before, after, debug);
-        }
-
-        // Attempt to workaround weird issue in https://gist.github.com/HugsLibRecordKeeper/1f5317c8f1643df4593ad981a7e038df
-        // where Harmony patching apparently stopped at the AccessTools.TypeByName call for no apparent reason.
-        private static Type SafeTypeByName(string typeName)
-        {
-            try
-            {
-                return AccessTools.TypeByName(typeName);
-            }
-            catch (Exception e)
-            {
-                Log.Warning($"Unexpected exception during AccessTools.TypeByName({typeName}): {e}");
-                return null;
-            }
         }
 
         private static IEnumerable<MethodInfo> FindLambdaMethods(this Type type, string parentMethodName, Type returnType,
