@@ -253,7 +253,7 @@
       </damageData>
     </graphicData>
     <uiIconPath>Things/Building/Door/Curtain_MenuIcon</uiIconPath>
-    <costStuffCount>50</costStuffCount>
+    <costStuffCount>25</costStuffCount>
     <designationHotKey>Misc2</designationHotKey>
     <tempLeakRate>60</tempLeakRate>
     <doorType>Stretch</doorType>
