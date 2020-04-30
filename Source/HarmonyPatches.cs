@@ -37,46 +37,6 @@ namespace DoorsExpanded
             harmony = new Harmony("rimworld.jecrell.doorsexpanded");
         }
 
-        // If an earlier loaded mod's StaticConstructorOnStartup-attributed class static constructor throws an exception,
-        // no later mods' StaticConstructorOnStartup-attributed class static constructors, including ours, will run
-        // within StaticConstructorOnStartupUtility.CallAll during game initialization/loading.
-        // So patch StaticConstructorOnStartupUtility.CallAll to effectively try/catch around each static constructor call
-        // to ensure that all StaticConstructorOnStartup-attributed class static constructors run regardless of earlier exceptions.
-        // This patching is done during Mod subclass instantiation (see DoorsExpandedMod constructor), which happens before
-        // StaticConstructorOnStartupUtility.CallAll is called.
-        public static void PatchStaticConstructorOnStartupUtility()
-        {
-            harmony.Patch(original: AccessTools.Method(typeof(StaticConstructorOnStartupUtility),
-                nameof(StaticConstructorOnStartupUtility.CallAll)),
-                transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(StaticConstructorOnStartupUtilityCallAllTranspiler)));
-        }
-
-        private static IEnumerable<CodeInstruction> StaticConstructorOnStartupUtilityCallAllTranspiler(
-            IEnumerable<CodeInstruction> instructions)
-        {
-            var methodof_RuntimeHelpers_RunClassConstructor =
-                AccessTools.Method(typeof(RuntimeHelpers), nameof(RuntimeHelpers.RunClassConstructor),
-                    new[] { typeof(RuntimeTypeHandle) });
-            foreach (var instruction in instructions)
-            {
-                if (instruction.Calls(methodof_RuntimeHelpers_RunClassConstructor))
-                    instruction.operand = AccessTools.Method(typeof(HarmonyPatches), nameof(SafeRunClassConstructor));
-                yield return instruction;
-            }
-        }
-
-        private static void SafeRunClassConstructor(RuntimeTypeHandle typeHandle)
-        {
-            try
-            {
-                RuntimeHelpers.RunClassConstructor(typeHandle);
-            }
-            catch (Exception e)
-            {
-                Log.Error($"Exception in StaticConstructorOnStartup-attributed class static constructor: " + e);
-            }
-        }
-
         public static void PatchAll()
         {
             var rwAssembly = typeof(Building_Door).Assembly;
