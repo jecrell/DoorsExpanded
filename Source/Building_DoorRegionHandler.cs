@@ -103,7 +103,7 @@ namespace DoorsExpanded
 
         public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
         {
-            // This check is necessary to prevent errors during operations that delete all things in the same cell,
+            // This check is necessary to prevent errors during operations that destroy all things in the same cell,
             // since despawning/destroying parent doors also destroys their invis doors.
             if (!Destroyed)
                 base.Destroy(mode);

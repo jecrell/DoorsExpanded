@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using HarmonyLib;
 using RimWorld;
 using UnityEngine;
@@ -22,17 +23,22 @@ namespace DoorsExpanded
     {
         static HarmonyPatchesOnStartup()
         {
-            var harmony = new Harmony("rimworld.jecrell.doorsexpanded");
-            HarmonyPatches.PatchAll(harmony);
-            DebugInspectorPatches.PatchDebugInspector(harmony);
+            HarmonyPatches.PatchAll();
+            DebugInspectorPatches.PatchDebugInspector();
         }
     }
 
     public static class HarmonyPatches
     {
-        public static void PatchAll(Harmony harmony)
+        internal static Harmony harmony;
+
+        static HarmonyPatches()
         {
-            HarmonyPatches.harmony = harmony;
+            harmony = new Harmony("rimworld.jecrell.doorsexpanded");
+        }
+
+        public static void PatchAll()
+        {
             var rwAssembly = typeof(Building_Door).Assembly;
 
             // Historical note: There used to be patches on the following methods that are no longer necessary since:
@@ -161,7 +167,16 @@ namespace DoorsExpanded
                 transpiler: nameof(InvisDoorDefMakeFogTranspiler));
             Patch(original: AccessTools.Method(typeof(SnowGrid), "CanHaveSnow"),
                 transpiler: nameof(InvisDoorCanHaveSnowTranspiler));
-            if (AccessTools.TypeByName("OpenedDoorsDontBlockLight.GlowFlooder_Patch") is Type openedDoorsDontBlockLightGlowFlooderPatch)
+
+            // Note: Not using AccessTools.TypeByName, since an invalid loaded assembly (e.g. wrong referenced assembly version) can cause
+            // AccessTools.TypeByName to fail as shown in the following example logs
+            // (note how there are no listed DoorsExpanded patches from InvisDoorBlockLightTranspiler onwards in above PatchAll):
+            // https://gist.github.com/HugsLibRecordKeeper/1f5317c8f1643df4593ad981a7e038df
+            // https://gist.github.com/HugsLibRecordKeeper/fa0fc17b6ddff4eb871e4ec946f7b834
+            // Using GenTypes.GetTypeInAnyAssembly instead, even if it's slower on first call for a given type name,
+            // since GenTypes.GetTypeInAnyAssembly only "valid" loaded assemblies (as determined via ModAssemblyHandler.AssemblyIsUsable).
+            if (GenTypes.GetTypeInAnyAssembly("OpenedDoorsDontBlockLight.GlowFlooder_Patch") is
+                Type openedDoorsDontBlockLightGlowFlooderPatch)
             {
                 foreach (var original in AccessTools.GetDeclaredMethods(openedDoorsDontBlockLightGlowFlooderPatch))
                 {
@@ -180,6 +195,7 @@ namespace DoorsExpanded
                 Patch(original: AccessTools.Method(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor)),
                     transpiler: nameof(InvisDoorBlockLightTranspiler));
             }
+
             Patch(original: AccessTools.Method( typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
 
@@ -254,9 +270,15 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Tick)),
                 prefix: nameof(BuildingDoorTickPrefix),
                 priority: Priority.VeryHigh);
-        }
 
-        private static Harmony harmony;
+            // Backwards compatibility patches.
+            Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.GetBackCompatibleType)),
+                prefix: nameof(DoorExpandedGetBackCompatibleType),
+                priority: Priority.VeryHigh);
+
+            // Following isn't actually a Harmony patch, but bundling this patch here anyway.
+            DefaultDoorMassPatch();
+        }
 
         private static void Patch(MethodInfo original, string prefix = null, string postfix = null, string transpiler = null,
             string transpilerRelated = null, int priority = Priority.Normal, string[] before = null, string[] after = null,
@@ -1236,6 +1258,22 @@ namespace DoorsExpanded
             return __instance.Spawned;
         }
 
+        // BackCompatibility.GetBackCompatibleType
+        public static bool DoorExpandedGetBackCompatibleType(Type baseType, string providedClassName, XmlNode node, ref Type __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedGetBackCompatibleType));
+            // To accommodate changes in the specific Building_DoorExpanded class (like blast doors now becoming Building_DoorRemote),
+            // always return a Building_DoorExpanded's actual def's thingClass.
+            if (baseType == typeof(Thing) && providedClassName == Building_DoorExpanded_FullName && node["def"] != null)
+            {
+                __result = DefDatabase<ThingDef>.GetNamedSilentFail(node["def"].InnerText).thingClass;
+                return false;
+            }
+            return true;
+        }
+
+        private static readonly string Building_DoorExpanded_FullName = typeof(Building_DoorExpanded).FullName;
+
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door door && door.Open
         // into:
@@ -1296,5 +1334,30 @@ namespace DoorsExpanded
         }
 
         private static bool IsDoor(Thing thing) => thing is Building_Door || thing is Building_DoorExpanded;
+
+        public const float DefaultDoorMass = 20f;
+
+        public static void DefaultDoorMassPatch()
+        {
+            // Although doors, including our custom doors, aren't uninstallable (minifiable) by default,
+            // we're defining masses for custom doors, so we might as well define a default for all doors
+            // if another mod hasn't already defined one yet.
+            // This way, if another mod like MinifyEverything does make doors uninstallable, they'll have a reasonable mass
+            // that looks consistent with the mass of our custom doors.
+            // This patch is done in code during StaticConstructorOnStartup rather than an XML patch since:
+            // a) A later-in-load-order mod's XML patch that also patches door mass without checking if it already exists,
+            //    would result in an error, albeit a harmless one.
+            // b) StaticConstructorOnStartup happens after XML patches for all mods are applied
+            //    and after ResolveReferences code for all mods is run, helping ensure default is only applied when necessary.
+            foreach (var thingDef in DefDatabase<ThingDef>.AllDefs)
+            {
+                if (typeof(Building_Door).IsAssignableFrom(thingDef.thingClass) &&
+                    thingDef.thingClass != typeof(Building_DoorRegionHandler) &&
+                    !thingDef.statBases.StatListContains(StatDefOf.Mass))
+                {
+                    StatUtility.SetStatValueInList(ref thingDef.statBases, StatDefOf.Mass, DefaultDoorMass);
+                }
+            }
+        }
     }
 }

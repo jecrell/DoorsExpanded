@@ -1,17 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Patch>
-
-  <!--
-  Although doors, including our custom doors, aren't uninstallable (minifiable) by default,
-  we're defining masses for custom doors, so we might as well define a default for all doors if another mod hasn't already defined one yet.
-  This way, if another mod like MinifyEverything does make doors uninstallable, they'll have a reasonable mass.
-  -->
-  <Operation Class="PatchOperationAdd">
-    <success>Always</success>
-    <xpath>/Defs/ThingDef[@Name="DoorBase"]/statBases</xpath>
-    <value>
-      <Mass>20</Mass>
-    </value>
-  </Operation>
-
+  <!-- TODO: Remove this file -->
+  <!-- Empty file for temporary backwards compatibility (in case users are simply copying over files over old versions) -->
 </Patch>
