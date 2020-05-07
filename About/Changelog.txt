@@ -1,3 +1,7 @@
+1.3.1.0 (05-06-2020)
+========================
+Blast doors can be remote controlled now. Additional rebalancing and cleanup. Patch by lbmaian. 
+
 - More robust patching in case other mods are broken (should no longer fail if another mod has an invalid assembly reference).
 - Blast doors can be remote controlled now (remote control tech still required to build remote buttons/levers).
 - Blast doors now have half flammability (so half the flammability of the material they're made of).
