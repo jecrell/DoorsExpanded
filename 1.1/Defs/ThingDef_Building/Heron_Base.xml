@@ -45,7 +45,7 @@
     <!-- Note: rotatable should be false for 1x1 doors since they're auto-rotated -->
     <rotatable>true</rotatable>
     <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
-    <!-- Note: Vanilla door terrainAffordanceNeeded is Light despite being constructable from stone, so doing the same here  -->
+    <useStuffTerrainAffordance>true</useStuffTerrainAffordance>
     <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
     <designationCategory>Structure</designationCategory>
     <holdsRoof>true</holdsRoof>

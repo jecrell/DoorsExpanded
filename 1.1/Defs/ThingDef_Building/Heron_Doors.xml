@@ -328,8 +328,6 @@
       <WorkToBuild>4000</WorkToBuild>
       <Flammability>0.5</Flammability>
     </statBases>
-    <!-- Same terrain affordance property values as Wall -->
-    <useStuffTerrainAffordance>true</useStuffTerrainAffordance>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
     <costStuffCount>175</costStuffCount>
     <costList>
@@ -400,8 +398,6 @@
       <WorkToBuild>8000</WorkToBuild>
       <Flammability>0.5</Flammability>
     </statBases>
-    <!-- Same terrain affordance property values as Wall -->
-    <useStuffTerrainAffordance>true</useStuffTerrainAffordance>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
     <costStuffCount>350</costStuffCount>
     <costList>
