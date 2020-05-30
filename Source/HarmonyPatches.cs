@@ -23,7 +23,7 @@ namespace DoorsExpanded
     {
         static HarmonyPatchesOnStartup()
         {
-            HarmonyPatches.PatchAll();
+            HarmonyPatches.Patches();
             DebugInspectorPatches.PatchDebugInspector();
         }
     }
@@ -37,7 +37,47 @@ namespace DoorsExpanded
             harmony = new Harmony("rimworld.jecrell.doorsexpanded");
         }
 
-        public static void PatchAll()
+        // Early patching before any StaticConstructorOnStartup-based patching (for compatibility reasons).
+        // This is called from DoorsExpandedMod constructor for earliest possible patching.
+        public static void EarlyPatches()
+        {
+            Patch(original: AccessTools.Method(typeof(ThingDefGenerator_Buildings), "NewBlueprintDef_Thing"),
+                postfix: nameof(InvisDoorNewBlueprintDefThingPostfix));
+        }
+
+        // ThingDefGenerator_Buildings.NewBlueprintDef_Thing
+        public static void InvisDoorNewBlueprintDefThingPostfix(ThingDef def, bool isInstallBlueprint)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorNewBlueprintDefThingPostfix));
+            // The MinifyEverything mod attempts to make all ThingDefs having a minifiedDef.
+            // This includes our invisible doors (def HeronInvisibleDoor and class Building_DoorRegionHandler),
+            // and users have reported that this can result in minified invisible doors somehow (how, I don't know...)
+            // So this is a hack to undo MinifyEverything's AddMinifiedFor behavior for invisible doors.
+            // This patch also must be applied earlier that MinifyEverything's StaticConstructorOnStartup-based patching,
+            // since that's when its AddMinifiedFor is called.
+            if (def == HeronDefOf.HeronInvisibleDoor && isInstallBlueprint)
+            {
+                def.blueprintDef = null;
+                var installBlueprintDef = def.installBlueprintDef;
+                def.installBlueprintDef = null;
+                def.minifiedDef = null;
+                // ThingDefGenerator_Buildings.NewBlueprintDef_Thing is called within MinifyEverything's AddMinifiedFor,
+                // which then adds installBlueprintDef to the DefDatabase. So must remove from DefDatabase afterwards. 
+                LongEventHandler.ExecuteWhenFinished(() =>
+                {
+                    if (DefDatabase<ThingDef>.GetNamedSilentFail(installBlueprintDef.defName) != null)
+                        DefDatabaseThingDefRemove(installBlueprintDef);
+                    Log.Message($"[Doors Expanded] Detected minifiedDef for def {def} with installBlueprintDef {installBlueprintDef}, " +
+                        "likely added by MinifyEverything mod - removed to avoid minifiable invisible doors");
+                });
+            }
+        }
+
+        private static readonly Action<ThingDef> DefDatabaseThingDefRemove =
+            (Action<ThingDef>) AccessTools.Method(typeof(DefDatabase<ThingDef>), "Remove", new[] { typeof(ThingDef) })
+                .CreateDelegate(typeof(Action<ThingDef>));
+
+        public static void Patches()
         {
             var rwAssembly = typeof(Building_Door).Assembly;
 
@@ -274,6 +314,9 @@ namespace DoorsExpanded
             // Backwards compatibility patches.
             Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.GetBackCompatibleType)),
                 prefix: nameof(DoorExpandedGetBackCompatibleType),
+                priority: Priority.VeryHigh);
+            Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.CheckSpawnBackCompatibleThingAfterLoading)),
+                prefix: nameof(DoorExpandedCheckSpawnBackCompatibleThingAfterLoading),
                 priority: Priority.VeryHigh);
 
             // Following isn't actually a Harmony patch, but bundling this patch here anyway.
@@ -1268,6 +1311,38 @@ namespace DoorsExpanded
             {
                 __result = DefDatabase<ThingDef>.GetNamedSilentFail(node["def"].InnerText).thingClass;
                 return false;
+            }
+            return true;
+        }
+
+        // BackCompatibility.CheckSpawnBackCompatibleThingAfterLoading
+        public static bool DoorExpandedCheckSpawnBackCompatibleThingAfterLoading(Thing thing, ref bool __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedCheckSpawnBackCompatibleThingAfterLoading));
+            // If invis doors somehow become minified (there are reports this can somehow happen with the MinifyEverything mod),
+            // destroy them when loading them.
+            if (thing is MinifiedThing minifiedThing)
+            {
+                var innerContainer = minifiedThing.GetDirectlyHeldThings();
+                List<Thing> invisDoors = null;
+                innerContainer.RemoveAll(innerThing =>
+                {
+                    if (innerThing.def == HeronDefOf.HeronInvisibleDoor)
+                    {
+                        if (invisDoors == null)
+                            invisDoors = new List<Thing>();
+                        invisDoors.Add(innerThing);
+                        return true;
+                    }
+                    return false;
+                });
+                if (invisDoors != null && innerContainer.Count == 0)
+                {
+                    minifiedThing.Destroy();
+                    __result = true; // true => avoid spawning
+                    Log.Warning($"[Doors Expanded] Found and destroyed minified invis door(s) during loading: " + invisDoors.ToStringSafeEnumerable());
+                    return false;
+                }
             }
             return true;
         }

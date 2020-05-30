@@ -197,7 +197,8 @@ namespace DoorsExpanded
 
         public override void PostMapInit()
         {
-            SpawnInvisDoorsAsNeeded(Map);
+            if (Spawned)
+                SpawnInvisDoorsAsNeeded(Map);
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
@@ -240,6 +241,8 @@ namespace DoorsExpanded
             //    $"#invisDoors={invisDoors.Count}/{this.OccupiedRect().Area}");
             var occupiedRect = this.OccupiedRect();
             var invisDoorsToReposition = new List<Building_DoorRegionHandler>();
+            var spawnedInvisDoors = new List<Building_DoorRegionHandler>();
+            var errors = new List<string>();
 
             if (invisDoors.Count > 0)
             {
@@ -249,13 +252,13 @@ namespace DoorsExpanded
                     var invisDoor = invisDoors[i];
                     if (invisDoor == null)
                     {
-                        Log.Warning($"{this}.invisDoors[{i}] is unexpectedly null - removing");
+                        errors.Add($"{this}.invisDoors[{i}] is unexpectedly null - removing");
                         invisDoors.RemoveAt(i);
                     }
                     else if (!invisDoor.Spawned)
                     {
                         var stateStr = invisDoor.Destroyed ? "destroyed" : "unspawned";
-                        Log.Warning($"{this}.invisDoors[{i}] is unexpectedly {stateStr} - removing");
+                        errors.Add($"{invisDoor} is unexpectedly {stateStr} - removing");
                         invisDoors.RemoveAt(i);
                     }
                     else
@@ -266,12 +269,12 @@ namespace DoorsExpanded
                         }
                         if (invisDoor.ParentDoor != this)
                         {
-                            Log.Warning($"{invisDoor} has incorrect parent ({invisDoor.ParentDoor}) - fixing it");
+                            errors.Add($"{invisDoor} has incorrect parent ({invisDoor.ParentDoor}) - fixing it");
                             invisDoor.ParentDoor = this;
                         }
                         if (invisDoor.Faction != Faction)
                         {
-                            Log.Warning($"{invisDoor} has incorrect faction ({invisDoor.Faction}) - fixing it");
+                            errors.Add($"{invisDoor} has incorrect faction ({invisDoor.Faction}) - fixing it");
                             invisDoor.SetFactionDirect(Faction);
                         }
                     }
@@ -285,7 +288,7 @@ namespace DoorsExpanded
                 {
                     if (existingDoor.ParentDoor != this)
                     {
-                        Log.Warning($"Unexpected {invisDoor} already spawned at {cell} - destroying it (including parent)");
+                        errors.Add($"Unexpected {invisDoor} already spawned at {cell} - destroying it (including parent)");
                         existingDoor.ParentDoor.Destroy(DestroyMode.Vanish);
                     }
                     else
@@ -300,7 +303,7 @@ namespace DoorsExpanded
                     if (invisDoorsToReposition.Count > 0)
                     {
                         invisDoor = invisDoorsToReposition.Pop();
-                        Log.Warning($"{invisDoor} has position outside of {occupiedRect} - setting position to {cell}");
+                        errors.Add($"{invisDoor} has position outside of {occupiedRect} - setting position to {cell}");
                         invisDoor.Position = cell;
                     }
                     else
@@ -309,8 +312,7 @@ namespace DoorsExpanded
                         invisDoor.ParentDoor = this;
                         invisDoor.SetFactionDirect(Faction);
                         GenSpawn.Spawn(invisDoor, cell, map);
-                        //Log.Message($"Spawned {invisDoor} at {cell}");
-                        invisDoors.Add(invisDoor);
+                        spawnedInvisDoors.Add(invisDoor);
                     }
                 }
 
@@ -321,9 +323,19 @@ namespace DoorsExpanded
 
             foreach (var invisDoor in invisDoorsToReposition)
             {
-                Log.Warning($"{invisDoor} has position outside of {occupiedRect} and is extraneous - destroying it");
+                errors.Add($"{invisDoor} has position outside of {occupiedRect} and is extraneous - destroying it");
                 // Invis doors are always despawned/destroyed in DestroyMode.Vanish mode.
                 invisDoor.Destroy(DestroyMode.Vanish);
+            }
+
+            invisDoors.AddRange(spawnedInvisDoors);
+
+            if (errors.Count > 0)
+            {
+                var errorMsg = $"[Doors Expanded] Encountered errors when spawning invis doors for {this}:\n" + errors.ToLineList("\t");
+                if (spawnedInvisDoors.Count > 0)
+                    errorMsg += "\nSpawned invis doors:\n" + spawnedInvisDoors.Select(invisDoor => invisDoor.ToString()).ToLineList("\t");
+                Log.Error(errorMsg);
             }
         }
 

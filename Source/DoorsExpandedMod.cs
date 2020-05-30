@@ -6,8 +6,9 @@ namespace DoorsExpanded
     {
         public DoorsExpandedMod(ModContentPack content) : base(content)
         {
+            HarmonyPatches.EarlyPatches();
         }
-        
+
         // TODO: Mod options
     }
 }

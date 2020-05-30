@@ -183,7 +183,9 @@ namespace DoorsExpanded
 
         public override string ToString()
         {
-            return base.ToString() + " of " + parentDoor;
+            if (parentDoor == null)
+                return base.ToString() + " (NO PARENT)";
+            return base.ToString() + $" ({parentDoor}.invisDoors[{parentDoor.InvisDoors.IndexOf(this)}])";
         }
     }
 }
