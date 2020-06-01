@@ -146,7 +146,7 @@
   <ThingDef Name="HeronDoorRemote" ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteSingle</defName>
     <label>remote door (1x1)</label>
-    <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly. Can be opened and closed from a distance with a button or lever.</description>
+    <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
     <building>
       <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
@@ -196,7 +196,7 @@
   <ThingDef Name="HeronDoorDoubleRemote" ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteDouble</defName>
     <label>remote door (2x1)</label>
-    <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly. Can be opened and closed from a distance with a button or lever.</description>
+    <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
     <building>
       <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>

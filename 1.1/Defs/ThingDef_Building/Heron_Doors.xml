@@ -335,7 +335,7 @@
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
     <label>blast door (2x1)</label>
-    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons. Can be opened and closed from a distance with a button or lever.</description>
+    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons.</description>
     <size>(2,1)</size>
     <building>
       <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
@@ -415,7 +415,7 @@
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorThickBlastDoor</defName>
     <label>blast door (3x2)</label>
-    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons. Can be opened and closed from a distance with a button or lever.</description>
+    <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons.</description>
     <size>(3,2)</size>
     <building>
       <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>

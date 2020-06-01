@@ -14,16 +14,15 @@
   <Frame_PH_DoorLever.description>ドアを操作するレバー（ボタンと同じ機能）です。</Frame_PH_DoorLever.description>
 
   <PH_DoorRemoteSingle.label>遠隔ドア(1x1)</PH_DoorRemoteSingle.label>
-  <PH_DoorRemoteSingle.description>垂直にスライドする金属製のドアです。部屋を分割します。ボタンで遠くから開閉できます。</PH_DoorRemoteSingle.description>
+  <PH_DoorRemoteSingle.description>垂直にスライドする金属製のドアです。部屋を分割します。</PH_DoorRemoteSingle.description>
   <Blueprint_PH_DoorRemoteSingle.label>遠隔ドア(1x1)(設計)</Blueprint_PH_DoorRemoteSingle.label>
   <Frame_PH_DoorRemoteSingle.label>遠隔ドア(1x1)(施行)</Frame_PH_DoorRemoteSingle.label>
-  <Frame_PH_DoorRemoteSingle.description>垂直にスライドする金属製のドアです。部屋を分割します。ボタンで遠くから開閉できます。</Frame_PH_DoorRemoteSingle.description>
+  <Frame_PH_DoorRemoteSingle.description>垂直にスライドする金属製のドアです。部屋を分割します。</Frame_PH_DoorRemoteSingle.description>
 
   <PH_DoorRemoteDouble.label>遠隔ドア(2x1)</PH_DoorRemoteDouble.label>
-  <PH_DoorRemoteDouble.description>垂直にスライドする金属製のドアです。部屋を分割します。ボタンで遠くから開閉できます。</PH_DoorRemoteDouble.description>
+  <PH_DoorRemoteDouble.description>垂直にスライドする金属製のドアです。部屋を分割します。</PH_DoorRemoteDouble.description>
   <Blueprint_PH_DoorRemoteDouble.label>遠隔ドア(2x1)(設計)</Blueprint_PH_DoorRemoteDouble.label>
   <Frame_PH_DoorRemoteDouble.label>遠隔ドア(2x1)(施行)</Frame_PH_DoorRemoteDouble.label>
-  <Frame_PH_DoorRemoteDouble.description>垂直にスライドする金属製のドアです。部屋を分割します。ボタンで遠くから開閉できます。</Frame_PH_DoorRemoteDouble.description>
-
+  <Frame_PH_DoorRemoteDouble.description>垂直にスライドする金属製のドアです。部屋を分割します。</Frame_PH_DoorRemoteDouble.description>
 
 </LanguageData>

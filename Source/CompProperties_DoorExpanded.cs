@@ -56,6 +56,15 @@ namespace DoorsExpanded
         {
             parentDef.thingClass = remoteDoor ? typeof(Building_DoorRemote) : typeof(Building_DoorExpanded);
 
+            if (typeof(Building_DoorRemote).IsAssignableFrom(parentDef.thingClass))
+            {
+                var remoteDoorDescription = "PH_RemoteDoor".Translate();
+                if (!parentDef.description.Contains(remoteDoorDescription))
+                {
+                    parentDef.description += " " + remoteDoorDescription;
+                }
+            }
+
             base.ResolveReferences(parentDef);
 
             // See comments regarding stretch property defaults in the fields above.

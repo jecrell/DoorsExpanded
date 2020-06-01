@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
 
+  <PH_RemoteDoor>ボタンで遠くから開閉できます。</PH_RemoteDoor>
   <PH_ButtonDisconnect>ボタンやレバーを解除</PH_ButtonDisconnect>
   <PH_ButtonDisconnectDesc>接続されているボタンまたはレバーを解除します。</PH_ButtonDisconnectDesc>
   <PH_CannotOpenRemotelyWithoutPower>{0}を遠隔操作で開く必要があります。</PH_CannotOpenRemotelyWithoutPower>

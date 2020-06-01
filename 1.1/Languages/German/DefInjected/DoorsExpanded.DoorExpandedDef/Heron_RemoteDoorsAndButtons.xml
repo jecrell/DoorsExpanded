@@ -2,10 +2,9 @@
 <LanguageData>
 
   <PH_DoorRemoteSingle.label>Fernbedienbare Tür (1x1)</PH_DoorRemoteSingle.label>
-  <PH_DoorRemoteSingle.description>Vertikale Metallschiebetür. Teilt Räume. Kann mit einem Knopf aus der Ferne geöffnet und geschlossen werden.</PH_DoorRemoteSingle.description>
+  <PH_DoorRemoteSingle.description>Vertikale Metallschiebetür. Teilt Räume.</PH_DoorRemoteSingle.description>
 
   <PH_DoorRemoteDouble.label>Fernbedienbare Tür (2x1)</PH_DoorRemoteDouble.label>
-  <PH_DoorRemoteDouble.description>Vertikale Metallschiebetür. Teilt Räume. Kann mit einem Knopf aus der Ferne geöffnet und geschlossen werden..</PH_DoorRemoteDouble.description>
-
+  <PH_DoorRemoteDouble.description>Vertikale Metallschiebetür. Teilt Räume.</PH_DoorRemoteDouble.description>
 
 </LanguageData>

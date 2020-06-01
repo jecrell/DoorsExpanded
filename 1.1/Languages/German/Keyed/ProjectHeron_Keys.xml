@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
 
+  <PH_RemoteDoor>Kann mit einem Knopf aus der Ferne geöffnet und geschlossen werden.</PH_RemoteDoor>
   <PH_ButtonDisconnect>Knopf oder Hebel trennen</PH_ButtonDisconnect>
   <PH_ButtonDisconnectDesc>Trennt alle angeschlossenen Knöpfe oder Hebel.</PH_ButtonDisconnectDesc>
   <PH_CannotOpenRemotelyWithoutPower>{0} Zum Öffnen der Tür muss eine Stromversorgung hergestllt werden.</PH_CannotOpenRemotelyWithoutPower>
