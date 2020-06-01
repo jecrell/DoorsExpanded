@@ -50,6 +50,7 @@
     <Compile Include="PlaceWorker_OnTopOfWalls.cs" />
     <Compile Include="PlaceWorker_Outline.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StatWorker_DoorOpenTime.cs" />
     <Compile Include="TexButton.cs" />
     <Compile Include="TexOverlay.cs" />
     <Compile Include="WorkGiver_UseRemoteButton.cs" />

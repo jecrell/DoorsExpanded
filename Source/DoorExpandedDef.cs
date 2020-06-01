@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace DoorsExpanded
@@ -23,7 +25,7 @@ namespace DoorsExpanded
         public bool rotatesSouth = true;
         public int tempLeakRate = TemperatureTuning.Door_TempEqualizeIntervalClosed;
         public float doorOpenMultiplier = Building_DoorExpanded.VisualDoorOffsetEnd;
-        // TODO: Shouldn't this be incorporated into the DoorOpenSpeed stat somehow?
+        [Obsolete("Use the DoorOpenSpeed stat instead (note: DoorOpenSpeed stat is the inverse of confusingly named doorOpenSpeedRate)")]
         public float doorOpenSpeedRate = 1.0f;
         public GraphicData doorFrame;
         public Vector3 doorFrameOffset;
@@ -57,6 +59,7 @@ namespace DoorsExpanded
         public override void ResolveReferences()
         {
             base.ResolveReferences();
+
             // See comments regarding stretch property defaults in the fields above.
             if (graphicData != null && (doorType == DoorType.Stretch || doorType == DoorType.StretchVertical))
             {
@@ -80,6 +83,14 @@ namespace DoorsExpanded
                 //    $"- stretchOpenSize: {stretchOpenSize}\n" +
                 //    $"- stretchOffset: {stretchOffset}");
             }
+
+            // Default missing DoorOpenSpeed to inverse of obsolete doorOpenSpeedRate value.
+#pragma warning disable CS0618 // Type or member is obsolete
+            if (doorOpenSpeedRate != 1.0f && !this.StatBaseDefined(StatDefOf.DoorOpenSpeed))
+            {
+                this.SetStatBaseValue(StatDefOf.DoorOpenSpeed, 1f / doorOpenSpeedRate);
+            }
+#pragma warning restore CS0618 // Type or member is obsolete
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -27,6 +28,7 @@ namespace DoorsExpanded
     // at this point, shouldn't we consider attacking those limitations directly rather than all these workarounds?
     public class Building_DoorExpanded : Building
     {
+        // All of these constants are currently the same as those in Building_Door.
         private const float OpenTicks = 45f;
         private const int CloseDelayTicks = 110;
         private const int WillCloseSoonThreshold = 111;
@@ -161,23 +163,7 @@ namespace DoorsExpanded
 
         public bool SlowsPawns => /*!DoorPowerOn ||*/ TicksToOpenNow > 20;
 
-        public int TicksToOpenNow
-        {
-            get
-            {
-                if (Def.doorType == DoorType.FreePassage)
-                {
-                    return 0;
-                }
-                var ticksToOpenNow = OpenTicks / this.GetStatValue(StatDefOf.DoorOpenSpeed);
-                if (DoorPowerOn)
-                {
-                    ticksToOpenNow *= PowerOffDoorOpenSpeedFactor;
-                }
-                ticksToOpenNow *= Def.doorOpenSpeedRate;
-                return Mathf.RoundToInt(ticksToOpenNow);
-            }
-        }
+        public int TicksToOpenNow => DoorOpenTicks(StatRequest.For(this), DoorPowerOn);
 
         internal bool CanTryCloseAutomatically => FriendlyTouchedRecently && !HoldOpen;
 
@@ -187,6 +173,71 @@ namespace DoorsExpanded
         public override bool FireBulwark => !Open && base.FireBulwark;
 
         public virtual bool Forbidden => forbiddenComp?.Forbidden ?? false;
+
+        // This method works for both Building_Door and Building_DoorExpanded.
+        private static int DoorOpenTicks(StatRequest statRequest, bool doorPowerOn, bool applyPostProcess = true)
+        {
+            if (statRequest.Def is DoorExpandedDef doorExDef && doorExDef.doorType == DoorType.FreePassage)
+            {
+                return 0;
+            }
+            var ticksToOpenNow = OpenTicks / StatDefOf.DoorOpenSpeed.Worker.GetValue(statRequest, applyPostProcess);
+            if (doorPowerOn)
+            {
+                ticksToOpenNow *= PowerOffDoorOpenSpeedFactor;
+            }
+            return Mathf.RoundToInt(ticksToOpenNow);
+        }
+
+        public static float DoorOpenTime(StatRequest statRequest, bool doorPowerOn, bool applyPostProcess)
+        {
+            return GenTicks.TicksToSeconds(DoorOpenTicks(statRequest, doorPowerOn, applyPostProcess));
+        }
+
+        // This method works for both Building_Door and Building_DoorExpanded.
+        public static string DoorOpenTimeExplanation(StatRequest statRequest, bool doorPowerOn, StatDef stat)
+        {
+            var explanation = new StringBuilder();
+
+            // Treat powered door open speed as the "normal" speed.
+            // This is done partly due to the lack of a vanilla "has power" translation key.
+            var defaultSpeed = OpenTicks * PowerOffDoorOpenSpeedFactor;
+            explanation.AppendLine("StatsReport_BaseValue".Translate() + ": " + stat.ValueToString(defaultSpeed / GenTicks.TicksPerRealSecond));
+
+            if (statRequest.Def is DoorExpandedDef doorExDef && doorExDef.doorType == DoorType.FreePassage)
+            {
+                explanation.AppendLine($"{DoorType.FreePassage}: x0");
+                return explanation.ToString();
+            }
+
+            var doorOpenSpeedStat = StatDefOf.DoorOpenSpeed;
+            var doorOpenSpeed = doorOpenSpeedStat.Worker.GetValue(statRequest);
+            explanation.AppendLine($"{doorOpenSpeedStat.LabelCap}:");
+            var doorOpenSpeedExplanation = doorOpenSpeedStat.Worker.GetExplanationFull(statRequest, doorOpenSpeedStat.toStringNumberSense, doorOpenSpeed);
+            explanation.AppendLine("    " + string.Join("\n    ",
+                doorOpenSpeedExplanation.Split(new[] { '\n' }, System.StringSplitOptions.RemoveEmptyEntries)));
+            explanation.AppendLine($"    1/x => x{(1f / doorOpenSpeed).ToStringPercent()}");
+
+            if (!doorPowerOn)
+            {
+                explanation.AppendLine($"{"NoPower".Translate()}: x{(1f / PowerOffDoorOpenSpeedFactor).ToStringPercent()}");
+            }
+
+            return explanation.ToString();
+        }
+
+        // This method works for both Building_Door and Building_DoorExpanded.
+        public static bool DoorNeedsPower(ThingDef def) => def.HasComp(typeof(CompPowerTrader));
+
+        // This method works for both Building_Door and Building_DoorExpanded.
+        public static bool? DoorIsPoweredOn(Thing thing)
+        {
+            if (thing is Building_Door door)
+                return door.DoorPowerOn;
+            else if (thing is Building_DoorExpanded doorEx)
+                return doorEx.DoorPowerOn;
+            return null;
+        }
 
         public override void PostMake()
         {
