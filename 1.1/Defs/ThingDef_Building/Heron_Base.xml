@@ -29,12 +29,14 @@
     </stuffCategories>
   </ThingDef>
 
+  <!-- Based off /Defs/ThingDefs[@Name="DoorBase"] - can't simply inherit from it, since there's no way to override its building.blueprintGraphicData with null. -->
   <ThingDef Name="AbstractHeronDoorBase" ParentName="BuildingBase" Abstract="True">
     <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
     <category>Building</category>
     <altitudeLayer>DoorMoveable</altitudeLayer>
     <fillPercent>1</fillPercent>
     <useHitPoints>true</useHitPoints>
+    <!-- Note: Not using stuffCategories from /Defs/ThingDefs[@Name="DoorBase"] - they're defined in ThingDefs inheriting this. -->
     <statBases>
       <MaxHitPoints>250</MaxHitPoints>
       <Flammability>1.0</Flammability>
@@ -42,7 +44,7 @@
     <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
     <selectable>true</selectable>
     <tickerType>Normal</tickerType>
-    <!-- Note: rotatable should be false for 1x1 doors since they're auto-rotated -->
+    <!-- Note: rotatable should be false for 1x1 doors since they're auto-rotated. -->
     <rotatable>true</rotatable>
     <soundImpactDefault>BulletImpact_Metal</soundImpactDefault>
     <useStuffTerrainAffordance>true</useStuffTerrainAffordance>
@@ -60,6 +62,8 @@
       <soundDoorOpenManual>Door_OpenManual</soundDoorOpenManual>
       <soundDoorCloseManual>Door_CloseManual</soundDoorCloseManual>
       <ai_chillDestination>false</ai_chillDestination>
+      <!-- Note: Not using blueprintClass or blueprintGraphicData from /Defs/ThingDefs[@Name="DoorBase"]
+           since we're patching Blueprint and want the default blueprintGraphicData. -->
     </building>
     <comps>
       <li Class="CompProperties_Forbiddable"/>

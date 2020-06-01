@@ -47,7 +47,7 @@
 
   <DoorsExpanded.DoorExpandedDef Name="HeronDoor" ParentName="HeronDoorBase">
     <defName>PH_DoorDouble</defName>
-    <label>door (1x2)</label>
+    <label>door (2x1)</label>
     <description>Divides rooms. Simple doors must be manually opened, which slows people down. The amount of slowdown depends on what the door is made of.</description>
     <statBases>
       <Mass>40</Mass>
@@ -106,7 +106,7 @@
   <!--
   <DoorsExpanded.DoorExpandedDef ParentName="HeronDoor">
     <defName>PH_AutodoorDouble</defName>
-    <label>autodoor (1x2)</label>
+    <label>autodoor (2x1)</label>
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
     <size>(2,1)</size>
     <statBases>
@@ -235,6 +235,7 @@
       <Mass>10</Mass>
       <MaxHitPoints>50</MaxHitPoints>
       <WorkToBuild>850</WorkToBuild>
+      <DoorOpenSpeed>4.0</DoorOpenSpeed> <!-- powered autodoor speed -->
     </statBases>
     <size>(1,1)</size>
     <rotatable>false</rotatable>
@@ -258,7 +259,6 @@
     <tempLeakRate>60</tempLeakRate>
     <doorType>Stretch</doorType>
     <singleDoor>true</singleDoor>
-    <doorOpenSpeedRate>0.5</doorOpenSpeedRate>
     <researchPrerequisites>
       <li>ProjectHeron_Curtains</li>
     </researchPrerequisites>
@@ -326,6 +326,7 @@
       <Mass>100</Mass>
       <MaxHitPoints>1000</MaxHitPoints>
       <WorkToBuild>4000</WorkToBuild>
+      <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
       <Flammability>0.5</Flammability>
     </statBases>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
@@ -373,6 +374,13 @@
     <doorType>Standard</doorType>
     <fixedPerspective>true</fixedPerspective>
     <rotatesSouth>false</rotatesSouth>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>100</basePowerConsumption>
+      </li>
+      <li Class="CompProperties_Breakdownable"/>
+    </comps>
     <researchPrerequisites>
       <li>ProjectHeron_BlastDoors</li>
     </researchPrerequisites>
@@ -396,6 +404,7 @@
       <Mass>200</Mass>
       <MaxHitPoints>2000</MaxHitPoints>
       <WorkToBuild>8000</WorkToBuild>
+      <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
       <Flammability>0.5</Flammability>
     </statBases>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
@@ -442,6 +451,13 @@
     <doorType>Standard</doorType>
     <fixedPerspective>true</fixedPerspective>
     <rotatesSouth>false</rotatesSouth>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>200</basePowerConsumption>
+      </li>
+      <li Class="CompProperties_Breakdownable"/>
+    </comps>
     <researchPrerequisites>
       <li>ProjectHeron_BlastDoors</li>
     </researchPrerequisites>
