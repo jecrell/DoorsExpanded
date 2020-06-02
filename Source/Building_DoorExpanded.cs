@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimWorld;
@@ -39,6 +40,7 @@ namespace DoorsExpanded
         internal const float VisualDoorOffsetEnd = 0.45f;
 
         private List<Building_DoorRegionHandler> invisDoors = new List<Building_DoorRegionHandler>();
+        private CompProperties_DoorExpanded props;
         private CompPowerTrader powerComp;
         private CompForbiddable forbiddenComp;
         private bool openInt;
@@ -51,11 +53,15 @@ namespace DoorsExpanded
         private bool preventDoorOpenRecursion;
         private bool preventDoorTryCloseRecursion;
 
-        public DoorExpandedDef Def => (DoorExpandedDef)def;
+        [Obsolete("Use Props instead")]
+        public DoorExpandedDef Def => def as DoorExpandedDef;
+
+        public CompProperties_DoorExpanded Props =>
+            props ??= def.GetDoorExpandedProps() ?? throw new Exception("Missing " + typeof(CompProperties_DoorExpanded));
 
         public List<Building_DoorRegionHandler> InvisDoors => invisDoors;
 
-        public bool Open => Def.doorType == DoorType.FreePassage || openInt;
+        public bool Open => props.doorType == DoorType.FreePassage || openInt;
 
         protected virtual bool OpenInt
         {
@@ -177,7 +183,7 @@ namespace DoorsExpanded
         // This method works for both Building_Door and Building_DoorExpanded.
         private static int DoorOpenTicks(StatRequest statRequest, bool doorPowerOn, bool applyPostProcess = true)
         {
-            if (statRequest.Def is DoorExpandedDef doorExDef && doorExDef.doorType == DoorType.FreePassage)
+            if (statRequest.Def.GetDoorExpandedProps() is CompProperties_DoorExpanded props && props.doorType == DoorType.FreePassage)
             {
                 return 0;
             }
@@ -204,7 +210,7 @@ namespace DoorsExpanded
             var defaultSpeed = OpenTicks * PowerOffDoorOpenSpeedFactor;
             explanation.AppendLine("StatsReport_BaseValue".Translate() + ": " + stat.ValueToString(defaultSpeed / GenTicks.TicksPerRealSecond));
 
-            if (statRequest.Def is DoorExpandedDef doorExDef && doorExDef.doorType == DoorType.FreePassage)
+            if (statRequest.Def.GetDoorExpandedProps() is CompProperties_DoorExpanded props && props.doorType == DoorType.FreePassage)
             {
                 explanation.AppendLine($"{DoorType.FreePassage}: x0");
                 return explanation.ToString();
@@ -242,6 +248,7 @@ namespace DoorsExpanded
         public override void PostMake()
         {
             base.PostMake();
+            _ = Props; // ensures props is initialized
             powerComp = GetComp<CompPowerTrader>();
             forbiddenComp = GetComp<CompForbiddable>();
         }
@@ -259,7 +266,7 @@ namespace DoorsExpanded
             // Fortunately once rotated, no further non-1x1 rotations will change the footprint further.
             // Restricted rotation logic in both patched Designator_Place and Blueprint shouldn't allow invalid rotations by
             // this point, but better safe than sorry, especially if this is spawned without Designator_Place or Blueprint.
-            Rotation = DoorRotationAt(Def, Position, Rotation, map);
+            Rotation = DoorRotationAt(def, props, Position, Rotation, map);
 
             // Note: We only want invisDoors to register in the edificeGrid (during its SpawnSetup).
             // A harmony patch to EdificeGrid.Register, which is called in Building.SpawnSetup,
@@ -430,16 +437,19 @@ namespace DoorsExpanded
         {
             base.ExposeData();
             Scribe_Collections.Look(ref invisDoors, nameof(invisDoors), LookMode.Reference);
-            if (invisDoors == null) // in case a save file somehow has missing or null invisDoors
-            {
-                invisDoors = new List<Building_DoorRegionHandler>();
-            }
+            invisDoors ??= new List<Building_DoorRegionHandler>(); // in case a save file somehow has missing or null invisDoors
             Scribe_Values.Look(ref openInt, "open", false);
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
-            if (Scribe.mode == LoadSaveMode.LoadingVars && Open)
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
-                ticksSinceOpen = TicksToOpenNow;
+                // Ensure props is available for Open usage since PostMake hasn't been called yet.
+                // base.ExposeData() ensures that def is available, which is required for props initialization.
+                _ = Props;
+                if (Open)
+                {
+                    ticksSinceOpen = TicksToOpenNow;
+                }
             }
         }
 
@@ -488,7 +498,7 @@ namespace DoorsExpanded
                 {
                     ticksSinceOpen--;
                 }
-                var closedTempLeakRate = Def.tempLeakRate;
+                var closedTempLeakRate = props.tempLeakRate;
                 if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
                 {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
@@ -708,9 +718,8 @@ namespace DoorsExpanded
         {
             var ticksToOpenNow = TicksToOpenNow;
             var percentOpen = ticksToOpenNow == 0 ? 1f : Mathf.Clamp01((float)ticksSinceOpen / ticksToOpenNow);
-            var def = Def;
 
-            var rotation = DoorRotationAt(def, Position, Rotation, Map);
+            var rotation = DoorRotationAt(def, props, Position, Rotation, Map);
             Rotation = rotation;
 
             var drawPos = DrawPos;
@@ -719,52 +728,53 @@ namespace DoorsExpanded
             for (var i = 0; i < 2; i++)
             {
                 var flipped = i != 0;
-                var material = (!flipped && def.doorAsync is GraphicData doorAsyncGraphic)
+                var material = (!flipped && props.doorAsync is GraphicData doorAsyncGraphic)
                     ? doorAsyncGraphic.GraphicColoredFor(this).MatAt(rotation)
                     : Graphic.MatAt(rotation);
-                Draw(def, material, drawPos, rotation, percentOpen, flipped,
+                Draw(def, props, material, drawPos, rotation, percentOpen, flipped,
                     i == 0 && MoreDebugViewSettings.writeDoors ? debugDrawVectors : null);
-                if (def.singleDoor)
+                if (props.singleDoor)
                     break;
             }
 
-            if (def.doorFrame is GraphicData)
+            if (props.doorFrame is GraphicData)
             {
-                DrawFrameParams(def, drawPos, rotation, false, out var fMesh, out var fMatrix);
-                Graphics.DrawMesh(fMesh, fMatrix, def.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
+                DrawFrameParams(def, props, drawPos, rotation, false, out var fMesh, out var fMatrix);
+                Graphics.DrawMesh(fMesh, fMatrix, props.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
 
-                if (def.doorFrameSplit is GraphicData)
+                if (props.doorFrameSplit is GraphicData)
                 {
-                    DrawFrameParams(def, drawPos, rotation, true, out fMesh, out fMatrix);
-                    Graphics.DrawMesh(fMesh, fMatrix, def.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
+                    DrawFrameParams(def, props, drawPos, rotation, true, out fMesh, out fMatrix);
+                    Graphics.DrawMesh(fMesh, fMatrix, props.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
                 }
             }
 
             Comps_PostDraw();
         }
 
-        internal static void Draw(DoorExpandedDef def, Material material, Vector3 drawPos, Rot4 rotation, float percentOpen,
+        internal static void Draw(ThingDef def, CompProperties_DoorExpanded props,
+            Material material, Vector3 drawPos, Rot4 rotation, float percentOpen,
             bool flipped, DebugDrawVectors drawVectors = null)
         {
             Mesh mesh;
             Quaternion rotQuat;
             Vector3 offsetVector, scaleVector;
-            switch (def.doorType)
+            switch (props.doorType)
             {
                 // There's no difference between Stretch and StretchVertical except for stretchOpenSize's default value.
                 case DoorType.Stretch:
                 case DoorType.StretchVertical:
-                    DrawStretchParams(def, rotation, percentOpen, flipped,
+                    DrawStretchParams(def, props, rotation, percentOpen, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
                 case DoorType.DoubleSwing:
                     // TODO: Should drawPos.y be set to Mathf.Max(drawPos.y, AltitudeLayer.BuildingOnTop.AltitudeFor())
                     // since AltitudeLayer.DoorMoveable is only used to hide sliding doors behind adjacent walls?
-                    DrawDoubleSwingParams(def, drawPos, rotation, percentOpen, flipped,
+                    DrawDoubleSwingParams(def, props, drawPos, rotation, percentOpen, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
                 default:
-                    DrawStandardParams(def, rotation, percentOpen, flipped,
+                    DrawStandardParams(def, props, rotation, percentOpen, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
             }
@@ -781,17 +791,17 @@ namespace DoorsExpanded
             }
         }
 
-        private static void DrawStretchParams(DoorExpandedDef def, Rot4 rotation,
-            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+        private static void DrawStretchParams(ThingDef def, CompProperties_DoorExpanded props,
+            Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var drawSize = def.graphicData.drawSize;
-            var closeSize = def.stretchCloseSize;
-            var openSize = def.stretchOpenSize;
-            var offset = def.stretchOffset.Value;
+            var closeSize = props.stretchCloseSize;
+            var openSize = props.stretchOpenSize;
+            var offset = props.stretchOffset.Value;
 
             var verticalRotation = rotation.IsHorizontal;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
 
             offsetVector = new Vector3(offset.x * percentOpen * persMod, 0f, offset.y * percentOpen * persMod);
 
@@ -817,8 +827,8 @@ namespace DoorsExpanded
             offsetVector = rotQuat * offsetVector;
         }
 
-        private static void DrawDoubleSwingParams(DoorExpandedDef def, Vector3 drawPos, Rot4 rotation,
-            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+        private static void DrawDoubleSwingParams(ThingDef def, CompProperties_DoorExpanded props,
+            Vector3 drawPos, Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
@@ -843,7 +853,7 @@ namespace DoorsExpanded
                 rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * percentOpen) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * percentOpen) * def.Size.x;
             offsetVector *= offsetMod;
 
             if (verticalRotation)
@@ -856,12 +866,12 @@ namespace DoorsExpanded
             }
 
             var drawSize = def.graphicData.drawSize;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
             scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
         }
 
-        private static void DrawStandardParams(DoorExpandedDef def, Rot4 rotation,
-            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+        private static void DrawStandardParams(ThingDef def, CompProperties_DoorExpanded props,
+            Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
@@ -879,22 +889,23 @@ namespace DoorsExpanded
             rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * percentOpen) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * percentOpen) * def.Size.x;
             offsetVector *= offsetMod;
 
             var drawSize = def.graphicData.drawSize;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
             scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
         }
 
-        private static void DrawFrameParams(DoorExpandedDef def, Vector3 drawPos, Rot4 rotation, bool split,
+        private static void DrawFrameParams(ThingDef def, CompProperties_DoorExpanded props,
+            Vector3 drawPos, Rot4 rotation, bool split,
             out Mesh mesh, out Matrix4x4 matrix)
         {
             var verticalRotation = rotation.IsHorizontal;
             var offsetVector = new Vector3(-1f, 0f, 0f);
             mesh = MeshPool.plane10;
 
-            if (def.doorFrameSplit != null)
+            if (props.doorFrameSplit != null)
             {
                 if (rotation == Rot4.West)
                 {
@@ -907,11 +918,11 @@ namespace DoorsExpanded
             var rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * 1f) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * 1f) * def.Size.x;
             offsetVector *= offsetMod;
 
-            var drawSize = def.doorFrame.drawSize;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var drawSize = props.doorFrame.drawSize;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
             var scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
 
             var graphicVector = drawPos;
@@ -934,15 +945,15 @@ namespace DoorsExpanded
             }
             graphicVector += offsetVector;
 
-            var frameOffsetVector = def.doorFrameOffset;
-            if (def.doorFrameSplit != null)
+            var frameOffsetVector = props.doorFrameOffset;
+            if (props.doorFrameSplit != null)
             {
                 if (rotation == Rot4.West)
                 {
                     rotQuat = Quaternion.Euler(0f, 270f, 0f);
                     graphicVector.z -= 2.7f;
                     mesh = MeshPool.plane10Flip;
-                    frameOffsetVector = def.doorFrameSplitOffset;
+                    frameOffsetVector = props.doorFrameSplitOffset;
                 }
             }
             graphicVector += frameOffsetVector;
@@ -950,15 +961,15 @@ namespace DoorsExpanded
             matrix = Matrix4x4.TRS(graphicVector, rotQuat, scaleVector);
         }
 
-        public static Rot4 DoorRotationAt(DoorExpandedDef def, IntVec3 loc, Rot4 rot, Map map)
+        public static Rot4 DoorRotationAt(ThingDef def, CompProperties_DoorExpanded props, IntVec3 loc, Rot4 rot, Map map)
         {
             if (!def.rotatable)
             {
                 var size = def.Size;
-                if ((size.x == 1 && size.z == 1) || def.doorType == DoorType.StretchVertical || def.doorType == DoorType.Stretch)
+                if ((size.x == 1 && size.z == 1) || props.doorType == DoorType.StretchVertical || props.doorType == DoorType.Stretch)
                     rot = Building_Door.DoorRotationAt(loc, map);
             }
-            if (!def.rotatesSouth && rot == Rot4.South)
+            if (!props.rotatesSouth && rot == Rot4.South)
                 rot = Rot4.North;
             return rot;
         }

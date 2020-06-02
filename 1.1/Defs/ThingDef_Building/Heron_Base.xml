@@ -1,7 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!--========================= Doors =============================-->
+  <!--
+  ========================= Base Doors =============================
+  
+  You don't need to use these as a base doors for your custom doors, but they're convenient to base off of.
+  Custom doors must define a "DoorsExpanded.CompProperties_DoorExpanded" comp - see Heron_Doors.xml for examples.
+  -->
 
   <ThingDef ParentName="AbstractHeronDoorBase" Name="HeronClothDoorBase" Abstract="True">
     <!-- Only cloth doors are minifiable by default. -->
@@ -31,6 +36,7 @@
 
   <!-- Based off /Defs/ThingDefs[@Name="DoorBase"] - can't simply inherit from it, since there's no way to override its building.blueprintGraphicData with null. -->
   <ThingDef Name="AbstractHeronDoorBase" ParentName="BuildingBase" Abstract="True">
+    <!-- Note: thingClass will be overriden in a DoorsExpanded.CompProperties_DoorExpanded, which must be defined. -->
     <thingClass>DoorsExpanded.Building_DoorExpanded</thingClass>
     <category>Building</category>
     <altitudeLayer>DoorMoveable</altitudeLayer>

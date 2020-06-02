@@ -40,6 +40,8 @@
     <Compile Include="Building_DoorExpanded.cs" />
     <Compile Include="Building_DoorRegionHandler.cs" />
     <Compile Include="Building_DoorRemoteButton.cs" />
+    <Compile Include="CompDoorExpanded.cs" />
+    <Compile Include="CompProperties_DoorExpanded.cs" />
     <Compile Include="DebugInspectorPatches.cs" />
     <Compile Include="DoorExpandedDef.cs" />
     <Compile Include="DoorsExpandedMod.cs" />

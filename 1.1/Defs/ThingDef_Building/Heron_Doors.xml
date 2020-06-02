@@ -45,7 +45,7 @@
     </comps>
   </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef Name="HeronDoor" ParentName="HeronDoorBase">
+  <ThingDef Name="HeronDoor" ParentName="HeronDoorBase">
     <defName>PH_DoorDouble</defName>
     <label>door (2x1)</label>
     <description>Divides rooms. Simple doors must be manually opened, which slows people down. The amount of slowdown depends on what the door is made of.</description>
@@ -72,10 +72,14 @@
     <uiIconPath>Things/Building/Door/DoorSimple_MenuIcon</uiIconPath>
     <costStuffCount>50</costStuffCount>
     <designationHotKey>Misc1</designationHotKey>
-    <doorType>Standard</doorType>
-  </DoorsExpanded.DoorExpandedDef>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <doorType>Standard</doorType>
+      </li>
+    </comps>
+  </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronDoor">
+  <ThingDef ParentName="HeronDoor">
     <defName>PH_DoorTriple</defName>
     <label>door (3x1)</label>
     <size>(3,1)</size>
@@ -100,11 +104,15 @@
       </damageData>
     </graphicData>
     <costStuffCount>75</costStuffCount>
-    <doorType>Standard</doorType>
-  </DoorsExpanded.DoorExpandedDef>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <doorType>Standard</doorType>
+      </li>
+    </comps>
+  </ThingDef>
 
   <!--
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronDoor">
+  <ThingDef ParentName="HeronDoor">
     <defName>PH_AutodoorDouble</defName>
     <label>autodoor (2x1)</label>
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
@@ -127,6 +135,9 @@
     </costList>
     <costStuffCount>35</costStuffCount>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <doorType>Standard</doorType>
+      </li>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>70</basePowerConsumption>
@@ -138,9 +149,9 @@
       <li>Autodoors</li>
     </researchPrerequisites>
     <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronDoor">
+  <ThingDef ParentName="HeronDoor">
     <defName>PH_AutodoorTriple</defName>
     <label>autodoor (1x3)</label>
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
@@ -174,10 +185,10 @@
       <li>Autodoors</li>
     </researchPrerequisites>
     <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 -->
 
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronDoorBase">
+  <ThingDef ParentName="HeronDoorBase">
     <defName>PH_DoorJail</defName>
     <label>jail door</label>
     <description>Sliding jail cell door with strong bars.</description>
@@ -209,15 +220,19 @@
       <Steel>30</Steel>
       <ComponentIndustrial>2</ComponentIndustrial>
     </costList>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <doorType>Standard</doorType>
+        <singleDoor>true</singleDoor>
+        <doorOpenMultiplier>0.8</doorOpenMultiplier>
+        <rotatesSouth>false</rotatesSouth>
+      </li>
+    </comps>
     <designationHotKey>Misc1</designationHotKey>
-    <doorType>Standard</doorType>
-    <singleDoor>true</singleDoor>
-    <doorOpenMultiplier>0.8</doorOpenMultiplier>
-    <rotatesSouth>false</rotatesSouth>
     <researchPrerequisites>
       <li>ProjectHeron_PrisonDoors</li>
     </researchPrerequisites>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
   <!--
    ██████ ██    ██ ██████  ████████  █████  ██ ███    ██ ███████
@@ -227,7 +242,7 @@
    ██████  ██████  ██   ██    ██    ██   ██ ██ ██   ████ ███████
   -->
 
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronClothDoorBase">
+  <ThingDef ParentName="HeronClothDoorBase">
     <defName>HeronCurtainTribal</defName>
     <label>curtain (tribal)</label>
     <description>Divides rooms. Curtains are much faster to open than standard doors, but are flammable and slowly vent temperatures between rooms.</description>
@@ -255,14 +270,18 @@
     </graphicData>
     <uiIconPath>Things/Building/Door/Curtain_MenuIcon</uiIconPath>
     <costStuffCount>25</costStuffCount>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <doorType>Stretch</doorType>
+        <tempLeakRate>60</tempLeakRate>
+        <singleDoor>true</singleDoor>
+      </li>
+    </comps>
     <designationHotKey>Misc2</designationHotKey>
-    <tempLeakRate>60</tempLeakRate>
-    <doorType>Stretch</doorType>
-    <singleDoor>true</singleDoor>
     <researchPrerequisites>
       <li>ProjectHeron_Curtains</li>
     </researchPrerequisites>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
   <!--
    ██████   █████  ████████ ███████ ███████
@@ -272,7 +291,7 @@
    ██████  ██   ██    ██    ███████ ███████
  -->
 
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronDoor">
+  <ThingDef ParentName="HeronDoor">
     <defName>PH_GateDoubleThick</defName>
     <label>gate (2x1)</label>
     <size>(2,1)</size>
@@ -292,14 +311,18 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <doorType>DoubleSwing</doorType>
-    <rotatesSouth>false</rotatesSouth>
-    <fixedPerspective>true</fixedPerspective>
     <costStuffCount>100</costStuffCount>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <doorType>DoubleSwing</doorType>
+        <rotatesSouth>false</rotatesSouth>
+        <fixedPerspective>true</fixedPerspective>
+      </li>
+    </comps>
     <researchPrerequisites>
       <li>ProjectHeron_Gates</li>
     </researchPrerequisites>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
   <!--
   ██████  ██       █████  ███████ ████████     ██████   ██████   ██████  ██████  ███████
@@ -309,11 +332,10 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
+  <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
     <label>blast door (2x1)</label>
     <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons. Can be opened and closed from a distance with a button or lever.</description>
-    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
     <size>(2,1)</size>
     <building>
       <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
@@ -344,37 +366,40 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <doorAsync>
-      <texPath>Things/Building/Door/DoorBlastDoor_MoverAsync</texPath>
-      <graphicClass>Graphic_Multi</graphicClass>
-      <drawSize>(2,1)</drawSize>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </doorAsync>
-    <doorFrameSplitOffset>(0,0,1)</doorFrameSplitOffset>
-    <doorFrame>
-      <texPath>Things/Building/Door/DoorBlastDoor_Frame</texPath>
-      <graphicClass>Graphic_Multi</graphicClass>
-      <shaderType>CutoutComplex</shaderType>
-      <drawSize>(2,1)</drawSize>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </doorFrame>
-    <doorFrameSplit>
-      <texPath>Things/Building/Door/DoorBlastDoor_FrameAsync</texPath>
-      <graphicClass>Graphic_Multi</graphicClass>
-      <shaderType>CutoutComplex</shaderType>
-      <drawSize>(2,1)</drawSize>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </doorFrameSplit>
-    <doorType>Standard</doorType>
-    <fixedPerspective>true</fixedPerspective>
-    <rotatesSouth>false</rotatesSouth>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>Standard</doorType>
+        <fixedPerspective>true</fixedPerspective>
+        <rotatesSouth>false</rotatesSouth>
+        <doorAsync>
+          <texPath>Things/Building/Door/DoorBlastDoor_MoverAsync</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(2,1)</drawSize>
+          <damageData>
+            <enabled>false</enabled>
+          </damageData>
+        </doorAsync>
+        <doorFrameSplitOffset>(0,0,1)</doorFrameSplitOffset>
+        <doorFrame>
+          <texPath>Things/Building/Door/DoorBlastDoor_Frame</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <shaderType>CutoutComplex</shaderType>
+          <drawSize>(2,1)</drawSize>
+          <damageData>
+            <enabled>false</enabled>
+          </damageData>
+        </doorFrame>
+        <doorFrameSplit>
+          <texPath>Things/Building/Door/DoorBlastDoor_FrameAsync</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <shaderType>CutoutComplex</shaderType>
+          <drawSize>(2,1)</drawSize>
+          <damageData>
+            <enabled>false</enabled>
+          </damageData>
+        </doorFrameSplit>
+      </li>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>100</basePowerConsumption>
@@ -385,13 +410,12 @@
       <li>ProjectHeron_BlastDoors</li>
     </researchPrerequisites>
     <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef ParentName="HeronMetalDoorBase">
+  <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorThickBlastDoor</defName>
     <label>blast door (3x2)</label>
     <description>A heavy pair of doors that are twice as strong against explosives, and three times more resilient to standard blunt and sharpened weapons. Can be opened and closed from a distance with a button or lever.</description>
-    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
     <size>(3,2)</size>
     <building>
       <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
@@ -422,36 +446,39 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <doorAsync>
-      <texPath>Things/Building/Door/DoorBlastDoor_MoverAsync</texPath>
-      <graphicClass>Graphic_Multi</graphicClass>
-      <drawSize>(3,2)</drawSize>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </doorAsync>
-    <doorFrame>
-      <texPath>Things/Building/Door/DoorBlastDoor_Frame</texPath>
-      <graphicClass>Graphic_Multi</graphicClass>
-      <shaderType>CutoutComplex</shaderType>
-      <drawSize>(3,2)</drawSize>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </doorFrame>
-    <doorFrameSplit>
-      <texPath>Things/Building/Door/DoorBlastDoor_FrameAsync</texPath>
-      <graphicClass>Graphic_Multi</graphicClass>
-      <shaderType>CutoutComplex</shaderType>
-      <drawSize>(3,2)</drawSize>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </doorFrameSplit>
-    <doorType>Standard</doorType>
-    <fixedPerspective>true</fixedPerspective>
-    <rotatesSouth>false</rotatesSouth>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>Standard</doorType>
+        <fixedPerspective>true</fixedPerspective>
+        <rotatesSouth>false</rotatesSouth>
+        <doorAsync>
+          <texPath>Things/Building/Door/DoorBlastDoor_MoverAsync</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(3,2)</drawSize>
+          <damageData>
+            <enabled>false</enabled>
+          </damageData>
+        </doorAsync>
+        <doorFrame>
+          <texPath>Things/Building/Door/DoorBlastDoor_Frame</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <shaderType>CutoutComplex</shaderType>
+          <drawSize>(3,2)</drawSize>
+          <damageData>
+            <enabled>false</enabled>
+          </damageData>
+        </doorFrame>
+        <doorFrameSplit>
+          <texPath>Things/Building/Door/DoorBlastDoor_FrameAsync</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <shaderType>CutoutComplex</shaderType>
+          <drawSize>(3,2)</drawSize>
+          <damageData>
+            <enabled>false</enabled>
+          </damageData>
+        </doorFrameSplit>
+      </li>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>200</basePowerConsumption>
@@ -462,6 +489,6 @@
       <li>ProjectHeron_BlastDoors</li>
     </researchPrerequisites>
     <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
 </Defs>

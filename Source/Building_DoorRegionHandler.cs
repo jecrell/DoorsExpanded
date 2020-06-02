@@ -143,9 +143,8 @@ namespace DoorsExpanded
             // We're delegating all the Tick logic to Building_DoorExpanded, which syncs its fields with its invis doors as needed.
             // So we skip calling Building_Door.Tick (via base.Tick()) and instead call Building.Tick (actually ThingWithComps.Tick).
             // Not replicating the logic in ThingWithComps.Tick, in case the logic changes or another mod patches that method.
-            if (Building_Tick == null)
-                Building_Tick = (Action)Activator.CreateInstance(typeof(Action), this,
-                    methodof_Building_Tick.MethodHandle.GetFunctionPointer());
+            Building_Tick ??= (Action)Activator.CreateInstance(typeof(Action), this,
+                methodof_Building_Tick.MethodHandle.GetFunctionPointer());
             Building_Tick();
         }
 

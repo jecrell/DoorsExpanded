@@ -44,8 +44,7 @@ namespace DoorsExpanded
         {
             if (name != null)
             {
-                if (patchCallRegistry == null)
-                    patchCallRegistry = new Dictionary<string, bool>();
+                patchCallRegistry ??= new Dictionary<string, bool>();
                 patchCallRegistry[name] = false;
             }
         }

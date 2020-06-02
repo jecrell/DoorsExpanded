@@ -1103,7 +1103,8 @@ namespace DoorsExpanded
             RotationDirection rotDirection)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedRotateAgainIfNeeded));
-            if (placingRot == Rot4.South && designatorPlace.PlacingDef is DoorExpandedDef doorExDef && !doorExDef.rotatesSouth)
+            if (placingRot == Rot4.South && designatorPlace.PlacingDef.GetDoorExpandedProps() is CompProperties_DoorExpanded doorExProps &&
+                !doorExProps.rotatesSouth)
             {
                 placingRot.Rotate(rotDirection);
             }
@@ -1120,13 +1121,13 @@ namespace DoorsExpanded
             float extraRotation)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedDrawGhostGraphicFromDef));
-            if (thingDef is DoorExpandedDef doorExDef)
+            if (thingDef.GetDoorExpandedProps() is CompProperties_DoorExpanded doorExProps)
             {
                 // Always delegate door expanded graphics to our custom code.
                 for (var i = 0; i < 2; i++)
                 {
-                    Building_DoorExpanded.Draw(doorExDef, graphic.MatAt(rot), loc, rot, percentOpen: 0, flipped: i != 0);
-                    if (doorExDef.singleDoor)
+                    Building_DoorExpanded.Draw(thingDef, doorExProps, graphic.MatAt(rot), loc, rot, percentOpen: 0, flipped: i != 0);
+                    if (doorExProps.singleDoor)
                         break;
                 }
             }
@@ -1179,7 +1180,8 @@ namespace DoorsExpanded
             ref var blueprint = ref __instance;
             // This needs to be a prefix (as opposed to a postfix), since Thing.SpawnSetup has logic which depends on
             // drawerType and rotation.
-            if (blueprint.def.entityDefToBuild is DoorExpandedDef doorExDef)
+            if (blueprint.def.entityDefToBuild is ThingDef thingDef &&
+                thingDef.GetCompProperties<CompProperties_DoorExpanded>() is CompProperties_DoorExpanded doorExProps)
             {
                 // ThingDefGenerator_Buildings.NewBlueprintDef_Thing configures generated blueprint defs such that their
                 // def.drawerType is MapMeshAndRealTime. This means that they have both a "update-when-needed" drawing that
@@ -1199,7 +1201,7 @@ namespace DoorsExpanded
                 // is cached in various ways in base.SpawnSetup, including in BlueprintGrid.
                 // Fortunately once rotated, no further non-1x1 rotations will change the footprint further.
                 blueprint.Rotation =
-                    Building_DoorExpanded.DoorRotationAt(doorExDef, blueprint.Position, blueprint.Rotation, map);
+                    Building_DoorExpanded.DoorRotationAt(thingDef, doorExProps, blueprint.Position, blueprint.Rotation, map);
             }
             else if (blueprint is Blueprint_Install && IsVanillaDoorDef(blueprint.def.entityDefToBuild))
             {
@@ -1214,18 +1216,19 @@ namespace DoorsExpanded
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedBlueprintDrawPrefix));
             ref var blueprint = ref __instance;
-            if (blueprint.def.entityDefToBuild is DoorExpandedDef doorExDef)
+            if (blueprint.def.entityDefToBuild is ThingDef thingDef &&
+                thingDef.GetCompProperties<CompProperties_DoorExpanded>() is CompProperties_DoorExpanded doorExProps)
             {
                 // Always delegate door expanded graphics to our custom code.
                 var drawPos = blueprint.DrawPos;
                 var rotation = blueprint.Rotation;
-                rotation = Building_DoorExpanded.DoorRotationAt(doorExDef, blueprint.Position, rotation, blueprint.Map);
+                rotation = Building_DoorExpanded.DoorRotationAt(thingDef, doorExProps, blueprint.Position, rotation, blueprint.Map);
                 blueprint.Rotation = rotation;
                 var material = blueprint.Graphic.MatAt(rotation);
                 for (var i = 0; i < 2; i++)
                 {
-                    Building_DoorExpanded.Draw(doorExDef, material, drawPos, rotation, percentOpen: 0, flipped: i != 0);
-                    if (doorExDef.singleDoor)
+                    Building_DoorExpanded.Draw(thingDef, doorExProps, material, drawPos, rotation, percentOpen: 0, flipped: i != 0);
+                    if (doorExProps.singleDoor)
                         break;
                 }
                 Comps_PostDraw(blueprint, emptyObjArray);
@@ -1329,8 +1332,7 @@ namespace DoorsExpanded
                 {
                     if (innerThing.def == HeronDefOf.HeronInvisibleDoor)
                     {
-                        if (invisDoors == null)
-                            invisDoors = new List<Thing>();
+                        invisDoors ??= new List<Thing>();
                         invisDoors.Add(innerThing);
                         return true;
                     }

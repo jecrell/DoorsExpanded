@@ -143,10 +143,9 @@
     </researchPrerequisites>
   </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef Name="HeronDoorRemote" ParentName="HeronMetalDoorBase">
+  <ThingDef Name="HeronDoorRemote" ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteSingle</defName>
     <label>remote door (1x1)</label>
-    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
     <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly. Can be opened and closed from a distance with a button or lever.</description>
     <building>
       <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
@@ -171,6 +170,11 @@
       </damageData>
     </graphicData>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>StretchVertical</doorType>
+        <singleDoor>true</singleDoor>
+      </li>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>15</basePowerConsumption> <!-- 30% of equivalent autodoor to compensate for slower door open speed -->
@@ -184,17 +188,14 @@
       <ComponentIndustrial>1</ComponentIndustrial>
     </costList>
     <designationCategory>Structure</designationCategory>
-    <doorType>StretchVertical</doorType>
-    <singleDoor>true</singleDoor>
     <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef Name="HeronDoorDoubleRemote" ParentName="HeronMetalDoorBase">
+  <ThingDef Name="HeronDoorDoubleRemote" ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteDouble</defName>
     <label>remote door (2x1)</label>
-    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
     <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly. Can be opened and closed from a distance with a button or lever.</description>
     <building>
       <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
@@ -222,6 +223,13 @@
       </damageData>
     </graphicData>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>StretchVertical</doorType>
+        <!-- Top and bottom 4th of door texture is all transparent, so "actual" size of closed door for stretch purposes is (2,1) -->
+        <stretchCloseSize>(2,1)</stretchCloseSize>
+        <singleDoor>true</singleDoor>
+      </li>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>30</basePowerConsumption> <!-- 30% of equivalent autodoor to compensate for slower door open speed -->
@@ -235,13 +243,9 @@
       <ComponentIndustrial>2</ComponentIndustrial>
     </costList>
     <designationCategory>Structure</designationCategory>
-    <doorType>StretchVertical</doorType>
-    <!-- Top and bottom 4th of door texture is all transparent, so "actual" size of closed door for stretch purposes is (2,1) -->
-    <stretchCloseSize>(2,1)</stretchCloseSize>
-    <singleDoor>true</singleDoor>
     <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
 
 </Defs>
