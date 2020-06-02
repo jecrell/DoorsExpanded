@@ -1308,15 +1308,20 @@ namespace DoorsExpanded
         public static bool DoorExpandedGetBackCompatibleType(Type baseType, string providedClassName, XmlNode node, ref Type __result)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedGetBackCompatibleType));
-            // To accommodate changes in the specific Building_DoorExpanded class (like blast doors now becoming Building_DoorRemote),
-            // always return a Building_DoorExpanded's actual def's thingClass.
-            if (baseType == typeof(Thing) && providedClassName == Building_DoorExpanded_FullName && node["def"] != null)
+            // To accommodate changes in the specific Building_DoorExpanded class
+            // (like blast doors from Building_DoorExpanded to Building_DoorRemote, or autodoors from Building_Door to Building_DoorRemote),
+            // always return a door's actual def's thingClass (which should by set by CompProperties_DoorExpanded).
+            if (baseType == typeof(Thing) && node["def"] is XmlNode defNode &&
+                (providedClassName == Building_Door_FullName || providedClassName == Building_DoorExpanded_FullName))
             {
-                __result = DefDatabase<ThingDef>.GetNamedSilentFail(node["def"].InnerText).thingClass;
+                __result = DefDatabase<ThingDef>.GetNamedSilentFail(defNode.InnerText).thingClass;
                 return false;
             }
             return true;
         }
+
+        private static readonly string Building_Door_FullName = typeof(Building_Door).Name; // omit "RimWorld." prefix
+        private static readonly string Building_DoorExpanded_FullName = typeof(Building_DoorExpanded).FullName;
 
         // BackCompatibility.CheckSpawnBackCompatibleThingAfterLoading
         public static bool DoorExpandedCheckSpawnBackCompatibleThingAfterLoading(Thing thing, ref bool __result)
@@ -1348,8 +1353,6 @@ namespace DoorsExpanded
             }
             return true;
         }
-
-        private static readonly string Building_DoorExpanded_FullName = typeof(Building_DoorExpanded).FullName;
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door door && door.Open
