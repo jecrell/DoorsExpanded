@@ -80,6 +80,7 @@ namespace DoorsExpanded
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
+            TLog.Log(this);
             // Building_Door.SpawnSetup calls BlockedOpenMomentary, which will be delegating to Building_DoorExpanded.
             // Since that Building_DoorExpanded may not be spawned yet, we want to avoid this.
             // Building_Door.SpawnSetup also calls ClearReachabilityCache, which is redundant with Building_DoorExpanded
@@ -95,6 +96,7 @@ namespace DoorsExpanded
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
+            TLog.Log(this);
             // This check is necessary to prevent errors during operations that despawn all things in the same cell,
             // since despawning/destroying parent doors also destroys their invis doors.
             if (Spawned)
@@ -103,6 +105,7 @@ namespace DoorsExpanded
 
         public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
         {
+            TLog.Log(this);
             // This check is necessary to prevent errors during operations that destroy all things in the same cell,
             // since despawning/destroying parent doors also destroys their invis doors.
             if (!Destroyed)
@@ -129,7 +132,9 @@ namespace DoorsExpanded
             // Sanity checks. These are inexpensive and thus done every tick.
             if (ParentDoor == null || !ParentDoor.Spawned)
             {
-                Destroy(DestroyMode.Vanish);
+                var stateStr = ParentDoor == null ? "null" : ParentDoor.Destroyed ? "destroyed" : "unspawned";
+                Log.Error($"{this}.ParentDoor is unexpectedly {stateStr} - destroying this");
+                Destroy();
                 return;
             }
             if (Faction != ParentDoor.Faction)

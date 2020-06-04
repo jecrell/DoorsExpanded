@@ -261,6 +261,7 @@ namespace DoorsExpanded
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
+            TLog.Log(this);
             // Non-1x1 rotations change the footprint of the blueprint, so this needs to be done before that footprint is
             // cached in various ways in base.SpawnSetup.
             // Fortunately once rotated, no further non-1x1 rotations will change the footprint further.
@@ -295,44 +296,80 @@ namespace DoorsExpanded
         // Note: This method is also filled with sanity checks for invis doors that manifest as warnings.
         private void SpawnInvisDoorsAsNeeded(Map map)
         {
-            //Log.Message($"SpawnInvisDoorsAsNeeded called in {this}.{new System.Diagnostics.StackFrame(1).GetMethod().Name}, " +
-            //    $"#invisDoors={invisDoors.Count}/{this.OccupiedRect().Area}");
+            if (TLog.Enabled)
+                TLog.Log($"{this} (#invisDoors={invisDoors.Count}/{this.OccupiedRect().Area})");
             var occupiedRect = this.OccupiedRect();
+            var invisDoorsToRespawn = new List<Building_DoorRegionHandler>();
             var invisDoorsToReposition = new List<Building_DoorRegionHandler>();
             var spawnedInvisDoors = new List<Building_DoorRegionHandler>();
             var errors = new List<string>();
 
             if (invisDoors.Count > 0)
             {
-                var invisDoorCells = new HashSet<IntVec3>(); // only for detecting multiple existing invis door at same cell
+                var invisDoorCells = new HashSet<IntVec3>(); // only for detecting multiple existing invis doors at same cell
                 for (var i = invisDoors.Count - 1; i >= 0; i--)
                 {
                     var invisDoor = invisDoors[i];
+                    var removeInvisDoor = false;
                     if (invisDoor == null)
                     {
-                        errors.Add($"{this}.invisDoors[{i}] is unexpectedly null - removing");
-                        invisDoors.RemoveAt(i);
+                        errors.Add($"{this}.invisDoors[{i}] is unexpectedly null - removing it");
+                        removeInvisDoor = true;
                     }
-                    else if (!invisDoor.Spawned)
+                    else if (invisDoor.Destroyed)
                     {
-                        var stateStr = invisDoor.Destroyed ? "destroyed" : "unspawned";
-                        errors.Add($"{invisDoor} is unexpectedly {stateStr} - removing");
+                        errors.Add($"{invisDoor} is unexpectedly destroyed - removing it");
+                        removeInvisDoor = true;
+                    }
+                    else
+                    {
+                        if (!invisDoor.Spawned)
+                        {
+                            // Error msg is added later in this case.
+                            removeInvisDoor = true;
+                            invisDoorsToRespawn.Add(invisDoor);
+                        }
+                        else
+                        {
+                            var cell = invisDoor.Position;
+                            if (!occupiedRect.Contains(cell))
+                            {
+                                errors.Add($"{invisDoor} has position {cell} outside of {occupiedRect} - destroying it");
+                                removeInvisDoor = true;
+                                invisDoor.Destroy();
+                            }
+                            else if (!invisDoorCells.Add(cell))
+                            {
+                                var existingInvisDoors = cell.GetThingList(map).OfType<Building_DoorRegionHandler>();
+                                errors.Add($"{invisDoor} has position {cell} taken by multiple invis doors " +
+                                    $"({existingInvisDoors.ToStringSafeEnumerable()}) - destroying it");
+                                removeInvisDoor = true;
+                                invisDoor.Destroy();
+                            }
+                        }
+                    }
+
+                    if (removeInvisDoor)
+                    {
                         invisDoors.RemoveAt(i);
                     }
                     else
                     {
-                        if (!invisDoorCells.Add(invisDoor.Position) || !occupiedRect.Contains(invisDoor.Position))
+                        if (invisDoor.ParentDoor == null)
                         {
-                            invisDoorsToReposition.Add(invisDoor);
-                        }
-                        if (invisDoor.ParentDoor != this)
-                        {
-                            errors.Add($"{invisDoor} has incorrect parent ({invisDoor.ParentDoor}) - fixing it");
+                            errors.Add($"{invisDoor} has no parent - reparenting it to {this}");
                             invisDoor.ParentDoor = this;
                         }
+                        else if (invisDoor.ParentDoor != this)
+                        {
+                            errors.Add($"{invisDoor} has different parent - removing it from {this}");
+                            // Don't destroy this invis door here - let the invis door's parent handle it.
+                            invisDoors.RemoveAt(i);
+                        }
+
                         if (invisDoor.Faction != Faction)
                         {
-                            errors.Add($"{invisDoor} has incorrect faction ({invisDoor.Faction}) - fixing it");
+                            errors.Add($"{invisDoor} has different faction ({invisDoor.Faction}) - setting it to {Faction}");
                             invisDoor.SetFactionDirect(Faction);
                         }
                     }
@@ -341,37 +378,64 @@ namespace DoorsExpanded
 
             foreach (var cell in occupiedRect)
             {
-                Building_DoorRegionHandler invisDoor = null;
-                foreach (var existingDoor in cell.GetThingList(map).OfType<Building_DoorRegionHandler>())
+                var thingList = cell.GetThingList(map);
+                // Another spawned overlapping doorEx shouldn't ever by possible due to GenSpawn.SpawningWipes checks, but just in case...
+                foreach (var existingThing in thingList)
                 {
-                    if (existingDoor.ParentDoor != this)
+                    if (existingThing != this && existingThing is Building_DoorExpanded existingDoorEx)
                     {
-                        errors.Add($"Unexpected {invisDoor} already spawned at {cell} - destroying it (including parent)");
-                        existingDoor.ParentDoor.Destroy(DestroyMode.Vanish);
+                        var existingOccupiedRect = existingDoorEx.OccupiedRect();
+                        if (occupiedRect.Overlaps(existingOccupiedRect))
+                        {
+                            errors.Add($"Unexpected {existingDoorEx} (occupying {existingOccupiedRect}) overlaps {this} " +
+                                $"(occupying {occupiedRect}) - refunding it");
+                            // This should also destroy all the invis doors associated with the refunded doorEx.
+                            GenSpawn.Refund(existingDoorEx, map, occupiedRect);
+                        }
+                    }
+                }
+
+                Building_DoorRegionHandler invisDoor = null;
+                var existingInvisDoors = thingList.OfType<Building_DoorRegionHandler>();
+                foreach (var existingInvisDoor in existingInvisDoors)
+                {
+                    if (existingInvisDoor.ParentDoor != this)
+                    {
+                        errors.Add($"Unexpected {invisDoor} already spawned at {cell} - destroying it");
+                        // By this point, it's impossible for another spawned doorEx to overlap this doorEx,
+                        // so if existing invis door's parent is another doorEx, assume it's either unspawned or in another location,
+                        // so don't destroy that doorEx. Just destroy
+                        invisDoor.Destroy();
+                    }
+                    else if (invisDoor != null)
+                    {
+                        // This isn't redundant with the earlier multiple invis doors check, since it's technically possible for
+                        // some existing invis doors at the cell to not all be within invisDoors, thus warranting this sanity check.
+                        errors.Add($"{invisDoor} has position {cell} taken by multiple invis doors " +
+                            $"({existingInvisDoors.ToStringSafeEnumerable()}) - destroying it");
+                        invisDoor.Destroy();
                     }
                     else
                     {
-                        // Note: multiple existing invis doors with ParentDoor == this are handled via invisDoorsToReposition.
-                        invisDoor = existingDoor;
+                        invisDoor = existingInvisDoor;
                     }
                 }
 
                 if (invisDoor == null)
                 {
-                    if (invisDoorsToReposition.Count > 0)
+                    if (invisDoorsToRespawn.Count > 0)
                     {
-                        invisDoor = invisDoorsToReposition.Pop();
-                        errors.Add($"{invisDoor} has position outside of {occupiedRect} - setting position to {cell}");
-                        invisDoor.Position = cell;
+                        invisDoor = invisDoorsToRespawn.Pop();
+                        errors.Add($"{invisDoor} is unexpectedly unspawned - respawning it at {cell}");
                     }
                     else
                     {
                         invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
                         invisDoor.ParentDoor = this;
                         invisDoor.SetFactionDirect(Faction);
-                        GenSpawn.Spawn(invisDoor, cell, map);
-                        spawnedInvisDoors.Add(invisDoor);
                     }
+                    GenSpawn.Spawn(invisDoor, cell, map);
+                    spawnedInvisDoors.Add(invisDoor);
                 }
 
                 // Open is the only field that needs to be manually synced with the parent door;
@@ -379,11 +443,10 @@ namespace DoorsExpanded
                 invisDoor.Open = Open;
             }
 
-            foreach (var invisDoor in invisDoorsToReposition)
+            foreach (var invisDoor in invisDoorsToRespawn)
             {
-                errors.Add($"{invisDoor} has position outside of {occupiedRect} and is extraneous - destroying it");
-                // Invis doors are always despawned/destroyed in DestroyMode.Vanish mode.
-                invisDoor.Destroy(DestroyMode.Vanish);
+                errors.Add($"{invisDoor} is unexpectedly unspawned and is extraneous - destroying it");
+                invisDoor.Destroy();
             }
 
             invisDoors.AddRange(spawnedInvisDoors);
@@ -399,13 +462,14 @@ namespace DoorsExpanded
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
+            TLog.Log(this);
             var spawnedInvisDoors = invisDoors.Where(invisDoor => invisDoor.Spawned).ToArray();
             foreach (var invisDoor in spawnedInvisDoors)
             {
                 // If this parent door is respawned later, it will always recreate the invis doors,
                 // so destroy (rather than just despawn) existing invis doors.
-                // And invis doors are always despawned/destroyed in DestroyMode.Vanish mode.
-                invisDoor.Destroy(DestroyMode.Vanish);
+                // And invis doors are always despawned/destroyed in the default Vanish mode.
+                invisDoor.Destroy();
             }
             invisDoors.Clear();
             var map = Map;
@@ -431,6 +495,12 @@ namespace DoorsExpanded
             }
             base.DeSpawn(mode);
             ClearReachabilityCache(map);
+        }
+
+        public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
+        {
+            TLog.Log(this);
+            base.Destroy(mode);
         }
 
         public override void ExposeData()

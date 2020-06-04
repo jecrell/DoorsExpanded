@@ -43,6 +43,7 @@
     <Compile Include="CompDoorExpanded.cs" />
     <Compile Include="CompProperties_DoorExpanded.cs" />
     <Compile Include="DebugInspectorPatches.cs" />
+    <Compile Include="TLog.cs" />
     <Compile Include="DoorExpandedDef.cs" />
     <Compile Include="DoorsExpandedMod.cs" />
     <Compile Include="HarmonyPatches.cs" />
