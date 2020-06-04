@@ -30,12 +30,7 @@ namespace DoorsExpanded
 
     public static class HarmonyPatches
     {
-        internal static Harmony harmony;
-
-        static HarmonyPatches()
-        {
-            harmony = new Harmony("rimworld.jecrell.doorsexpanded");
-        }
+        internal static Harmony harmony = new Harmony("rimworld.jecrell.doorsexpanded");
 
         // Early patching before any StaticConstructorOnStartup-based patching (for compatibility reasons).
         // This is called from DoorsExpandedMod constructor for earliest possible patching.
@@ -310,6 +305,10 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Tick)),
                 prefix: nameof(BuildingDoorTickPrefix),
                 priority: Priority.VeryHigh);
+
+            // Patch StatsReportUtility.StatsToDraw(Def, ThingDef) to include stats from stuffProps if needed.
+            Patch(original: AccessTools.Method(typeof(StatsReportUtility), "StatsToDraw", new[] { typeof(Def), typeof(ThingDef) }),
+                postfix: nameof(StatsReportUtilityStatsToDrawDefPostfix));
 
             // Backwards compatibility patches.
             Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.GetBackCompatibleType)),
@@ -1302,6 +1301,49 @@ namespace DoorsExpanded
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(BuildingDoorTickPrefix));
             return __instance.Spawned;
+        }
+
+        // StatsReportUtility.StatsToDraw(Def, ThingDef)
+        public static IEnumerable<StatDrawEntry> StatsReportUtilityStatsToDrawDefPostfix(IEnumerable<StatDrawEntry> result, Def def)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(StatsReportUtilityStatsToDrawDefPostfix));
+            if (!(def is ThingDef thingDef && thingDef.IsStuff))
+                return result;
+
+            var statsToDraw = result.ToList();
+            // Based off part of StatsReportUtility.StatsToDraw(Thing)
+            // Modified to check whether stats from stuff props are already added, in case future vanilla code or another mod fixes this.
+            if (!thingDef.stuffProps.statFactors.NullOrEmpty())
+            {
+                var existingStats = new HashSet<StatDef>(statsToDraw
+                    .Where(entry => entry.category == StatCategoryDefOf.StuffStatFactors)
+                    .Select(entry => entry.stat));
+                for (int j = 0; j < thingDef.stuffProps.statFactors.Count; j++)
+                {
+                    var stat = thingDef.stuffProps.statFactors[j].stat;
+                    if (!existingStats.Contains(stat))
+                    {
+                        statsToDraw.Add(new StatDrawEntry(StatCategoryDefOf.StuffStatFactors, stat,
+                            thingDef.stuffProps.statFactors[j].value, StatRequest.ForEmpty(), ToStringNumberSense.Factor));
+                    }
+                }
+            }
+            if (!thingDef.stuffProps.statOffsets.NullOrEmpty())
+            {
+                var existingStats = new HashSet<StatDef>(statsToDraw
+                    .Where(entry => entry.category == StatCategoryDefOf.StuffStatOffsets)
+                    .Select(entry => entry.stat));
+                for (int j = 0; j < thingDef.stuffProps.statOffsets.Count; j++)
+                {
+                    var stat = thingDef.stuffProps.statOffsets[j].stat;
+                    if (!existingStats.Contains(stat))
+                    {
+                        statsToDraw.Add(new StatDrawEntry(StatCategoryDefOf.StuffStatOffsets, stat,
+                            thingDef.stuffProps.statOffsets[j].value, StatRequest.ForEmpty(), ToStringNumberSense.Offset));
+                    }
+                }
+            }
+            return statsToDraw;
         }
 
         // BackCompatibility.GetBackCompatibleType

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using RimWorld;
 using Verse;
 
@@ -39,6 +39,14 @@ namespace DoorsExpanded
             if (stat == HeronDefOf.UnpoweredDoorOpenTime)
                 return false;
             return Building_DoorExpanded.DoorIsPoweredOn(req.Thing) ?? Building_DoorExpanded.DoorNeedsPower((ThingDef)req.Def);
+        }
+
+        public override IEnumerable<Dialog_InfoCard.Hyperlink> GetInfoCardHyperlinks(StatRequest statRequest)
+        {
+            if (statRequest.Thing?.Stuff is ThingDef thingStuff)
+                yield return new Dialog_InfoCard.Hyperlink(thingStuff);
+            else if (statRequest.StuffDef is ThingDef stuffDef)
+                yield return new Dialog_InfoCard.Hyperlink(stuffDef);
         }
     }
 }
