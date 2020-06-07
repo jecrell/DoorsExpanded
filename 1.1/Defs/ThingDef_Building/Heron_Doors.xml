@@ -69,7 +69,7 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <uiIconPath>Things/Building/Door/DoorSimple_MenuIcon</uiIconPath>
+    <uiIconPath>Things/Building/Door/DoorDouble_MenuIcon</uiIconPath>
     <costStuffCount>50</costStuffCount>
     <designationHotKey>Misc1</designationHotKey>
     <comps>
@@ -103,6 +103,7 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
+    <uiIconPath>Things/Building/Door/DoorTriple_MenuIcon</uiIconPath>
     <costStuffCount>75</costStuffCount>
     <comps>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
