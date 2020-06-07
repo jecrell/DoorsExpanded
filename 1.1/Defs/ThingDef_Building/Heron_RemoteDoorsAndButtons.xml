@@ -143,20 +143,21 @@
     </researchPrerequisites>
   </ThingDef>
 
-  <ThingDef Name="HeronDoorRemote" ParentName="HeronMetalDoorBase">
+  <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteSingle</defName>
     <label>remote door (1x1)</label>
     <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
-    <building>
-      <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
-      <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
-    </building>
     <statBases>
       <Mass>20</Mass>
       <MaxHitPoints>160</MaxHitPoints>
       <WorkToBuild>1100</WorkToBuild>
       <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
     </statBases>
+    <costList>
+      <Steel>5</Steel>
+      <ComponentIndustrial>1</ComponentIndustrial>
+    </costList>
+    <costStuffCount>50</costStuffCount>
     <size>(1,1)</size>
     <rotatable>false</rotatable>
     <graphicData>
@@ -169,6 +170,11 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
+    <uiIconPath>Things/Building/Door/DoorRemote_icon</uiIconPath>
+    <building>
+      <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
+      <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
+    </building>
     <comps>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
@@ -181,37 +187,27 @@
       </li>
       <li Class="CompProperties_Breakdownable"/>
     </comps>
-    <uiIconPath>Things/Building/Door/DoorRemote_icon</uiIconPath>
-    <costStuffCount>50</costStuffCount>
-    <costList>
-      <Steel>5</Steel>
-      <ComponentIndustrial>1</ComponentIndustrial>
-    </costList>
-    <designationCategory>Structure</designationCategory>
     <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
   </ThingDef>
 
-  <ThingDef Name="HeronDoorDoubleRemote" ParentName="HeronMetalDoorBase">
+  <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteDouble</defName>
     <label>remote door (2x1)</label>
     <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
-    <building>
-      <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
-      <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
-    </building>
     <statBases>
-      <Mass>20</Mass>
+      <Mass>40</Mass>
       <MaxHitPoints>320</MaxHitPoints>
       <WorkToBuild>2200</WorkToBuild>
       <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
     </statBases>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
+    <costList>
+      <Steel>10</Steel>
+      <ComponentIndustrial>2</ComponentIndustrial>
+    </costList>
+    <costStuffCount>100</costStuffCount>
     <size>(2,1)</size>
-    <rotatable>true</rotatable>
     <graphicData>
       <texPath>Things/Building/Door/DoorDoubleRemote_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
@@ -222,6 +218,11 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
+    <uiIconPath>Things/Building/Door/DoorDoubleRemoteUI_icon</uiIconPath>
+    <building>
+      <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
+      <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
+    </building>
     <comps>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
@@ -236,13 +237,9 @@
       </li>
       <li Class="CompProperties_Breakdownable"/>
     </comps>
-    <uiIconPath>Things/Building/Door/DoorDoubleRemoteUI_icon</uiIconPath>
-    <costStuffCount>100</costStuffCount>
-    <costList>
-      <Steel>10</Steel>
-      <ComponentIndustrial>2</ComponentIndustrial>
-    </costList>
-    <designationCategory>Structure</designationCategory>
+    <placeWorkers>
+      <li>JecsTools.PlaceWorker_Outline</li>
+    </placeWorkers>
     <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>

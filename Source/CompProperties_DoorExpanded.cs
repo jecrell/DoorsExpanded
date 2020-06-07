@@ -44,12 +44,18 @@ namespace DoorsExpanded
             foreach (var error in base.ConfigErrors(parentDef))
                 yield return error;
 
+            foreach (var comp in parentDef.comps)
+            {
+                if (comp != this && comp is CompProperties_DoorExpanded)
+                    yield return $"contains multiple {typeof(CompProperties_DoorExpanded)}s";
+            }
+
             if (parentDef.category != ThingCategory.Building)
-                yield return $"{parentDef} with {this} must have category {ThingCategory.Building}";
+                yield return $"{this} must have category {ThingCategory.Building}";
             if (parentDef.tickerType != TickerType.Normal)
-                yield return $"{parentDef} with {this} must have tickerType {TickerType.Normal}";
+                yield return $"{this} must have tickerType {TickerType.Normal}";
             if (parentDef.drawerType != DrawerType.RealtimeOnly)
-                yield return $"{parentDef} with {this} must have drawerType {DrawerType.RealtimeOnly}";
+                yield return $"{this} must have drawerType {DrawerType.RealtimeOnly}";
         }
 
         public override void ResolveReferences(ThingDef parentDef)
