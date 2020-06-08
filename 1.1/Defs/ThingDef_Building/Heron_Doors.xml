@@ -220,7 +220,6 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <uiIconPath>Things/Building/Door/JailCell_Mover</uiIconPath>
     <building>
       <soundDoorOpenManual>HeronJailDoorOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronJailDoorClose</soundDoorCloseManual>
@@ -276,7 +275,6 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <uiIconPath>Things/Building/Door/Curtain_MenuIcon</uiIconPath>
     <comps>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>Stretch</doorType>
