@@ -185,7 +185,9 @@
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>15</basePowerConsumption> <!-- 30% of equivalent autodoor to compensate for slower door open speed -->
       </li>
-      <li Class="CompProperties_Breakdownable"/>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
+      </li>
     </comps>
     <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
@@ -235,7 +237,9 @@
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>30</basePowerConsumption> <!-- 30% of equivalent autodoor to compensate for slower door open speed -->
       </li>
-      <li Class="CompProperties_Breakdownable"/>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
+      </li>
     </comps>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>

@@ -407,7 +407,9 @@
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>100</basePowerConsumption>
       </li>
-      <li Class="CompProperties_Breakdownable"/>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
+      </li>
     </comps>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>
@@ -486,7 +488,9 @@
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>200</basePowerConsumption>
       </li>
-      <li Class="CompProperties_Breakdownable"/>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
+      </li>
     </comps>
     <placeWorkers>
       <li>JecsTools.PlaceWorker_Outline</li>

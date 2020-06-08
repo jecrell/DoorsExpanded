@@ -310,6 +310,11 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(StatsReportUtility), "StatsToDraw", new[] { typeof(Def), typeof(ThingDef) }),
                 postfix: nameof(StatsReportUtilityStatsToDrawDefPostfix));
 
+            // Patch CompBreakdownable to consider CompProperties_BreakdownableCustom.
+            Patch(original: AccessTools.Method(typeof(CompBreakdownable), nameof(CompBreakdownable.CheckForBreakdown)),
+                transpiler: nameof(CompBreakdownableCheckForBreakdownTranspiler),
+                transpilerRelated: nameof(CompBreakdownableMTBUnit));
+
             // Backwards compatibility patches.
             Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.GetBackCompatibleType)),
                 prefix: nameof(DoorExpandedGetBackCompatibleType),
@@ -1344,6 +1349,32 @@ namespace DoorsExpanded
                 }
             }
             return statsToDraw;
+        }
+
+        // CompBreakdownable.CheckForBreakdown
+        public static IEnumerable<CodeInstruction> CompBreakdownableCheckForBreakdownTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            foreach (var instruction in instructions)
+            {
+                if (instruction.Is(OpCodes.Ldc_R4, 1f))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldfld,
+                        AccessTools.Field(typeof(ThingComp), nameof(ThingComp.props)));
+                    yield return new CodeInstruction(OpCodes.Call,
+                        AccessTools.Method(typeof(HarmonyPatches), nameof(CompBreakdownableMTBUnit)));
+                }
+                else
+                {
+                    yield return instruction;
+                }
+            }
+        }
+
+        private static float CompBreakdownableMTBUnit(CompProperties compProps)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(CompBreakdownableMTBUnit));
+            return compProps is CompProperties_BreakdownableCustom custom ? custom.breakdownMTBUnit : 1f;
         }
 
         // BackCompatibility.GetBackCompatibleType
