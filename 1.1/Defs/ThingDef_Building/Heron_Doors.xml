@@ -103,69 +103,35 @@
     </comps>
   </ThingDef>
 
-  <!--
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_AutodoorDouble</defName>
     <label>autodoor (2x1)</label>
     <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
     <statBases>
+      <Mass>40</Mass>
+      <MaxHitPoints>320</MaxHitPoints>
       <WorkToBuild>2200</WorkToBuild>
-    </statBases>
-    <costList>
-      <Steel>60</Steel>
-      <ComponentIndustrial>3</ComponentIndustrial>
-    </costList>
-    <costStuffCount>35</costStuffCount>
-    <size>(2,1)</size>
-    <graphicData>
-      <texPath>Things/Building/Door/Autodoor_Mover</texPath>
-      <graphicClass>Graphic_Single</graphicClass>
-      <drawSize>(2,1)</drawSize>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </graphicData>
-    <uiIconPath>Things/Building/Door/Autodoor_MenuIcon</uiIconPath>
-    <comps>
-      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
-        <doorType>Standard</doorType>
-      </li>
-      <li Class="CompProperties_Power">
-        <compClass>CompPowerTrader</compClass>
-        <basePowerConsumption>70</basePowerConsumption>
-      </li>
-      <li Class="CompProperties_Breakdownable"/>
-    </comps>
-    <researchPrerequisites>
-      <li>Autodoors</li>
-    </researchPrerequisites>
-    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
-  </ThingDef>
-
-  <ThingDef ParentName="HeronDoorBase">
-    <defName>PH_AutodoorTriple</defName>
-    <label>autodoor (1x3)</label>
-    <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
-    <statBases>
-      <WorkToBuild>3300</WorkToBuild>
     </statBases>
     <costList>
       <Steel>80</Steel>
       <ComponentIndustrial>4</ComponentIndustrial>
     </costList>
     <costStuffCount>50</costStuffCount>
-    <size>(3,1)</size>
+    <size>(2,1)</size>
     <graphicData>
-      <texPath>Things/Building/Door/Autodoor_Mover</texPath>
+      <texPath>Things/Building/Door/AutodoorDouble_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
-      <drawSize>(3,1)</drawSize>
+      <drawSize>(2,1)</drawSize>
       <damageData>
+        <!--  no damage marks because they don't move with the door
+        <rect>(0,0.12,1,0.76)</rect>-->
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <uiIconPath>Things/Building/Door/Autodoor_MenuIcon</uiIconPath>
+    <uiIconPath>Things/Building/Door/AutodoorDouble_MenuIcon</uiIconPath>
     <comps>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
         <doorType>Standard</doorType>
       </li>
       <li Class="CompProperties_Power">
@@ -179,7 +145,49 @@
     </researchPrerequisites>
     <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
   </ThingDef>
--->
+
+  <ThingDef ParentName="HeronDoorBase">
+    <defName>PH_AutodoorTriple</defName>
+    <label>autodoor (3x1)</label>
+    <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
+    <statBases>
+      <Mass>60</Mass>
+      <MaxHitPoints>480</MaxHitPoints>
+      <WorkToBuild>3300</WorkToBuild>
+    </statBases>
+    <costList>
+      <Steel>120</Steel>
+      <ComponentIndustrial>6</ComponentIndustrial>
+    </costList>
+    <costStuffCount>75</costStuffCount>
+    <size>(3,1)</size>
+    <graphicData>
+      <texPath>Things/Building/Door/AutodoorTriple_Mover</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(3,1)</drawSize>
+      <damageData>
+        <!--  no damage marks because they don't move with the door
+        <rect>(0,0.12,1,0.76)</rect>-->
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+    <uiIconPath>Things/Building/Door/AutodoorTriple_MenuIcon</uiIconPath>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>Standard</doorType>
+      </li>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>150</basePowerConsumption>
+      </li>
+      <li Class="CompProperties_Breakdownable"/>
+    </comps>
+    <researchPrerequisites>
+      <li>Autodoors</li>
+    </researchPrerequisites>
+    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
+  </ThingDef>
 
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_DoorJail</defName>
