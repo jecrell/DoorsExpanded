@@ -341,10 +341,10 @@
       <Flammability>0.5</Flammability>
     </statBases>
     <costList>
-      <Steel>50</Steel>
+      <Steel>80</Steel>
       <ComponentIndustrial>7</ComponentIndustrial>
     </costList>
-    <costStuffCount>175</costStuffCount>
+    <costStuffCount>150</costStuffCount>
     <size>(2,1)</size>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
     <graphicData>
@@ -423,10 +423,10 @@
       <Flammability>0.5</Flammability>
     </statBases>
     <costList>
-      <Steel>100</Steel>
+      <Steel>160</Steel>
       <ComponentIndustrial>14</ComponentIndustrial>
     </costList>
-    <costStuffCount>350</costStuffCount>
+    <costStuffCount>300</costStuffCount>
     <size>(3,2)</size>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
     <graphicData>

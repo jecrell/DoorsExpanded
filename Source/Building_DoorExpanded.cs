@@ -1005,13 +1005,13 @@ namespace DoorsExpanded
             {
                 graphicVector.z -= offsetMod;
                 if (split)
-                    graphicVector.y = AltitudeLayer.DoorMoveable.AltitudeFor();
+                    graphicVector.y = AltitudeLayer.BuildingOnTop.AltitudeFor();
             }
             else if (rotation == Rot4.West)
             {
                 graphicVector.z += offsetMod;
                 if (split)
-                    graphicVector.y = AltitudeLayer.DoorMoveable.AltitudeFor();
+                    graphicVector.y = AltitudeLayer.BuildingOnTop.AltitudeFor();
             }
             graphicVector += offsetVector;
 
