@@ -72,9 +72,6 @@
         <doorType>Standard</doorType>
       </li>
     </comps>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
   </ThingDef>
 
   <ThingDef ParentName="HeronDoorBase">
@@ -104,9 +101,6 @@
         <doorType>Standard</doorType>
       </li>
     </comps>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
   </ThingDef>
 
   <!--
@@ -142,9 +136,6 @@
       </li>
       <li Class="CompProperties_Breakdownable"/>
     </comps>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
     <researchPrerequisites>
       <li>Autodoors</li>
     </researchPrerequisites>
@@ -183,9 +174,6 @@
       </li>
       <li Class="CompProperties_Breakdownable"/>
     </comps>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
     <researchPrerequisites>
       <li>Autodoors</li>
     </researchPrerequisites>
@@ -232,9 +220,6 @@
         <rotatesSouth>false</rotatesSouth>
       </li>
     </comps>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
     <researchPrerequisites>
       <li>ProjectHeron_PrisonDoors</li>
     </researchPrerequisites>
