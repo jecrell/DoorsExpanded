@@ -322,6 +322,9 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.CheckSpawnBackCompatibleThingAfterLoading)),
                 prefix: nameof(DoorExpandedCheckSpawnBackCompatibleThingAfterLoading),
                 priority: Priority.VeryHigh);
+            Patch(original: AccessTools.Method(typeof(GenTypes), nameof(GenTypes.GetTypeNameWithoutIgnoredNamespaces)),
+                prefix: nameof(DoorExpandedGetTypeNameWithoutIgnoredNamespacesPrefix),
+                priority: Priority.VeryHigh);
 
             // Following isn't actually a Harmony patch, but bundling this patch here anyway.
             DefaultDoorMassPatch();
@@ -1354,6 +1357,11 @@ namespace DoorsExpanded
         // CompBreakdownable.CheckForBreakdown
         public static IEnumerable<CodeInstruction> CompBreakdownableCheckForBreakdownTranspiler(IEnumerable<CodeInstruction> instructions)
         {
+            // This transforms the following code:
+            //  Rand.MTBEventOccurs(..., 1f, ...)
+            // into:
+            //  Rand.MTBEventOccurs(..., CompBreakdownableMTBUnit(this.props), ...)
+
             foreach (var instruction in instructions)
             {
                 if (instruction.Is(OpCodes.Ldc_R4, 1f))
@@ -1423,6 +1431,26 @@ namespace DoorsExpanded
                     Log.Warning($"[Doors Expanded] Found and destroyed minified invis door(s) during loading: " + invisDoors.ToStringSafeEnumerable());
                     return false;
                 }
+            }
+            return true;
+        }
+
+        // GenTypes.GetTypeNameWithoutIgnoredNamespaces
+        public static bool DoorExpandedGetTypeNameWithoutIgnoredNamespacesPrefix(Type type, ref string __result)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedGetTypeNameWithoutIgnoredNamespacesPrefix));
+            // Ensure doors patched to have thingClass be Building_DoorExpanded or subclass, which includes door defs with
+            // CompProperties_DoorExpanded, are saved with Class="Building_Door" in the save file, such that if Doors Expanded
+            // is removed by the user, such doors revert to vanilla behavior (rather than disappearing altogether). When loading a save,
+            // the above DoorExpandedGetBackCompatibleType patch converts Building_Door to the proper Building_DoorExpanded type.
+            // Note: GenTypes.GetTypeNameWithoutIgnoredNamespaces is being patched rather than its caller
+            // Scribe_Deep.Look<T>(ref T, bool, string, params object[]) since the latter can't currently be patched by Harmony
+            // (generic argument limitations). One consequence of this that only the door's Type is available, not the door itself,
+            // so we can't just filter for only one-cell patched doors such as autodoors (unless it's encoded in the door's Type itself).
+            if (typeof(Building_DoorExpanded).IsAssignableFrom(type))
+            {
+                __result = nameof(Building_Door);
+                return false;
             }
             return true;
         }

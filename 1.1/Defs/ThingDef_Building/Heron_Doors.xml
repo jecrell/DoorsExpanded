@@ -11,7 +11,7 @@
 
   <ThingDef>
     <defName>HeronInvisibleDoor</defName>
-    <label>invisible door</label>
+    <label>(internal invisible door)</label>
     <thingClass>DoorsExpanded.Building_DoorRegionHandler</thingClass>
     <category>Building</category>
     <thingCategories/>
@@ -23,6 +23,9 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
+    <!-- In case another mod makes invis doors minifiable (note: Minify Everything is already mitigated against in code)
+         and a mod like Home Mover needs to show ghost textures, specify a dummy blank uiIconPath for said ghost textures. -->
+    <uiIconPath>BlankTex</uiIconPath>
     <altitudeLayer>FloorEmplacement</altitudeLayer>
     <fillPercent>0</fillPercent>
     <useHitPoints>false</useHitPoints>
