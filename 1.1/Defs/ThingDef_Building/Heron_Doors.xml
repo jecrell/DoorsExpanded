@@ -9,45 +9,6 @@
     ██████   ██████   ██████  ██   ██ ███████
   -->
 
-  <ThingDef>
-    <defName>HeronInvisibleDoor</defName>
-    <label>(internal invisible door)</label>
-    <thingClass>DoorsExpanded.Building_DoorRegionHandler</thingClass>
-    <category>Building</category>
-    <thingCategories/>
-    <repairEffect>Repair</repairEffect>
-    <graphicData>
-      <texPath>BlankTex</texPath>
-      <graphicClass>Graphic_Single</graphicClass>
-      <damageData>
-        <enabled>false</enabled>
-      </damageData>
-    </graphicData>
-    <!-- In case another mod makes invis doors minifiable (note: Minify Everything is already mitigated against in code)
-         and a mod like Home Mover needs to show ghost textures, specify a dummy blank uiIconPath for said ghost textures. -->
-    <uiIconPath>BlankTex</uiIconPath>
-    <altitudeLayer>FloorEmplacement</altitudeLayer>
-    <fillPercent>0</fillPercent>
-    <useHitPoints>false</useHitPoints>
-    <scatterableOnMapGen>false</scatterableOnMapGen>
-    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
-    <selectable>false</selectable>
-    <neverMultiSelect>true</neverMultiSelect>
-    <isAutoAttackableMapObject>false</isAutoAttackableMapObject>
-    <tickerType>Normal</tickerType>
-    <rotatable>false</rotatable>
-    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
-    <drawerType>RealtimeOnly</drawerType>
-    <building>
-      <isEdifice>true</isEdifice>
-      <isInert>true</isInert>
-      <canPlaceOverWall>true</canPlaceOverWall>
-    </building>
-    <comps>
-      <li Class="CompProperties_Forbiddable"/>
-    </comps>
-  </ThingDef>
-
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_DoorDouble</defName>
     <label>door (2x1)</label>
