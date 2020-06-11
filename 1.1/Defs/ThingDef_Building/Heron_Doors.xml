@@ -274,7 +274,7 @@
     <comps>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>Stretch</doorType>
-        <tempLeakRate>60</tempLeakRate>
+        <tempEqualizeRate>6.0</tempEqualizeRate> <!-- 6 times normal temperature equalize rate -->
         <singleDoor>true</singleDoor>
       </li>
     </comps>

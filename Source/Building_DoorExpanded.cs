@@ -568,10 +568,9 @@ namespace DoorsExpanded
                 {
                     ticksSinceOpen--;
                 }
-                var closedTempLeakRate = props.tempLeakRate;
-                if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
+                if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % TemperatureTuning.Door_TempEqualizeIntervalClosed == 0)
                 {
-                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
+                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, props.tempEqualizeRate, twoWay: false);
                 }
             }
             else

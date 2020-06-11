@@ -13,7 +13,7 @@ namespace DoorsExpanded
         public bool fixedPerspective = false;
         public bool singleDoor = false;
         public bool rotatesSouth = true;
-        public int tempLeakRate = TemperatureTuning.Door_TempEqualizeIntervalClosed;
+        public float tempEqualizeRate = TemperatureTuning.Door_TempEqualizeRate;
         public float doorOpenMultiplier = Building_DoorExpanded.VisualDoorOffsetEnd;
         public GraphicData doorFrame;
         public Vector3 doorFrameOffset;
