@@ -251,13 +251,10 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualOpenBy)),
                 prefix: nameof(InvisDoorStartManualOpenByPrefix),
                 priority: Priority.First);
-            // Building_Door.StartManualCloseBy gets inlined, so can only patch its caller Pawn_PathFollower.TryEnterNextPathCell.
-            //Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
-            //    prefix: nameof(InvisDoorStartManualCloseByPrefix),
-            //    priority: Priority.First);
-            Patch(original: AccessTools.Method(typeof(Pawn_PathFollower), "TryEnterNextPathCell"),
-                transpiler: nameof(InvisDoorManualCloseCallTranspiler),
-                transpilerRelated: nameof(InvisDoorStartManualCloseBy));
+            // Note: Building_Door.StartManualCloseBy gets inlined, but Harmony 2 can prevent this, so that it can be patched.
+            Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
+                prefix: nameof(InvisDoorStartManualCloseByPrefix),
+                priority: Priority.First);
 
             // Patches to redirect access from invis door def to its parent door def.
             Patch(original: AccessTools.Method(typeof(GenStep_Terrain), nameof(GenStep_Terrain.Generate)),
@@ -626,36 +623,25 @@ namespace DoorsExpanded
         public static bool InvisDoorStartManualOpenByPrefix(Building_Door __instance, Pawn opener)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorStartManualOpenByPrefix));
-            if (__instance is Building_DoorRegionHandler w)
+            if (__instance is Building_DoorRegionHandler invisDoor)
             {
-                w.ParentDoor?.StartManualOpenBy(opener);
+                invisDoor.ParentDoor?.StartManualOpenBy(opener);
                 return false;
             }
             return true;
         }
 
         // Building_Door.StartManualCloseBy
-        // Note: Used to be a prefix patch, but changed into a method that's called within Pawn_PathFollower.TryEnterNextPathCell
-        // (see next patch method), since Building_Door.StartManualCloseBy gets inlined.
-        public static void InvisDoorStartManualCloseBy(Building_Door door, Pawn closer)
+        public static bool InvisDoorStartManualCloseByPrefix(Building_Door __instance, Pawn closer)
         {
-            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorStartManualCloseBy));
-            if (door is Building_DoorRegionHandler invisDoor)
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorStartManualCloseByPrefix));
+            if (__instance is Building_DoorRegionHandler invisDoor)
             {
                 invisDoor.ParentDoor?.StartManualCloseBy(closer);
+                return false;
             }
-            else
-            {
-                door.StartManualCloseBy(closer);
-            }
+            return true;
         }
-
-        // Pawn_PathFollower.TryEnterNextPathCell
-        public static IEnumerable<CodeInstruction> InvisDoorManualCloseCallTranspiler(
-            IEnumerable<CodeInstruction> instructions) =>
-            instructions.MethodReplacer(
-                AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
-                AccessTools.Method(typeof(HarmonyPatches), nameof(InvisDoorStartManualCloseBy)));
 
         // GenStep_Terrain.Generate
         // GenGrid.CanBeSeenOver
