@@ -28,6 +28,7 @@ namespace DoorsExpanded
         }
     }
 
+    // TODO: Reorganize this into multiple classes/files and use Harmony attribute-based patch classes.
     public static class HarmonyPatches
     {
         internal static Harmony harmony = new Harmony("rimworld.jecrell.doorsexpanded");
@@ -138,22 +139,22 @@ namespace DoorsExpanded
             //   prefix patches, and there's no safe way to redirect other mods' Building_Door patches to Building_DoorExpanded patches.
 
             // See comments in Building_DoorRegionHandler.
-            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.FreePassage)).GetGetMethod(),
+            Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.FreePassage)),
                 prefix: nameof(InvisDoorFreePassagePrefix),
                 priority: Priority.First);
-            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.TicksTillFullyOpened)).GetGetMethod(),
+            Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.TicksTillFullyOpened)),
                 prefix: nameof(InvisDoorTicksTillFullyOpenedPrefix),
                 priority: Priority.First);
-            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.WillCloseSoon)).GetGetMethod(),
+            Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.WillCloseSoon)),
                 prefix: nameof(InvisDoorWillCloseSoonPrefix),
                 priority: Priority.First);
-            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.BlockedOpenMomentary)).GetGetMethod(),
+            Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.BlockedOpenMomentary)),
                 prefix: nameof(InvisDoorBlockedOpenMomentaryPrefix),
                 priority: Priority.First);
-            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.SlowsPawns)).GetGetMethod(),
+            Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.SlowsPawns)),
                 prefix: nameof(InvisDoorSlowsPawnsPrefix),
                 priority: Priority.First);
-            Patch(original: AccessTools.Property(typeof(Building_Door), nameof(Building_Door.TicksToOpenNow)).GetGetMethod(),
+            Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.TicksToOpenNow)),
                 prefix: nameof(InvisDoorTicksToOpenNowPrefix),
                 priority: Priority.First);
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.CheckFriendlyTouched)),
@@ -259,9 +260,9 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(EdificeGrid), nameof(EdificeGrid.Register)),
                 prefix: nameof(DoorExpandedEdificeGridRegisterPrefix),
                 priority: Priority.VeryHigh);
-            Patch(original: AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod(),
+            Patch(original: AccessTools.PropertyGetter(typeof(ThingDef), nameof(ThingDef.IsDoor)),
                 postfix: nameof(DoorExpandedThingDefIsDoorPostfix));
-            Patch(original: AccessTools.Property(typeof(CompForbiddable), nameof(CompForbiddable.Forbidden)).GetSetMethod(),
+            Patch(original: AccessTools.PropertySetter(typeof(CompForbiddable), nameof(CompForbiddable.Forbidden)),
                 transpiler: nameof(DoorExpandedSetForbiddenTranspiler),
                 transpilerRelated: nameof(DoorExpandedSetForbidden));
             Patch(original: AccessTools.Method(typeof(RegionAndRoomUpdater), "ShouldBeInTheSameRoomGroup"),
@@ -588,13 +589,13 @@ namespace DoorsExpanded
         public static IEnumerable<CodeInstruction> InvisDoorDefFillageTranspiler(
             IEnumerable<CodeInstruction> instructions) =>
             GetActualDoorForDefTranspiler(instructions,
-                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.Fillage)).GetGetMethod());
+                AccessTools.PropertyGetter(typeof(ThingDef), nameof(ThingDef.Fillage)));
 
         // FloodFillerFog.FloodUnfog
         // FogGrid.FloodUnfogAdjacent
         public static IEnumerable<CodeInstruction> InvisDoorDefMakeFogTranspiler(IEnumerable<CodeInstruction> instructions) =>
             GetActualDoorForDefTranspiler(instructions,
-                AccessTools.Property(typeof(ThingDef), nameof(ThingDef.MakeFog)).GetGetMethod());
+                AccessTools.PropertyGetter(typeof(ThingDef), nameof(ThingDef.MakeFog)));
 
         // SnowGrid.CanHaveSnow
         public static IEnumerable<CodeInstruction> InvisDoorCanHaveSnowTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -646,7 +647,8 @@ namespace DoorsExpanded
             AccessTools.Method(typeof(HarmonyPatches), nameof(GetActualDoor));
 
         // PathGrid.CalculatedCostAt
-        public static IEnumerable<CodeInstruction> InvisDoorCalculatedCostAtTranspiler(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> InvisDoorCalculatedCostAtTranspiler(IEnumerable<CodeInstruction> instructions,
+            MethodBase method, ILGenerator ilGen)
         {
             // This removes the slowdown from consecutive invis doors of the same Building_DoorExpanded thing.
             // It keeps the slowdown from consecutive "actual" doors
@@ -675,17 +677,18 @@ namespace DoorsExpanded
 
             var methodof_GetActualDoor = AccessTools.Method(typeof(HarmonyPatches), nameof(GetActualDoor));
             var instructionList = instructions.AsList();
+            var locals = new Locals(method, ilGen);
 
             var searchIndex = 0;
-            var firstDoor = GetIsinstDoorVar(instructionList, ref searchIndex);
-            var secondDoor = GetIsinstDoorVar(instructionList, ref searchIndex);
+            var firstDoorVar = GetIsinstDoorVar(locals, instructionList, ref searchIndex);
+            var secondDoorVar = GetIsinstDoorVar(locals, instructionList, ref searchIndex);
             var condBranchToAfterFlagIndex = instructionList.FindIndex(searchIndex, instr => instr.operand is Label);
             var afterFlagLabel = (Label)instructionList[condBranchToAfterFlagIndex].operand;
-            instructionList.InsertRange(condBranchToAfterFlagIndex + 1, new[]
+            instructionList.SafeInsertRange(condBranchToAfterFlagIndex + 1, new[]
             {
-                new CodeInstruction(OpCodes.Ldloc_S, firstDoor),
+                firstDoorVar.ToLdloc(),
                 new CodeInstruction(OpCodes.Call, methodof_GetActualDoor),
-                new CodeInstruction(OpCodes.Ldloc_S, secondDoor),
+                secondDoorVar.ToLdloc(),
                 new CodeInstruction(OpCodes.Call, methodof_GetActualDoor),
                 new CodeInstruction(OpCodes.Beq, afterFlagLabel),
             });
@@ -694,11 +697,11 @@ namespace DoorsExpanded
         }
 
         // Get x from instruction sequence: ldloc.s <x>; isinst Building_Door.
-        private static LocalBuilder GetIsinstDoorVar(List<CodeInstruction> instructions, ref int startIndex)
+        private static LocalVar GetIsinstDoorVar(Locals locals, List<CodeInstruction> instructionList, ref int startIndex)
         {
-            var isinstDoorIndex = instructions.FindIndex(startIndex, IsinstDoorInstruction);
+            var isinstDoorIndex = instructionList.FindIndex(startIndex, IsinstDoorInstruction);
             startIndex = isinstDoorIndex + 1;
-            return (LocalBuilder)instructions[isinstDoorIndex - 1].operand;
+            return locals.FromLdloc(instructionList[isinstDoorIndex - 1]);
         }
 
         private static bool IsinstDoorInstruction(CodeInstruction instruction) =>
@@ -745,7 +748,7 @@ namespace DoorsExpanded
 
         // MouseoverReadout.MouseoverReadoutOnGUI
         public static IEnumerable<CodeInstruction> MouseoverReadoutTranspiler(IEnumerable<CodeInstruction> instructions,
-            ILGenerator ilGen)
+            MethodBase method, ILGenerator ilGen)
         {
             // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
             // In particular, this makes it skip invis doors, which have null LabelMouseover.
@@ -775,8 +778,9 @@ namespace DoorsExpanded
             //  }
 
             var methodof_Entity_get_LabelMouseover =
-                AccessTools.Property(typeof(Entity), nameof(Entity.LabelMouseover)).GetGetMethod();
+                AccessTools.PropertyGetter(typeof(Entity), nameof(Entity.LabelMouseover));
             var instructionList = instructions.AsList();
+            var locals = new Locals(method, ilGen);
 
             var labelMouseoverIndex = instructionList.FindIndex(instr => instr.Calls(methodof_Entity_get_LabelMouseover));
             // This relies on the fact that there's a conditional within the loop that acts as a loop continue,
@@ -791,11 +795,11 @@ namespace DoorsExpanded
                 instr => instr.OperandIs(loopContinueLabel));
             // We also need the var that has the Thing on which Entity.LabelMouseover is called.
             // Assume this is just a ldloc(.s) right before the Entity.LabelMouseover callvirt.
-            var thingVar = (LocalBuilder)instructionList[labelMouseoverIndex - 1].operand;
+            var thingVar = locals.FromLdloc(instructionList[labelMouseoverIndex - 1]);
 
-            instructionList.InsertRange(loopContinueBranchIndex + 1, new[]
+            instructionList.SafeInsertRange(loopContinueBranchIndex + 1, new[]
             {
-                new CodeInstruction(OpCodes.Ldloc, thingVar),
+                thingVar.ToLdloc(),
                 new CodeInstruction(OpCodes.Callvirt, methodof_Entity_get_LabelMouseover),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.IsNullOrEmpty))),
                 new CodeInstruction(OpCodes.Brtrue, loopContinueLabel),
@@ -896,7 +900,7 @@ namespace DoorsExpanded
 
         // GenTemperature.EqualizeTemperaturesThroughBuilding
         public static IEnumerable<CodeInstruction> DoorExpandedEqualizeTemperaturesThroughBuildingTranspiler(
-            IEnumerable<CodeInstruction> instructions, ILGenerator ilGen)
+            IEnumerable<CodeInstruction> instructions, MethodBase method, ILGenerator ilGen)
         {
             // GenTemperature.EqualizeTemperaturesThroughBuildingTranspiler doesn't handle buildings that are larger than 1x1.
             // For the twoWay=false case (which is the one we care about), the algorithm for finding surrounding temperatures
@@ -937,7 +941,8 @@ namespace DoorsExpanded
             //      return;
 
             var instructionList = instructions.AsList();
-            var adjCellsVar = ilGen.DeclareLocal(typeof(IntVec3[]));
+            var locals = new Locals(method, ilGen);
+            var adjCellsVar = locals.DeclareLocal(typeof(IntVec3[]));
             //void DebugInstruction(string label, int index)
             //{
             //    Log.Message($"{label} @ {index}: " +
@@ -947,48 +952,40 @@ namespace DoorsExpanded
             var twoWayArgIndex = instructionList.FindIndex(instr => instr.opcode == OpCodes.Ldarg_2);
             // Assume the next brfalse(.s) operand is a label to the twoWay=false branch.
             var twoWayArgFalseBranchIndex = instructionList.FindIndex(twoWayArgIndex + 1,
-                instr => instr.opcode == OpCodes.Brfalse || instr.opcode == OpCodes.Brfalse_S);
+                instr => instr.IsBrfalse());
             var twoWayArgFalseLabel = (Label)instructionList[twoWayArgFalseBranchIndex].operand;
             var twoWayArgFalseIndex = instructionList.FindIndex(twoWayArgFalseBranchIndex + 1,
                 instr => instr.labels.Contains(twoWayArgFalseLabel));
-            // Assume next stloc.s is storing to the loop index var.
-            var loopIndexIndex = instructionList.FindIndex(twoWayArgFalseIndex + 1,
-                instr => instr.opcode == OpCodes.Stloc_S);
-            var loopIndexVar = (LocalBuilder)instructionList[loopIndexIndex].operand;
+            // Assume next stloc(.s) is storing to the loop index var.
+            var loopIndexVar = locals.FromStloc(instructionList[instructionList.FindIndex(twoWayArgFalseIndex + 1,
+                instr => locals.IsStloc(instr))]);
 
             var newInstructions = new[]
             {
-                new CodeInstruction(OpCodes.Ldarg_0) // Building b
-                { labels = instructionList[twoWayArgFalseIndex].labels.PopAll() },
+                new CodeInstruction(OpCodes.Ldarg_0), // Building b
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(HarmonyPatches), nameof(GetAdjacentCellsForTemperature))),
-                // XXX: TIL that RW 1.0's version of mono/.NET didn't actually require that
-                // ILGenerator.Emit(OpCode opcode, LocalBuilder local) have opcode be a ldloc/stloc-type opcode
-                // and worked just fine with ldarg/starg-type opcode.
-                // RW 1.1+'s version of mono/.NET requires the opcode to be a ldloc/stloc-type opcode,
-                // revealing this bug... oops!
-                new CodeInstruction(OpCodes.Stloc_S, adjCellsVar),
+                adjCellsVar.ToStloc(),
             };
-            instructionList.InsertRange(twoWayArgFalseIndex, newInstructions);
+            instructionList.SafeInsertRange(twoWayArgFalseIndex, newInstructions);
 
             var buildingArgIndex = instructionList.FindIndex(twoWayArgFalseIndex + newInstructions.Length,
                 instr => instr.opcode == OpCodes.Ldarg_0);
             var currentCellStoreIndex = instructionList.FindIndex(buildingArgIndex + 1,
-                instr => instr.opcode == OpCodes.Stloc_S);
+                instr => locals.IsStloc(instr));
             newInstructions = new[]
             {
-                new CodeInstruction(OpCodes.Ldloc_S, adjCellsVar)
-                { labels = instructionList[buildingArgIndex].labels.PopAll() },
-                new CodeInstruction(OpCodes.Ldloc_S, loopIndexVar),
+                adjCellsVar.ToLdloc(),
+                loopIndexVar.ToLdloc(),
                 new CodeInstruction(OpCodes.Ldelem, typeof(IntVec3)),
             };
-            instructionList.ReplaceRange(buildingArgIndex, currentCellStoreIndex - buildingArgIndex, newInstructions);
+            instructionList.SafeReplaceRange(buildingArgIndex, currentCellStoreIndex - buildingArgIndex, newInstructions);
 
             var loopEndIndexIndex = instructionList.FindIndex(buildingArgIndex + newInstructions.Length,
                 instr => instr.opcode == OpCodes.Ldc_I4_4);
-            instructionList.ReplaceRange(loopEndIndexIndex, 1, new[]
+            instructionList.SafeReplaceRange(loopEndIndexIndex, 1, new[]
             {
-                new CodeInstruction(OpCodes.Ldloc_S, adjCellsVar),
+                adjCellsVar.ToLdloc(),
                 new CodeInstruction(OpCodes.Ldlen),
             });
 
@@ -1083,7 +1080,7 @@ namespace DoorsExpanded
                     // (0) instance itself for 1st arg to DoorExpandedRotateAgainIfNeeded call
                     replaceInstructions.AddRange(new[]
                     {
-                        new CodeInstruction(OpCodes.Dup) { labels = instructionList[placingRotFieldIndex].labels.PopAll() },
+                        new CodeInstruction(OpCodes.Dup),
                         new CodeInstruction(OpCodes.Dup),
                     });
                     // Copy original instructions from placingRot field access to Rotate call (uses up (2)).
@@ -1094,7 +1091,7 @@ namespace DoorsExpanded
                     // Call DoorExpandedRotateAgainIfNeeded with required arguments.
                     replaceInstructions.AddRange(copiedRotateArgInstructions); // uses up (1)
                     replaceInstructions.Add(new CodeInstruction(OpCodes.Call, methodof_RotateAgainIfNeeded)); // uses up (0)
-                    instructionList.ReplaceRange(placingRotFieldIndex, rotateIndex - placingRotFieldIndex + 1,
+                    instructionList.SafeReplaceRange(placingRotFieldIndex, rotateIndex - placingRotFieldIndex + 1,
                         replaceInstructions);
                     searchIndex += replaceInstructions.Count - 1;
                     nextPlacingRotFieldIndex = instructionList.FindIndex(searchIndex,
@@ -1159,19 +1156,20 @@ namespace DoorsExpanded
             // into:
             //  if (... || (thingDef.IsDoor && !IsDoorExpandedDef(thingDef))
 
-            var methodof_ThingDef_IsDoor = AccessTools.Property(typeof(ThingDef), nameof(ThingDef.IsDoor)).GetGetMethod();
+            var methodof_ThingDef_IsDoor = AccessTools.PropertyGetter(typeof(ThingDef), nameof(ThingDef.IsDoor));
             var instructionList = instructions.AsList();
 
             var isDoorIndex = instructionList.FindIndex(instr => instr.Calls(methodof_ThingDef_IsDoor));
             // Assume prev instruction is ldarg(.s) or ldloc(.s) for thingDef argument.
-            var thingDefLoadInstruction = instructionList[isDoorIndex - 1];
+            var thingDefLoad = instructionList[isDoorIndex - 1];
             // Assume the next brfalse(.s) operand is a label that skips the Graphic_Single code path.
             var skipGraphicSingleBranchIndex = instructionList.FindIndex(isDoorIndex + 1,
-                instr => instr.opcode == OpCodes.Brfalse || instr.opcode == OpCodes.Brfalse_S);
+                instr => instr.IsBrfalse());
             var skipGraphicSingleLabel = (Label)instructionList[skipGraphicSingleBranchIndex].operand;
+            // Note: Not using SafeInsertRange, since we want labels to stay at skipGraphicSingleBranchIndex + 1.
             instructionList.InsertRange(skipGraphicSingleBranchIndex + 1, new[]
             {
-                thingDefLoadInstruction.Clone(),
+                thingDefLoad.Clone(),
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(HarmonyPatches), nameof(IsDoorExpandedDef))),
                 new CodeInstruction(OpCodes.Brtrue, skipGraphicSingleLabel),
@@ -1473,11 +1471,9 @@ namespace DoorsExpanded
                 var nextIsinstDoorIndex = instructionList.FindIndex(searchIndex, IsinstDoorInstruction);
                 if (doorOpenIndex >= 0 && (nextIsinstDoorIndex < 0 || doorOpenIndex < nextIsinstDoorIndex))
                 {
-                    instructionList.ReplaceRange(isinstDoorIndex, doorOpenIndex - isinstDoorIndex + 1, new[]
+                    instructionList.SafeReplaceRange(isinstDoorIndex, doorOpenIndex - isinstDoorIndex + 1, new[]
                     {
-                        new CodeInstruction(OpCodes.Call,
-                            AccessTools.Method(typeof(HarmonyPatches), nameof(IsOpenDoor)))
-                        { labels = instructionList[isinstDoorIndex].labels.PopAll() },
+                        new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(IsOpenDoor))),
                     });
                     nextIsinstDoorIndex = instructionList.FindIndex(searchIndex, IsinstDoorInstruction);
                 }
@@ -1488,7 +1484,7 @@ namespace DoorsExpanded
         }
 
         private static readonly MethodInfo methodof_Building_Door_get_Open =
-            AccessTools.Property(typeof(Building_Door), nameof(Building_Door.Open)).GetGetMethod();
+            AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.Open));
 
         private static bool IsOpenDoor(Thing thing) =>
             thing is Building_Door door && door.Open ||

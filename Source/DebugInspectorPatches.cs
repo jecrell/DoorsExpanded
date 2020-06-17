@@ -111,20 +111,26 @@ namespace DoorsExpanded
             AccessTools.Field(typeof(MoreDebugViewSettings), nameof(MoreDebugViewSettings.writePatchCallRegistry));
 
         // EditWindow_DebugInspector.CurrentDebugString
-        public static IEnumerable<CodeInstruction> EditWindowDebugInspectorTranspiler(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> EditWindowDebugInspectorTranspiler(IEnumerable<CodeInstruction> instructions,
+            MethodBase method, ILGenerator ilGen)
         {
             var methodof_UI_MouseCell = AccessTools.Method(typeof(UI), nameof(UI.MouseCell));
             var methodof_object_ToString = AccessTools.Method(typeof(object), nameof(ToString));
             var instructionList = instructions.AsList();
+            var locals = new Locals(method, ilGen);
+
+            // Assume first found StringBuilder var (currently the only StringBuilder var) is the one we want.
+            var stringBuilderVar = locals.FromStloc(instructionList.Find(instr =>
+                locals.IsStloc(instr, out var local) && local.LocalType == typeof(StringBuilder)));
 
             var mouseCellIndex = instructionList.FindIndex(instr => instr.Calls(methodof_UI_MouseCell));
-            var mouseCellVar = (LocalBuilder)instructionList[mouseCellIndex + 1].operand;
+            var mouseCellVar = locals.FromStloc(instructionList[mouseCellIndex + 1]);
 
             var mouseCellToStringIndex = instructionList.FindSequenceIndex(
-                instr => instr.IsLdloc(mouseCellVar),
+                instr => locals.IsLdloca(instr, mouseCellVar),
                 instr => instr.Is(OpCodes.Constrained, typeof(IntVec3)),
                 instr => instr.Calls(methodof_object_ToString));
-            instructionList.ReplaceRange(mouseCellToStringIndex, 3, new[]
+            instructionList.SafeReplaceRange(mouseCellToStringIndex, 3, new[]
             {
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(DebugInspectorPatches), nameof(MousePositionToString))),
@@ -133,14 +139,15 @@ namespace DoorsExpanded
             var writePathCostsFlagIndex = instructionList.FindIndex(
                 instr => instr.LoadsField(fieldof_DebugViewSettings_writePathCosts));
             var nextFlagIndex = instructionList.FindIndex(writePathCostsFlagIndex + 1, IsDebugViewSettingFlagAccess);
+            // Note: Not using SafeInsertRange, since labels need to be transferred to a new instruction in the middle.
             instructionList.InsertRange(nextFlagIndex - 1, new[]
             {
-                new CodeInstruction(OpCodes.Ldloc_0), // StringBuilder
-                new CodeInstruction(OpCodes.Ldloc_S, mouseCellVar),
+                stringBuilderVar.ToLdloc(),
+                mouseCellVar.ToLdloc(),
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(DebugInspectorPatches), nameof(WriteMorePathCostsDebugOutput))),
-                new CodeInstruction(OpCodes.Ldloc_0) { labels = instructionList[nextFlagIndex].labels.PopAll() },
-                new CodeInstruction(OpCodes.Ldloc_S, mouseCellVar),
+                stringBuilderVar.ToLdloc().TransferLabelsAndBlocksFrom(instructionList[nextFlagIndex]),
+                mouseCellVar.ToLdloc(),
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(DebugInspectorPatches), nameof(WriteMoreDebugOutput))),
             });
@@ -320,7 +327,7 @@ namespace DoorsExpanded
         }
 
         private static readonly MethodInfo methodof_Building_Door_FriendlyTouchedRecently =
-            AccessTools.Property(typeof(Building_Door), "FriendlyTouchedRecently").GetGetMethod(true);
+            AccessTools.PropertyGetter(typeof(Building_Door), "FriendlyTouchedRecently");
         private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_lastFriendlyTouchTick =
             AccessTools.FieldRefAccess<Building_Door, int>("lastFriendlyTouchTick");
         private static readonly AccessTools.FieldRef<Building_DoorExpanded, int> Building_DoorExpanded_lastFriendlyTouchTick =

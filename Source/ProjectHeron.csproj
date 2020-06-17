@@ -44,6 +44,7 @@
     <Compile Include="CompProperties_BreakdownableCustom.cs" />
     <Compile Include="CompProperties_DoorExpanded.cs" />
     <Compile Include="DebugInspectorPatches.cs" />
+    <Compile Include="HarmonyExtensions.cs" />
     <Compile Include="TLog.cs" />
     <Compile Include="DoorExpandedDef.cs" />
     <Compile Include="DoorsExpandedMod.cs" />
