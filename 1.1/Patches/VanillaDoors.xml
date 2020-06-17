@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+  <Operation Class="PatchOperationInsert">
+    <xpath>/Defs/ThingDef[defName="Door" or defName="Autodoor"]/label/text()</xpath>
+    <order>Append</order>
+    <value> (1x1)</value>
+  </Operation>
+
+  <Operation Class="PatchOperationSequence">
+    <operations>
+      <li Class="PatchOperationConditional">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName="Autodoor"]/comps</xpath>
+        <nomatch Class="PatchOperationAdd">
+          <xpath>/Defs/ThingDef[defName="Autodoor"]</xpath>
+          <value>
+            <comps/>
+          </value>
+        </nomatch>
+      </li>
+      <li Class="PatchOperationAdd">
+        <xpath>/Defs/ThingDef[defName="Autodoor"]/comps</xpath>
+        <value>
+          <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+            <remoteDoor>true</remoteDoor>
+            <doorType>Standard</doorType>
+          </li>
+        </value>
+      </li>
+    </operations>
+  </Operation>
+
+</Patch>

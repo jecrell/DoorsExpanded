@@ -207,7 +207,7 @@
 
   <ThingDef ParentName="HeronClothDoorBase">
     <defName>HeronCurtainTribal</defName>
-    <label>curtain (tribal)</label>
+    <label>curtain (tribal) (1x1)</label>
     <description>Divides rooms. Curtains are much faster to open than standard doors, but are flammable and slowly vent temperatures between rooms.</description>
     <statBases>
       <Mass>10</Mass>
