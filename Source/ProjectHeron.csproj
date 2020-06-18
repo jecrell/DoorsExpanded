@@ -40,9 +40,9 @@
     <Compile Include="Building_DoorExpanded.cs" />
     <Compile Include="Building_DoorRegionHandler.cs" />
     <Compile Include="Building_DoorRemoteButton.cs" />
-    <Compile Include="CompDoorExpanded.cs" />
     <Compile Include="CompProperties_BreakdownableCustom.cs" />
     <Compile Include="CompProperties_DoorExpanded.cs" />
+    <Compile Include="CompProperties_PostProcessText.cs" />
     <Compile Include="DebugInspectorPatches.cs" />
     <Compile Include="HarmonyExtensions.cs" />
     <Compile Include="TLog.cs" />

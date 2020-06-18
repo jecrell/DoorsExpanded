@@ -145,7 +145,7 @@
 
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteSingle</defName>
-    <label>remote door (1x1)</label>
+    <label>remote door</label>
     <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
     <statBases>
       <Mass>20</Mass>
@@ -175,6 +175,9 @@
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>StretchVertical</doorType>
@@ -195,8 +198,7 @@
 
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteDouble</defName>
-    <label>remote door (2x1)</label>
-    <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>40</Mass>
       <MaxHitPoints>320</MaxHitPoints>
@@ -224,6 +226,10 @@
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>PH_DoorRemoteSingle</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>StretchVertical</doorType>
@@ -244,8 +250,7 @@
 
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteTriple</defName>
-    <label>remote door (3x1)</label>
-    <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>60</Mass>
       <MaxHitPoints>480</MaxHitPoints>
@@ -273,6 +278,10 @@
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>PH_DoorRemoteSingle</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>StretchVertical</doorType>

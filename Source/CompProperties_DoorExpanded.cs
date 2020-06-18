@@ -4,6 +4,11 @@ using Verse;
 
 namespace DoorsExpanded
 {
+    public class CompDoorExpanded : ThingComp
+    {
+        public CompProperties_DoorExpanded Props => (CompProperties_DoorExpanded)props;
+    }
+
     public class CompProperties_DoorExpanded : CompProperties
     {
         public const float DefaultStretchPercent = 0.2f;

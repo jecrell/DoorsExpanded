@@ -45,13 +45,6 @@ namespace DoorsExpanded
             // since that's when its AddMinifiedFor is called.
             Patch(original: AccessTools.Method(typeof(ThingDefGenerator_Buildings), "NewBlueprintDef_Thing"),
                 postfix: nameof(InvisDoorNewBlueprintDefThingPostfix));
-
-            // PatchOperationInsert has an issue where if the xpath matches a text node, an inserted text node
-            // won't be combined with the matched text node, resulting in two text node children.
-            // This confuses DirectXmlToObject.ObjectFromXml, which expects just a single text node for strings.
-            // The fix is to call Normalize on the parent of each matched node after insertion.
-            Patch(original: AccessTools.Method(typeof(PatchOperationInsert), "ApplyWorker"),
-                transpiler: nameof(PatchOperationInsertNormalizeTranspiler));
         }
 
         // ThingDefGenerator_Buildings.NewBlueprintDef_Thing
@@ -79,75 +72,6 @@ namespace DoorsExpanded
         private static readonly Action<ThingDef> DefDatabaseThingDefRemove =
             (Action<ThingDef>) AccessTools.Method(typeof(DefDatabase<ThingDef>), "Remove", new[] { typeof(ThingDef) })
                 .CreateDelegate(typeof(Action<ThingDef>));
-
-        // PatchOperationInsert.ApplyWorker
-        public static IEnumerable<CodeInstruction> PatchOperationInsertNormalizeTranspiler(IEnumerable<CodeInstruction> instructions,
-            MethodBase method, ILGenerator ilGen)
-        {
-            // This transforms the following code:
-            //  foreach (XmlNode xmlNode in xml.SelectNodes(xpath))
-            //  {
-            //      XmlNode parentNode = xmlNode.ParentNode;
-            //      ...
-            //  }
-            //  return ...
-            // into:
-            //  XmlNode parentNode = null;
-            //  foreach (XmlNode xmlNode in xml.SelectNodes(xpath))
-            //  {
-            //      NormalizeParentNode(parentNode); // parentNode?.Normalize()
-            //      parentNode = xmlNode.ParentNode;
-            //      ...
-            //  }
-            //  NormalizeParentNode(parentNode); // parentNode?.Normalize()
-            //  return ...
-
-            // Ideally, it would be transformed into:
-            //  foreach (XmlNode xmlNode in xml.SelectNodes(xpath))
-            //  {
-            //      XmlNode parentNode = xmlNode.ParentNode;
-            //      ...
-            //      parentNode.Normalize();
-            //  }
-            //  return ...
-            // but this would make the transpiler code more fragile, since it requires finding the end of the correct loop block.
-
-            var methodof_XmlNode_get_ParentNode = AccessTools.PropertyGetter(typeof(XmlNode), nameof(XmlNode.ParentNode));
-            var methodof_XmlNode_Normalize = AccessTools.Method(typeof(XmlNode), nameof(XmlNode.Normalize));
-            var instructionList = instructions.AsList();
-            var locals = new Locals(method, ilGen);
-
-            // If RimWorld is already patched to use XmlNode.Normalize, assume the method is fixed, so don't patch (or rather, noop patch).
-            if (instructionList.Any(instr => instr.Calls(methodof_XmlNode_Normalize)))
-                return instructionList;
-
-            var parentNodeIndex = instructionList.FindIndex(instr => instr.Calls(methodof_XmlNode_get_ParentNode));
-            // Assume next instruction is stloc(.s) for parentNode.
-            var parentNodeVar = locals.FromStloc(instructionList[parentNodeIndex + 1]);
-            instructionList.SafeInsertRange(parentNodeIndex + 1, new[]
-            {
-                parentNodeVar.ToLdloc(),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(NormalizeParentNode))),
-            });
-
-            var retIndex = instructionList.FindIndex(parentNodeIndex + 3, instr => instr.opcode == OpCodes.Ret);
-            while (retIndex != -1)
-            {
-                instructionList.SafeInsertRange(retIndex, new[] {
-                    parentNodeVar.ToLdloc(),
-                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(NormalizeParentNode))),
-                });
-                retIndex = instructionList.FindIndex(retIndex + 3, instr => instr.opcode == OpCodes.Ret);
-            }
-
-            return instructionList;
-        }
-
-        private static void NormalizeParentNode(XmlNode parentNode)
-        {
-            DebugInspectorPatches.RegisterPatchCalled(nameof(NormalizeParentNode));
-            parentNode?.Normalize();
-        }
 
         public static void Patches()
         {

@@ -86,7 +86,7 @@
   -->
   <ThingDef>
     <defName>HeronInvisibleDoor</defName>
-    <label>(internal invisible door)</label>
+    <label>(internal invisible door)</label> <!-- Note: This shouldn't need translation, since the user should never see this -->
     <thingClass>DoorsExpanded.Building_DoorRegionHandler</thingClass>
     <category>Building</category>
     <thingCategories/>

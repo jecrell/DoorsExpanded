@@ -13,18 +13,19 @@
 
   <!-- PH_AutodoorDouble/PH_AutodoorTriple's label & description default to Door's, and size suffix is auto-appended to label -->
 
-  <PH_DoorJail.label>Gefängnistür</PH_DoorJail.label>
-  <PH_DoorJail.description>Schiebegefängniszellentür mit starken Metallstangen.</PH_DoorJail.description>
+  <PH_DoorJail.label>тюремная дверь</PH_DoorJail.label>
+  <PH_DoorJail.description>Раздвижная дверь тюремной камеры с прочной решеткой.</PH_DoorJail.description>
 
   <!--
    ██████ ██    ██ ██████  ████████  █████  ██ ███    ██ ███████
   ██      ██    ██ ██   ██    ██    ██   ██ ██ ████   ██ ██
   ██      ██    ██ ██████     ██    ███████ ██ ██ ██  ██ ███████
   ██      ██    ██ ██   ██    ██    ██   ██ ██ ██  ██ ██      ██
-   ██████  ██████  ██   ██    ██    ██   ██ ██ ██   ████ ███████ -->
+   ██████  ██████  ██   ██    ██    ██   ██ ██ ██   ████ ███████
+  -->
 
-  <HeronCurtainTribal.label>Vorhang (Stamm)</HeronCurtainTribal.label> <!-- size suffix is auto-appended to label -->
-  <HeronCurtainTribal.description>Teilt Räume. Vorhänge lassen sich viel schneller öffnen als Standardtüren, sind jedoch entflammbar und lüften langsam die Temperaturen zwischen den Räumen.</HeronCurtainTribal.description>
+  <HeronCurtainTribal.label>занавес (племя)</HeronCurtainTribal.label> <!-- size suffix is auto-appended to label -->
+  <HeronCurtainTribal.description>Разделяет комнаты. Занавесы открываются гораздо быстрее обычных дверей, но легко воспламеняются и медленно пропускают воздух между комнатами.</HeronCurtainTribal.description>
 
   <!-- HeronCurtainTribalDouble/HeronCurtainTribalTriple's label & description default to HeronCurtainTribal's, and size suffix is auto-appended to label -->
 
@@ -37,7 +38,7 @@
   -->
 
   <!-- PH_GateDoubleThick's description defaults to Door's, and size suffix is auto-appended to label -->
-  <PH_GateDoubleThick.label>Tor</PH_GateDoubleThick.label>
+  <PH_GateDoubleThick.label>ворота</PH_GateDoubleThick.label>
 
   <!--
   ██████  ██       █████  ███████ ████████     ██████   ██████   ██████  ██████  ███████
@@ -47,8 +48,8 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
-  <PH_DoorBlastDoor.label>Explosionsschutztür</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
-  <PH_DoorBlastDoor.description>Ein schweres Türpaar, das doppelt so stark gegen Sprengstoff und dreimal so widerstandsfähig gegen stumpfe und geschärfte Standardwaffen ist.</PH_DoorBlastDoor.description> <!-- needs translation update -->
+  <PH_DoorBlastDoor.label>взрывозащищенная дверь</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
+  <PH_DoorBlastDoor.description>Пара тяжёлых дверей, которые в два раза устойчивее от взрывчатых веществ, и в три раза к стандартному тупому и заточенному оружию.</PH_DoorBlastDoor.description> <!-- needs translation update -->
 
   <!-- PH_DoorThickBlastDoor's label & description default to PH_DoorBlastDoor's, and size suffix is auto-appended to label -->
 

@@ -2,17 +2,16 @@
 <Defs>
 
   <!--
-    ██████   ██████   ██████  ██████  ███████
-    ██   ██ ██    ██ ██    ██ ██   ██ ██
-    ██   ██ ██    ██ ██    ██ ██████  ███████
-    ██   ██ ██    ██ ██    ██ ██   ██      ██
-    ██████   ██████   ██████  ██   ██ ███████
+  ██████   ██████   ██████  ██████  ███████
+  ██   ██ ██    ██ ██    ██ ██   ██ ██
+  ██   ██ ██    ██ ██    ██ ██████  ███████
+  ██   ██ ██    ██ ██    ██ ██   ██      ██
+  ██████   ██████   ██████  ██   ██ ███████
   -->
 
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_DoorDouble</defName>
-    <label>door (2x1)</label>
-    <description>Divides rooms. Simple doors must be manually opened, which slows people down. The amount of slowdown depends on what the door is made of.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>40</Mass>
       <MaxHitPoints>320</MaxHitPoints>
@@ -32,6 +31,10 @@
     </graphicData>
     <uiIconPath>Things/Building/Door/DoorDouble_MenuIcon</uiIconPath>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>Door</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>Standard</doorType>
       </li>
@@ -40,8 +43,7 @@
 
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_DoorTriple</defName>
-    <label>door (3x1)</label>
-    <description>Divides rooms. Simple doors must be manually opened, which slows people down. The amount of slowdown depends on what the door is made of.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>60</Mass>
       <MaxHitPoints>480</MaxHitPoints>
@@ -61,6 +63,10 @@
     </graphicData>
     <uiIconPath>Things/Building/Door/DoorTriple_MenuIcon</uiIconPath>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>Door</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>Standard</doorType>
       </li>
@@ -69,8 +75,7 @@
 
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_AutodoorDouble</defName>
-    <label>autodoor (2x1)</label>
-    <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>40</Mass>
       <MaxHitPoints>320</MaxHitPoints>
@@ -94,6 +99,10 @@
     </graphicData>
     <uiIconPath>Things/Building/Door/AutodoorDouble_MenuIcon</uiIconPath>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>Autodoor</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>Standard</doorType>
@@ -112,8 +121,7 @@
 
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_AutodoorTriple</defName>
-    <label>autodoor (3x1)</label>
-    <description>Divides rooms. Powered operation allows people to move through the door without slowing down.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>60</Mass>
       <MaxHitPoints>480</MaxHitPoints>
@@ -137,6 +145,10 @@
     </graphicData>
     <uiIconPath>Things/Building/Door/AutodoorTriple_MenuIcon</uiIconPath>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>Autodoor</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>Standard</doorType>
@@ -207,7 +219,7 @@
 
   <ThingDef ParentName="HeronClothDoorBase">
     <defName>HeronCurtainTribal</defName>
-    <label>curtain (tribal) (1x1)</label>
+    <label>curtain (tribal)</label>
     <description>Divides rooms. Curtains are much faster to open than standard doors, but are flammable and slowly vent temperatures between rooms.</description>
     <statBases>
       <Mass>10</Mass>
@@ -233,6 +245,9 @@
       </damageData>
     </graphicData>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>Stretch</doorType>
         <tempEqualizeRate>6.0</tempEqualizeRate> <!-- 6 times normal temperature equalize rate -->
@@ -246,8 +261,7 @@
 
   <ThingDef ParentName="HeronClothDoorBase">
     <defName>HeronCurtainTribalDouble</defName>
-    <label>curtain (tribal) (2x1)</label>
-    <description>Divides rooms. Curtains are much faster to open than standard doors, but are flammable and slowly vent temperatures between rooms.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>20</Mass>
       <MaxHitPoints>100</MaxHitPoints>
@@ -271,6 +285,10 @@
       </damageData>
     </graphicData>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>HeronCurtainTribal</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>Stretch</doorType>
         <tempEqualizeRate>6.0</tempEqualizeRate> <!-- 6 times normal temperature equalize rate -->
@@ -285,8 +303,7 @@
 
   <ThingDef ParentName="HeronClothDoorBase">
     <defName>HeronCurtainTribalTriple</defName>
-    <label>curtain (tribal) (3x1)</label>
-    <description>Divides rooms. Curtains are much faster to open than standard doors, but are flammable and slowly vent temperatures between rooms.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>30</Mass>
       <MaxHitPoints>150</MaxHitPoints>
@@ -310,6 +327,10 @@
       </damageData>
     </graphicData>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>HeronCurtainTribal</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>Stretch</doorType>
         <tempEqualizeRate>6.0</tempEqualizeRate> <!-- 6 times normal temperature equalize rate -->
@@ -328,11 +349,11 @@
   ██   ███ ███████    ██    █████   ███████
   ██    ██ ██   ██    ██    ██           ██
    ██████  ██   ██    ██    ███████ ███████
- -->
+  -->
 
   <ThingDef ParentName="HeronDoorBase">
     <defName>PH_GateDoubleThick</defName>
-    <label>gate (2x1)</label>
+    <label>gate</label>
     <statBases>
       <Mass>60</Mass>
       <MaxHitPoints>500</MaxHitPoints>
@@ -352,6 +373,10 @@
     </graphicData>
     <uiIconPath>Things/Building/Door/Gate_MenuUI</uiIconPath>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>Door</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <doorType>DoubleSwing</doorType>
         <rotatesSouth>false</rotatesSouth>
@@ -373,7 +398,7 @@
 
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
-    <label>blast door (2x1)</label>
+    <label>blast door</label>
     <description>A heavy pair of doors that are far more resilient to damage.</description>
     <statBases>
       <Mass>100</Mass>
@@ -403,6 +428,9 @@
       <soundDoorCloseManual>HeronBlastDoorClose</soundDoorCloseManual>
     </building>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>Standard</doorType>
@@ -455,8 +483,7 @@
 
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorThickBlastDoor</defName>
-    <label>blast door (3x2)</label>
-    <description>A heavy pair of doors that are far more resilient to damage.</description>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
       <Mass>200</Mass>
       <MaxHitPoints>2000</MaxHitPoints>
@@ -485,6 +512,10 @@
       <soundDoorCloseManual>HeronBlastDoorClose</soundDoorCloseManual>
     </building>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>PH_DoorBlastDoor</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>Standard</doorType>
