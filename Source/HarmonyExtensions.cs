@@ -46,6 +46,7 @@ namespace DoorsExpanded
         }
     }
 
+#pragma warning disable CA1822 // Mark members as static
     public class Locals
     {
         private readonly IList<LocalVariableInfo> locals;
@@ -178,6 +179,7 @@ namespace DoorsExpanded
             return new LocalVar(ilGenerator.DeclareLocal(localType));
         }
     }
+#pragma warning restore CA1822 // Mark members as static
 
     public struct LocalVar : IEquatable<LocalVar>
     {

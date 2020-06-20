@@ -1,4 +1,5 @@
-﻿using Verse;
+﻿using System.Collections.Generic;
+using Verse;
 
 namespace DoorsExpanded
 {
@@ -13,7 +14,7 @@ namespace DoorsExpanded
         public ThingDef defaultLabelAndDescriptionFrom;
         public bool appendSizeToLabel;
 
-        [Unsaved]
+        [Unsaved(false)]
         private string origLabel;
 
         public CompProperties_PostProcessText()
@@ -38,6 +39,14 @@ namespace DoorsExpanded
                 var size = parentDef.Size;
                 parentDef.label = $"{parentDef.label} ({size.x}x{size.z})";
             }
+        }
+
+        // This serves as a useful hook for cleaning up after ourselves.
+        public override IEnumerable<string> ConfigErrors(ThingDef parentDef)
+        {
+            // Comps add overhead, so since we're done, remove ourselves.
+            parentDef.comps.Remove(this);
+            yield break;
         }
     }
 }
