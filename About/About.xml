@@ -7,6 +7,7 @@
   <supportedVersions>
     <li>1.0</li>
     <li>1.1</li>
+    <li>1.2</li>
   </supportedVersions>
   <modDependencies>
     <li>
@@ -34,7 +35,7 @@ Commissioned by CMDR Toss Antilles.
 
 Thank you to my Patrons for supporting me in my efforts. Without you, none of this would be possible.
 
-These are the most excellent rim dwellers who support me: 
+These are the most excellent rim dwellers who support me:
 Cade Perkinson, Jay Sacane, John Pahl, Tankok1998 also known as the Shermanlover, Vahl Kilmer, Zsolt Biró, Genaeve, JD2.0, Olteanu Laurentiu, Penelope Charli Whitman, Charlie Garnham, Steven Pretswell, Sultan Saltlick, RainerWingel, Daniel Paseka, Kyben, Charles Morris, Chris Seieroe, Robin Gleeson, Lea Stannard, Teres, David Silberstein, Kiya Nicoll, Matt Harris, Paul Fenwick, Michael Whitehead, Robert Alessi, Elodie, Gothi, Audrin Navarro, Михаил Юрченко, Calum, Tim Stillson, Populous25, Don Homer, Adam Bliss, Maaxar, Christopher, TinyFloatingTurtle, John Kanady, Midgeman, Nathan Getman, Sharp Spook, LionsFate, Cristina Shaver, Mark, George Chong Chuang Ming, Oliver White, roxxploxx, Emily Shaw, Justin Andres, Robin Hager, Kevin Reagan, Austin Harbert, Marcus Regan, E_T, Alex Mederer, Alexander, Toss Antilles
 
 ========================
@@ -68,7 +69,7 @@ Specifically, "HeronDoor", "HeronDoorRemote", "HeronDoorDoubleRemote" Name attri
 
 1.3.1.0 (05-06-2020)
 ========================
-Blast doors can be remote controlled now. Additional rebalancing and cleanup. Patch by lbmaian. 
+Blast doors can be remote controlled now. Additional rebalancing and cleanup. Patch by lbmaian.
 - More robust patching in case other mods are broken (should no longer fail if another mod has an invalid assembly reference).
 - Blast doors can be remote controlled now (remote control tech still required to build remote buttons/levers).
 - Blast doors now have half flammability (so half the flammability of the material they're made of).

@@ -58,7 +58,7 @@ namespace DoorsExpanded
                 def.installBlueprintDef = null;
                 def.minifiedDef = null;
                 // ThingDefGenerator_Buildings.NewBlueprintDef_Thing is called within MinifyEverything's AddMinifiedFor,
-                // which then adds installBlueprintDef to the DefDatabase. So must remove from DefDatabase afterwards. 
+                // which then adds installBlueprintDef to the DefDatabase. So must remove from DefDatabase afterwards.
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
                     if (DefDatabase<ThingDef>.GetNamedSilentFail(installBlueprintDef.defName) != null)
@@ -70,7 +70,7 @@ namespace DoorsExpanded
         }
 
         private static readonly Action<ThingDef> DefDatabaseThingDefRemove =
-            (Action<ThingDef>) AccessTools.Method(typeof(DefDatabase<ThingDef>), "Remove", new[] { typeof(ThingDef) })
+            (Action<ThingDef>)AccessTools.Method(typeof(DefDatabase<ThingDef>), "Remove", new[] { typeof(ThingDef) })
                 .CreateDelegate(typeof(Action<ThingDef>));
 
         public static void Patches()
@@ -229,7 +229,7 @@ namespace DoorsExpanded
                     transpiler: nameof(InvisDoorBlockLightTranspiler));
             }
 
-            Patch(original: AccessTools.Method( typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
+            Patch(original: AccessTools.Method(typeof(SectionLayer_LightingOverlay), nameof(SectionLayer_LightingOverlay.Regenerate)),
                 transpiler: nameof(InvisDoorBlockLightTranspiler));
 
             // Other patches for invis doors.
@@ -250,7 +250,7 @@ namespace DoorsExpanded
                 transpiler: nameof(MouseoverReadoutTranspiler));
 
             // Patches for door expanded doors themselves.
-            Patch(original: AccessTools.Method( typeof(CoverUtility), nameof(CoverUtility.BaseBlockChance), new[] { typeof(Thing) }),
+            Patch(original: AccessTools.Method(typeof(CoverUtility), nameof(CoverUtility.BaseBlockChance), new[] { typeof(Thing) }),
                 transpiler: nameof(DoorExpandedBaseBlockChanceTranspiler));
             Patch(original: AccessTools.Method(typeof(GenGrid), nameof(GenGrid.CanBeSeenOver), new[] { typeof(Building) }),
                 transpiler: nameof(DoorExpandedCanBeSeenOverTranspiler));
@@ -293,7 +293,8 @@ namespace DoorsExpanded
                 prefix: nameof(DoorExpandedBlueprintDrawPrefix));
 
             // Patches related to door remotes.
-            Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
+            Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders_NewTmp") ??
+                    AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
                 transpiler: nameof(DoorRemoteAddJobGiverWorkOrdersTranspiler),
                 transpilerRelated: nameof(TranslateCustomizeUseDoorRemoteJobLabel));
 
