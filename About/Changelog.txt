@@ -1,3 +1,6 @@
+1.3.2.0 (08-11-2020)
+========================
+- RimWorld 1.2 compatibility
 - New doors:
   - 2x1 and 3x1 autodoors
   - 3x1 remote garage-style doors
@@ -11,17 +14,18 @@
   - Blast doors and remote garage-style doors can now breakdown like autodoors, but only at half the normal frequency
   - Remote doors rebalanced such that they open more slowly than autodoors but cost less and use less power (and breakdown less frequently)
   - Tweak all the various costs of blast doors and remote garage-style doors such that: blast doors > autodoors > remote doors > vanilla doors
+  - Remove superfluous remote button/lever linking/unlinking messages
 - Show east/west door frames above buildings (fixes blast door frames showing below walls)
 - Door open time (in seconds) stats are now displayed instead of door open speed stat
-  - Vanilla bugfix: stuff property stat multipliers & offsets, including door open speed, are displayed in the stuff def info dialog (seen when clicking the stuff icon in a stuffed thing's info dialog)
 - Modders: DoorExpandedDef deprecated in favor of new CompProperties_DoorExpanded (see Heron_Doors.xml for examples):
   - Misleading DoorExpandedDef.doorOpenSpeedRate deprecated in favor of statBase for vanilla DoorOpenSpeed (backcompat default to 1.0/doorOpenSpeedRate)
   - Misleading DoorExpandedDef.tempLeakRate deprecated in favor of CompProperties_DoorExpanded.tempEqualizeRate (backcompat default to 375.0/tempLeakRate)
   - All other DoorExpandedDef fields can be copied as-is to CompProperties_DoorExpanded
   - Non-abstract door defs have had their Name attributes (used for XML inheritance) removed,
-since fields of comp properties (such as CompProperties_DoorExpanded) can't be overwritten in a derived def.
-Specifically, "HeronDoor", "HeronDoorRemote", "HeronDoorDoubleRemote" Name attributes have been removed.
-- Improve debug logging, add more logging when the "Verbose logging" setting is enabled
+    since fields of comp properties (such as CompProperties_DoorExpanded) can't be overwritten in a derived def.
+    Specifically, "HeronDoor", "HeronDoorRemote", "HeronDoorDoubleRemote" Name attributes have been removed.
+- Replace Pawn_PathFollower.TryEnterNextPathCell transpiler with Building_Door.StartManualOpenBy prefix patch (to avoid misleading report in Dubs Performance Analyzer)
+- Improve debug logging, add more logging when the "Verbose logging" setting is enabled, add full path cost in "write path costs"
 - Misc label & description tweaks and XML & texture cleanup
 
 1.3.1.0 (05-06-2020)
