@@ -27,8 +27,10 @@ namespace DoorsExpanded
         public static void PatchDebugInspector()
         {
             var harmony = HarmonyPatches.harmony;
+            harmony.Patch(original: AccessTools.Constructor(typeof(Dialog_DebugSettingsMenu)),
+                transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(AddMoreDebugViewSettingsTranspiler)));
             harmony.Patch(original: AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoListingItems"),
-                transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(DebugSettingsMenuDoListingItemsTranspiler)));
+                transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(AddMoreDebugViewSettingsTranspiler)));
             harmony.Patch(original: AccessTools.Method(typeof(EditWindow_DebugInspector), "CurrentDebugString"),
                 transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(EditWindowDebugInspectorTranspiler)));
             harmony.Patch(original: AccessTools.Method(typeof(Room), "DebugString"),
@@ -52,61 +54,43 @@ namespace DoorsExpanded
         [Conditional("PATCH_CALL_REGISTRY")]
         public static void RegisterPatchCalled(string name) => patchCallRegistry[name] = true;
 
+        // Dialog_DebugSettingsMenu constructor (for RW 1.2)
         // Dialog_DebugSettingsMenu.DoListingItems
-        public static IEnumerable<CodeInstruction> DebugSettingsMenuDoListingItemsTranspiler(
+        public static IEnumerable<CodeInstruction> AddMoreDebugViewSettingsTranspiler(
             IEnumerable<CodeInstruction> instructions)
         {
-            var enumerator = instructions.GetEnumerator();
+            // This transforms the following code:
+            //  typeof(DebugViewSettings).GetFields()
+            // into:
+            //  AddMoreDebugViewSettings(typeof(DebugViewSettings).GetFields())
 
-            var instruction = default(CodeInstruction);
-            while (enumerator.MoveNext())
+            var instructionList = instructions.AsList();
+            var debugViewSettingsIndex = instructionList.FindIndex(instr => instr.OperandIs(typeof(DebugViewSettings)));
+            if (debugViewSettingsIndex >= 0)
             {
-                instruction = enumerator.Current;
-                yield return instruction;
-                if (instruction.OperandIs(typeof(DebugViewSettings)))
-                    break;
-            }
-
-            var prevInstruction = instruction;
-            while (enumerator.MoveNext())
-            {
-                instruction = enumerator.Current;
-                yield return instruction;
-                if (instruction.Calls(methodof_Dialog_DebugSettingsMenu_DoField))
+                var getFieldsIndex = instructionList.FindIndex(debugViewSettingsIndex + 1, instr => instr.Calls(methodof_Type_GetFields));
+                instructionList.SafeInsertRange(getFieldsIndex + 1, new[]
                 {
-                    yield return new CodeInstruction(OpCodes.Ldarg_0); // Dialog_DebugSettingsMenu instance
-                    yield return prevInstruction.Clone(); // assumed to be ldloc(.s) for the current field
-                    yield return new CodeInstruction(OpCodes.Call,
-                        AccessTools.Method(typeof(DebugInspectorPatches), nameof(DoListingMoreDebugViewSettings)));
-                    break;
-                }
-                prevInstruction = instruction;
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DebugInspectorPatches), nameof(AddMoreDebugViewSettings))),
+                });
             }
-
-            while (enumerator.MoveNext())
-            {
-                yield return enumerator.Current;
-            }
+            return instructionList;
         }
 
-        private static void DoListingMoreDebugViewSettings(Dialog_DebugSettingsMenu menu, FieldInfo currentField)
+        private static FieldInfo[] AddMoreDebugViewSettings(FieldInfo[] fields)
         {
-            if (currentField == fieldof_DebugViewSettings_writePathCosts)
-            {
-                foreach (var field in typeof(MoreDebugViewSettings).GetFields())
-                {
-                    if (!(field == fieldof_MoreDebugViewSettings_writePatchCallRegistry && patchCallRegistry == null))
-                        methodof_Dialog_DebugSettingsMenu_DoField.Invoke(menu, new object[] { field });
-                }
-            }
+            var fieldList = fields.ToList();
+            var insertionIndex = fieldList.IndexOf(fieldof_DebugViewSettings_writePathCosts) + 1;
+            var fieldsToInsert = typeof(MoreDebugViewSettings).GetFields().AsEnumerable();
+            if (patchCallRegistry == null)
+                fieldsToInsert = fieldsToInsert.Where(field => field != fieldof_MoreDebugViewSettings_writePatchCallRegistry);
+            fieldList.InsertRange(insertionIndex, fieldsToInsert);
+            return fieldList.ToArray();
         }
 
-        private static readonly MethodInfo methodof_Dialog_DebugSettingsMenu_DoField =
-            AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoField");
+        private static readonly MethodInfo methodof_Type_GetFields = AccessTools.Method(typeof(Type), nameof(Type.GetFields));
         private static readonly FieldInfo fieldof_DebugViewSettings_writePathCosts =
             AccessTools.Field(typeof(DebugViewSettings), nameof(DebugViewSettings.writePathCosts));
-        private static readonly FieldInfo fieldof_DebugViewSettings_drawRooms =
-            AccessTools.Field(typeof(DebugViewSettings), nameof(DebugViewSettings.drawRooms));
         private static readonly FieldInfo fieldof_MoreDebugViewSettings_writePatchCallRegistry =
             AccessTools.Field(typeof(MoreDebugViewSettings), nameof(MoreDebugViewSettings.writePatchCallRegistry));
 
@@ -168,9 +152,11 @@ namespace DoorsExpanded
         {
             if (Find.Selector.SingleSelectedObject is Pawn pawn)
             {
-                debugString.AppendLine($"CalculatedCostAt(this, false, p.Position): " +
+                debugString.AppendLine($"CalculatedCostAt({mouseCell}, false, {pawn.Position}): " +
                     pawn.Map.pathGrid.CalculatedCostAt(mouseCell, perceivedStatic: false, pawn.Position));
-                debugString.AppendLine($"CostToMoveIntoCell({pawn}, this): {CostToMoveIntoCell(pawn, mouseCell)}");
+                debugString.AppendLine($"CostToMoveIntoCell({pawn}, {mouseCell}): " + CostToMoveIntoCell(pawn, mouseCell));
+                using var pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, mouseCell, pawn);
+                debugString.AppendLine($"FindPath({pawn.Position}, {mouseCell}, {pawn}).TotalCost: " + pawnPath.TotalCost);
             }
         }
 
