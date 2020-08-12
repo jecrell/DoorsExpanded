@@ -11,10 +11,7 @@
   <PH_ButtonNeeded>Connect a button or lever to secure remotely.</PH_ButtonNeeded>
   <PH_ButtonConnect>Connect to a button or lever</PH_ButtonConnect>
   <PH_ButtonConnectDesc>Instantly links the remote door to a button or lever</PH_ButtonConnectDesc>
-  <PH_ButtonConnectSuccess>Successfully set new button or lever at {0}</PH_ButtonConnectSuccess>
   <PH_ButtonConnectFailed>Failed to set new button or lever from {0}</PH_ButtonConnectFailed>
-  <PH_ButtonUnlinked>Unlinked previously connected button or lever at {0}</PH_ButtonUnlinked>
-  <PH_ButtonUnlinkedUnspawned>Unlinked previous connected button or lever</PH_ButtonUnlinkedUnspawned>
   <PH_UseButtonOrLeverNoConnection>Must be connected to a remote door</PH_UseButtonOrLeverNoConnection>
   <PH_UseButtonOrLeverNoPower>Must be connected to power</PH_UseButtonOrLeverNoPower>
   <PH_RemoteDoorSecuredRemotely>Secured remotely</PH_RemoteDoorSecuredRemotely>

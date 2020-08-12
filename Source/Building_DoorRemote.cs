@@ -190,13 +190,7 @@ namespace DoorsExpanded
                 {
                     if (Button != otherButton)
                     {
-                        if (Button != null)
-                        {
-                            DisplayUnlinkedMessage();
-                        }
                         Button = otherButton;
-                        Messages.Message("PH_ButtonConnectSuccess".Translate(otherButton.PositionHeld.ToString()), otherButton,
-                            MessageTypeDefOf.PositiveEvent);
                         UpdateOpenStateFromButtonEvent();
                     }
                 }
@@ -209,17 +203,8 @@ namespace DoorsExpanded
 
         private void ButtonDisconnect()
         {
-            DisplayUnlinkedMessage();
             Button = null;
             SecuredRemotely = false;
-        }
-
-        private void DisplayUnlinkedMessage()
-        {
-            if (Button.Spawned)
-                Messages.Message("PH_ButtonUnlinked".Translate(Button.PositionHeld.ToString()), Button, MessageTypeDefOf.SilentInput);
-            else
-                Messages.Message("PH_ButtonUnlinkedUnspawned".Translate(Button.PositionHeld.ToString()), MessageTypeDefOf.SilentInput);
         }
     }
 }
