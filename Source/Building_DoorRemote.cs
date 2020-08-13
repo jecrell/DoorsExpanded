@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -79,7 +78,7 @@ namespace DoorsExpanded
             {
                 // This is based off OverlayDrawer.RenderQuestionMarkOverlay/RenderPulsingOverlayInternal, with customized parameters.
                 var drawLoc = DrawPos;
-                drawLoc.y = Altitudes.AltitudeFor(AltitudeLayer_MetaOverlays) + Altitudes_AltInc * 6;
+                drawLoc.y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays) + Altitudes.AltInc * 6;
                 var sineInput = (Time.realtimeSinceStartup + 397f * (thingIDNumber % 571)) * LockPulseFrequency;
                 var alpha = ((float)Math.Sin(sineInput) + 1f) * 0.3f;
                 alpha = 0.3f + alpha * LockPulseAmplitude;
@@ -88,12 +87,6 @@ namespace DoorsExpanded
             }
             base.Draw();
         }
-
-        // These enums/constants changed values between RW 1.1 and RW 1.2, so need to fetch it at runtime via reflection.
-        private static readonly AltitudeLayer AltitudeLayer_MetaOverlays =
-            (AltitudeLayer)AccessTools.Field(typeof(AltitudeLayer), nameof(AltitudeLayer.MetaOverlays)).GetValue(null);
-        private static readonly float Altitudes_AltInc =
-            (float)AccessTools.Field(typeof(Altitudes), nameof(Altitudes.AltInc)).GetValue(null);
 
         public override void DrawExtraSelectionOverlays()
         {
