@@ -1,43 +1,73 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Verse;
 
 namespace DoorsExpanded
 {
-    // Debug logging that includes deduped stack traces (what the T stands for). Enabled only if Prefs.LogVerbose is true.
+    // Debug logging that optionally includes deduped stack traces (what the T stands for). Controlled by logLevel mod option.
+
+    public enum TLogLevel
+    {
+        Normal,
+        Debug,
+        StackTrace,
+    }
+
     static class TLog
     {
         private static readonly ConcurrentDictionary<string, int> methodToCounter = new ConcurrentDictionary<string, int>();
         private static readonly ConcurrentDictionary<string, string> stackTraceToId = new ConcurrentDictionary<string, string>();
 
-        public static bool Enabled => Prefs.LogVerbose;
+        public static bool Enabled => DoorsExpandedMod.Settings.logLevel != TLogLevel.Normal;
 
-        public static void Log(object obj)
+        public static void Log(object obj, string message = null, [CallerMemberName] string callerMemberName = "")
         {
-            if (!Enabled)
-                return;
-            var stackTrace = new StackTrace(1);
-            var stackTraceStr = stackTrace.ToString().Replace("\r", "");
-            var newId = false;
-            var id = stackTraceToId.GetOrAdd(stackTraceStr, _ =>
+            var logLevel = DoorsExpandedMod.Settings.logLevel;
+            switch (logLevel)
             {
-                newId = true;
-                var sb = new StringBuilder();
-                var method = stackTrace.GetFrame(0).GetMethod();
-                var methodName = method.Name;
-                if (method.DeclaringType is Type declaringType)
-                    methodName = declaringType + "." + methodName;
-                var counter = methodToCounter.AddOrUpdate(methodName,
-                    addValueFactory: _ => 0,
-                    updateValueFactory: (_, counter) => counter + 1);
-                return $"{methodName} {{{counter}}}";
-            });
-            var msg = $"{obj} called from {id}";
-            if (newId)
-                msg += "\n" + stackTraceStr;
-            UnityEngine.Debug.Log(msg);
+                case TLogLevel.Debug:
+                case TLogLevel.StackTrace:
+                    break;
+                default:
+                    return;
+            }
+
+            message ??= obj.ToString();
+            if (logLevel is TLogLevel.Debug)
+            {
+                message = $"[Tick {Find.TickManager.TicksGame}] {message} called from {obj.GetType()}:{callerMemberName}";
+            }
+            else // if (logLevel is TLogLevel.StackTrace)
+            {
+                var stackTrace = new StackTrace(1);
+                var stackTraceStr = stackTrace.ToString().Replace("\r", "");
+                var newId = false;
+                var id = stackTraceToId.GetOrAdd(stackTraceStr, _ =>
+                {
+                    newId = true;
+                    var sb = new StringBuilder();
+                    var method = stackTrace.GetFrame(0).GetMethod();
+                    var methodName = method.Name;
+                    if (method.DeclaringType is Type declaringType)
+                        methodName = declaringType + ":" + methodName;
+                    var counter = methodToCounter.AddOrUpdate(methodName,
+                        addValueFactory: _ => 0,
+                        updateValueFactory: (_, counter) => counter + 1);
+                    return $"{methodName} {{{counter}}}";
+                });
+                message = $"[Tick {Find.TickManager.TicksGame}] {message} called from {id}";
+                if (newId)
+                    message += "\n" + stackTraceStr;
+            }
+
+            // Workaround for RW 1.2 now monitoring all Unity Debug usage for the 1000 max message limit:
+            if (!UnityEngine.Debug.unityLogger.logEnabled)
+                Verse.Log.ResetMessageCount();
+
+            UnityEngine.Debug.Log(message);
         }
     }
 }

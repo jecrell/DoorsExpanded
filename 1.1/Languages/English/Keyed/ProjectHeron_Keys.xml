@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
 
+  <DoorsExpanded>Doors Expanded</DoorsExpanded>
+  <DoorsExpanded_logLevel>Log level (for debugging)</DoorsExpanded_logLevel>
+  <DoorsExpanded_logLevel_Normal>Normal</DoorsExpanded_logLevel_Normal>
+  <DoorsExpanded_logLevel_Debug>Debug</DoorsExpanded_logLevel_Debug>
+  <DoorsExpanded_logLevel_StackTrace>Stack Trace</DoorsExpanded_logLevel_StackTrace>
+
   <PH_RemoteDoor>Can be opened and closed from a distance with a button or lever.</PH_RemoteDoor>
   <PH_ButtonDisconnect>Disconnect button or lever</PH_ButtonDisconnect>
   <PH_ButtonDisconnectDesc>Disconnects any connected button or lever.</PH_ButtonDisconnectDesc>

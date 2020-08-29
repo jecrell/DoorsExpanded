@@ -12,17 +12,17 @@ using Verse.Sound;
 namespace DoorsExpanded
 {
     /// <summary>
-    /// 
+    ///
     /// Building_DoorExpanded
-    /// 
+    ///
     /// What: A class for multi-celled, larger and more complicated doors.
-    /// 
+    ///
     /// HowWhy: This class is a copy of the Building_Door class without inheriting it.
     /// This prevents it from being passed into region checks that cause region
     /// link errors. It also spawns in Building_DoorRegionHandler classed Things
     /// to act as invisible doors between the spaces of the larger door. This
     /// prevents portal errors.
-    /// 
+    ///
     /// </summary>
     // TODO: Since we're spending so much effort copying and patching things such that a door that's not a
     // Building_Door acts like Building_Door with extra features just to avoid RimWorld limitations regarding doors,
@@ -296,9 +296,9 @@ namespace DoorsExpanded
         // Note: This method is also filled with sanity checks for invis doors that manifest as warnings.
         private void SpawnInvisDoorsAsNeeded(Map map)
         {
-            if (TLog.Enabled)
-                TLog.Log($"{this} (#invisDoors={invisDoors.Count}/{this.OccupiedRect().Area})");
             var occupiedRect = this.OccupiedRect();
+            if (TLog.Enabled)
+                TLog.Log(this, $"{this} (#invisDoors={invisDoors.Count}/{occupiedRect.Area})");
             var invisDoorsToRespawn = new List<Building_DoorRegionHandler>();
             var invisDoorsToReposition = new List<Building_DoorRegionHandler>();
             var spawnedInvisDoors = new List<Building_DoorRegionHandler>();

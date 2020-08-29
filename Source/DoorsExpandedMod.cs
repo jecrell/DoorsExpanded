@@ -1,14 +1,49 @@
-﻿using Verse;
+﻿using UnityEngine;
+using Verse;
 
 namespace DoorsExpanded
 {
+    public class DoorsExpandedSettings : ModSettings
+    {
+        public TLogLevel logLevel;
+
+        public override void ExposeData()
+        {
+            Scribe_Values.Look(ref logLevel, nameof(logLevel), TLogLevel.Normal);
+        }
+    }
+
     public class DoorsExpandedMod : Mod
     {
+        public static DoorsExpandedSettings Settings { get; private set; }
+
         public DoorsExpandedMod(ModContentPack content) : base(content)
         {
             HarmonyPatches.EarlyPatches();
+            Settings = GetSettings<DoorsExpandedSettings>();
         }
 
-        // TODO: Mod options
+        public override void DoSettingsWindowContents(Rect inRect)
+        {
+            var listing = new Listing_Standard();
+            listing.Begin(inRect);
+            Text.Font = GameFont.Medium;
+            var labelKey = "DoorsExpanded_" + nameof(Settings.logLevel);
+            listing.Label(labelKey.Translate());
+            Text.Font = GameFont.Small;
+            foreach (TLogLevel logLevel in typeof(TLogLevel).GetEnumValues())
+            {
+#pragma warning disable CS0612 // Type or member is obsolete
+                if (listing.RadioButton($"{labelKey}_{logLevel}".Translate(), Settings.logLevel == logLevel, tabIn: 10f))
+#pragma warning restore CS0612 // Type or member is obsolete
+                    Settings.logLevel = logLevel;
+            }
+            listing.End();
+        }
+
+        public override string SettingsCategory()
+        {
+            return "DoorsExpanded".Translate();
+        }
     }
 }
