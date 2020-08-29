@@ -9,15 +9,15 @@ using Verse;
 namespace DoorsExpanded
 {
     /// <summary>
-    /// 
+    ///
     /// Door Region Handler
-    /// 
+    ///
     /// What: These are children doors spawned inside a larger door.
-    /// 
+    ///
     /// Why: This class is used instead of rewriting the base RimWorld code for
     /// handling regions. Regions do not handle large doors well. So this class
     /// will add smaller, invisible doors, inside a bigger door.
-    /// 
+    ///
     /// </summary>
     public class Building_DoorRegionHandler : Building_Door
     {
@@ -76,6 +76,9 @@ namespace DoorsExpanded
         private static readonly AccessTools.FieldRef<Building_Door, bool> Building_Door_holdOpenInt =
             AccessTools.FieldRefAccess<Building_Door, bool>("holdOpenInt");
 
+        private static readonly AccessTools.FieldRef<Thing, IntVec3> Thing_positionInt =
+            AccessTools.FieldRefAccess<Thing, IntVec3>("positionInt");
+
         public override bool FireBulwark => ParentDoor.FireBulwark;
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
@@ -115,7 +118,17 @@ namespace DoorsExpanded
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_References.Look(ref parentDoor, nameof(parentDoor));
+            // This roundabout way of setting parentDoor is to handle the case where parentDoor is no longer a Building_DoorExpanded
+            // (potentially due to XML def/patch changes), in which case, we invalidate the position to prevent spawning this invis door.
+            var tempParentDoor = (ILoadReferenceable)parentDoor;
+            Scribe_References.Look(ref tempParentDoor, nameof(parentDoor));
+            parentDoor = tempParentDoor as Building_DoorExpanded;
+            if (tempParentDoor != null && parentDoor == null)
+            {
+                if (TLog.Enabled)
+                    TLog.Log(this, $"{this} has invalid parentDoor type {tempParentDoor.GetType()} - invalidating position to avoid spawning");
+                Thing_positionInt(this) = IntVec3.Invalid;
+            }
         }
 
         public override void SetFaction(Faction newFaction, Pawn recruiter = null)

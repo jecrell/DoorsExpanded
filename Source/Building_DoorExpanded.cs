@@ -256,7 +256,7 @@ namespace DoorsExpanded
         public override void PostMapInit()
         {
             if (Spawned)
-                SpawnInvisDoorsAsNeeded(Map);
+                SpawnInvisDoorsAsNeeded(Map, this.OccupiedRect());
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
@@ -280,7 +280,7 @@ namespace DoorsExpanded
             // Therefore, we delay spawning (and the involved sanity checks) of invis doors until game is initialized.
             if (!respawningAfterLoad)
             {
-                SpawnInvisDoorsAsNeeded(map);
+                SpawnInvisDoorsAsNeeded(map, this.OccupiedRect());
             }
 
             powerComp = GetComp<CompPowerTrader>();
@@ -294,9 +294,8 @@ namespace DoorsExpanded
         }
 
         // Note: This method is also filled with sanity checks for invis doors that manifest as warnings.
-        private void SpawnInvisDoorsAsNeeded(Map map)
+        private void SpawnInvisDoorsAsNeeded(Map map, CellRect occupiedRect)
         {
-            var occupiedRect = this.OccupiedRect();
             if (TLog.Enabled)
                 TLog.Log(this, $"{this} (#invisDoors={invisDoors.Count}/{occupiedRect.Area})");
             var invisDoorsToRespawn = new List<Building_DoorRegionHandler>();
@@ -555,7 +554,7 @@ namespace DoorsExpanded
             if (invisDoors.Where(invisDoor => invisDoor != null && invisDoor.Spawned).Count() != occupiedRect.Area ||
                 this.IsHashIntervalTick(GenTicks.TickLongInterval))
             {
-                SpawnInvisDoorsAsNeeded(Map);
+                SpawnInvisDoorsAsNeeded(Map, occupiedRect);
             }
 
             if (FreePassage != freePassageWhenClearedReachabilityCache)
