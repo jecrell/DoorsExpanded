@@ -436,7 +436,6 @@
       <li Class="DoorsExpanded.CompProperties_DoorExpanded">
         <remoteDoor>true</remoteDoor>
         <doorType>Standard</doorType>
-        <fixedPerspective>true</fixedPerspective>
         <rotatesSouth>false</rotatesSouth>
         <doorFrameSplitOffset>(0,0,1)</doorFrameSplitOffset>
         <doorFrame>
