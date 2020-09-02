@@ -396,6 +396,75 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+
+  <ThingDef ParentName="HeronMetalDoorBase">
+    <defName>PH_DoorBlastSingle</defName>
+    <label>blast door</label>
+    <description>A heavy door that is far more resilient to damage.</description>
+    <statBases>
+      <Mass>50</Mass>
+      <MaxHitPoints>500</MaxHitPoints>
+      <WorkToBuild>2000</WorkToBuild>
+      <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
+      <Flammability>0.5</Flammability>
+    </statBases>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>4</ComponentIndustrial>
+    </costList>
+    <costStuffCount>75</costStuffCount>
+    <size>(1,1)</size>
+    <rotatable>false</rotatable>
+    <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
+    <graphicData>
+      <texPath>Things/Building/Door/DoorBlastDoor_MoverSingle</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(1,1)</drawSize>
+      <damageData>
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+    <uiIconPath>Things/Building/Door/BlastDoorSingleUI</uiIconPath>
+    <building>
+      <soundDoorOpenManual>HeronBlastDoorOpen</soundDoorOpenManual>
+      <soundDoorCloseManual>HeronBlastDoorClose</soundDoorCloseManual>
+    </building>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>Standard</doorType>
+        <rotatesSouth>false</rotatesSouth>
+        <doorFrameSplitOffset>(0,0,1)</doorFrameSplitOffset>
+        <doorFrame>
+          <texPath>Things/Building/Door/DoorBlastDoorSingle</texPath>
+          <graphicClass>Graphic_Single</graphicClass>
+          <shaderType>CutoutComplex</shaderType>
+          <drawSize>(1,1)</drawSize>
+          <damageData>
+            <enabled>false</enabled>
+          </damageData>
+        </doorFrame>
+      </li>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>50</basePowerConsumption>
+      </li>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
+      </li>
+    </comps>
+    <placeWorkers>
+      <li>JecsTools.PlaceWorker_Outline</li>
+    </placeWorkers>
+    <researchPrerequisites>
+      <li>ProjectHeron_BlastDoors</li>
+    </researchPrerequisites>
+    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
+  </ThingDef>
+
   <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorBlastDoor</defName>
     <label>blast door</label>
