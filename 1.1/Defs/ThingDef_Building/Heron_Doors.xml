@@ -450,10 +450,10 @@
       </li>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
-        <basePowerConsumption>65</basePowerConsumption>
+        <basePowerConsumption>50</basePowerConsumption>
       </li>
       <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
-        <breakdownMTBUnit>2.5</breakdownMTBUnit> <!-- half as likely to breakdown -->
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
       </li>
     </comps>
     <placeWorkers>
