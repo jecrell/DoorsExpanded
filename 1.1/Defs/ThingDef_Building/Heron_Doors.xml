@@ -402,15 +402,15 @@
     <label>blast door</label>
     <description>A heavy door that is far more resilient to damage.</description>
     <statBases>
-      <Mass>100</Mass>
-      <MaxHitPoints>800</MaxHitPoints>
+      <Mass>50</Mass>
+      <MaxHitPoints>500</MaxHitPoints>
       <WorkToBuild>2000</WorkToBuild>
       <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
       <Flammability>0.5</Flammability>
     </statBases>
     <costList>
       <Steel>40</Steel>
-      <ComponentIndustrial>3</ComponentIndustrial>
+      <ComponentIndustrial>4</ComponentIndustrial>
     </costList>
     <costStuffCount>75</costStuffCount>
     <size>(1,1)</size>
