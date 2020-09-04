@@ -282,7 +282,8 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Designator_Place), "HandleRotationShortcuts"),
                 transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
                 transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
-            Patch(original: AccessTools.Method(typeof(GhostDrawer), nameof(GhostDrawer.DrawGhostThing)),
+            Patch(original: AccessTools.Method(typeof(GhostDrawer), "DrawGhostThing_NewTmp") ??
+                    AccessTools.Method(typeof(GhostDrawer), nameof(GhostDrawer.DrawGhostThing)),
                 transpiler: nameof(DoorExpandedDrawGhostThingTranspiler),
                 transpilerRelated: nameof(DoorExpandedDrawGhostGraphicFromDef));
             Patch(original: AccessTools.Method(typeof(GhostUtility), nameof(GhostUtility.GhostGraphicFor)),
