@@ -12,7 +12,14 @@ namespace DoorsExpanded
         private bool buttonOn = false;
         private bool needsToBeSwitched = false;
 
-        public List<Building_DoorRemote> LinkedDoors => linkedDoors;
+        public List<Building_DoorRemote> LinkedDoors
+        {
+            get
+            {
+                RemoveNullOrUnspawnedDoors();
+                return linkedDoors;
+            }
+        }
 
         public bool ButtonOn
         {
@@ -31,6 +38,18 @@ namespace DoorsExpanded
 
         public bool NeedsPower => powerComp != null && !powerComp.PowerOn;
 
+        private void RemoveNullOrUnspawnedDoors()
+        {
+            if (TLog.Enabled)
+            {
+                var nullOrUnspawnedDoors = linkedDoors.FindAll(door => door is null || !door.Spawned);
+                if (nullOrUnspawnedDoors.Count > 0)
+                    TLog.Log(this, $"{this}: removing null or unspawned linkedDoors: " +
+                        nullOrUnspawnedDoors.ToStringSafeEnumerable());
+            }
+            linkedDoors.RemoveAll(door => door is null || !door.Spawned);
+        }
+
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             base.SpawnSetup(map, respawningAfterLoad);
@@ -40,6 +59,7 @@ namespace DoorsExpanded
         public override void DrawExtraSelectionOverlays()
         {
             base.DrawExtraSelectionOverlays();
+            var linkedDoors = LinkedDoors;
             for (var i = 0; i < linkedDoors.Count; i++)
             {
                 GenDraw.DrawLineBetween(this.TrueCenter(), linkedDoors[i].TrueCenter());
@@ -51,6 +71,7 @@ namespace DoorsExpanded
             // ButtonOn state is set to the first linked door's HoldOpen state.
             // From that point on, the relationship is reversed such that all linked door's HoldOpen state are synchronized
             // with this button's ButtonOn state.
+            var linkedDoors = LinkedDoors;
             if (linkedDoors.Count == 0)
                 ButtonOn = remoteDoor.HoldOpen;
             linkedDoors.Add(remoteDoor);
@@ -58,6 +79,7 @@ namespace DoorsExpanded
 
         public void Notify_Unlinked(Building_DoorRemote remoteDoor)
         {
+            var linkedDoors = LinkedDoors;
             linkedDoors.Remove(remoteDoor);
             if (linkedDoors.Count == 0)
                 ButtonOn = false;
@@ -69,7 +91,7 @@ namespace DoorsExpanded
                 NeedsToBeSwitched = false;
             SoundDefOf.Tick_Tiny.PlayOneShot(this);
             ButtonOn = !ButtonOn;
-            linkedDoors.RemoveAll(door => !door.Spawned);
+            var linkedDoors = LinkedDoors;
             foreach (var linkedDoor in linkedDoors)
                 linkedDoor.Notify_ButtonPushed();
         }
@@ -94,6 +116,7 @@ namespace DoorsExpanded
 
         public bool IsDisabled(out string reason)
         {
+            var linkedDoors = LinkedDoors;
             if (linkedDoors.Count == 0)
             {
                 reason = "PH_UseButtonOrLeverNoConnection".Translate();
@@ -121,9 +144,13 @@ namespace DoorsExpanded
         public override void ExposeData()
         {
             base.ExposeData();
+            if (Scribe.mode == LoadSaveMode.Saving)
+                RemoveNullOrUnspawnedDoors();
             Scribe_Collections.Look(ref linkedDoors, nameof(linkedDoors), LookMode.Reference);
             Scribe_Values.Look(ref needsToBeSwitched, nameof(needsToBeSwitched), false);
             Scribe_Values.Look(ref buttonOn, nameof(buttonOn), false);
+            if (TLog.Enabled)
+                TLog.Log(this, $"{Scribe.mode}: {this} (linkedDoors={linkedDoors.ToStringSafeEnumerable()})");
         }
     }
 }
