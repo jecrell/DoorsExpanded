@@ -27,7 +27,7 @@ Currently included:
 * Jail Door (1x1) - Stronger door to keep prisoners inside.
 * Gates (2x1) - Stylized doors perfect for meeting pre-industrial needs.
 * Remote Doors (1x1, 2x1, 3x1) - Garage-style doors that can be opened by remote buttons or levers.
-* Blast Doors (2x1, 3x2) - Incredibly large and secure doors used to keep greater threats at bay. Also can be opened by remote buttons or levers.
+* Blast Doors (1x1, 2x1, 3x2) - Incredibly tough and secure doors used to keep greater threats at bay. Also can be opened by remote buttons or levers.
 * Autodoors (2x1, 3x2) - Double/triple sized autodoors. All autodoors (including vanilla 1x1 autodoor) also can be opened by remote buttons or levers.
 
 Commissioned by CMDR Toss Antilles.
@@ -43,7 +43,7 @@ Changelog
 ========================
 1.3.3.0 (05-06-2021)
 ========================
-- Add BlastDoorSingle as a 1x1 tile blast door (thanks Jiopaba/InsanityPrelude!)
+- Add 1x1 blast door (thanks Jiopaba/InsanityPrelude!)
 - Add French translation (thanks qux!)
 - Attempt to fix potential errors (like NullReferenceException) due to stale linked doors (removed/unspawned outside of this mod's control)
 - Allow patches (or future changes) to change building's thingClass from Building_DoorExpanded to another class (like Building_Door) without breaking saves
