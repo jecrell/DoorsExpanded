@@ -226,6 +226,7 @@
       <MaxHitPoints>50</MaxHitPoints>
       <WorkToBuild>850</WorkToBuild>
       <DoorOpenSpeed>4.0</DoorOpenSpeed> <!-- powered autodoor speed -->
+      <Beauty>1.0</Beauty>
     </statBases>
     <costStuffCount>25</costStuffCount>
     <size>(1,1)</size>
@@ -267,6 +268,7 @@
       <MaxHitPoints>100</MaxHitPoints>
       <WorkToBuild>1700</WorkToBuild>
       <DoorOpenSpeed>4.0</DoorOpenSpeed> <!-- powered autodoor speed -->
+      <Beauty>2.0</Beauty>
     </statBases>
     <costStuffCount>50</costStuffCount>
     <size>(2,1)</size>
@@ -309,6 +311,7 @@
       <MaxHitPoints>150</MaxHitPoints>
       <WorkToBuild>2550</WorkToBuild>
       <DoorOpenSpeed>4.0</DoorOpenSpeed> <!-- powered autodoor speed -->
+      <Beauty>3.0</Beauty>
     </statBases>
     <costStuffCount>75</costStuffCount>
     <size>(3,1)</size>
