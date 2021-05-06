@@ -1,3 +1,12 @@
+1.3.3.0 (05-06-2021)
+========================
+- Add BlastDoorSingle as a 1x1 tile blast door (thanks Jiopaba/InsanityPrelude!)
+- Add French translation (thanks qux!)
+- Attempt to fix potential errors (like NullReferenceException) due to stale linked doors (removed/unspawned outside of this mod's control)
+- Allow patches (or future changes) to change building's thingClass from Building_DoorExpanded to another class (like Building_Door) without breaking saves
+- Rebuild to latest RW version
+- Mod option for log level (for debugging)
+
 1.3.2.1 (08-13-2020)
 ========================
 - Fix regressions in RW 1.1 version by compiling separate assemblies for RW 1.1 and RW 1.2 to account for different enum/constant values in RW assemblies
