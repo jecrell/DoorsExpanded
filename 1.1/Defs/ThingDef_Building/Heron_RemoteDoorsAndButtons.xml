@@ -143,20 +143,21 @@
     </researchPrerequisites>
   </ThingDef>
 
-  <DoorsExpanded.DoorExpandedDef Name="HeronDoorRemote" ParentName="HeronMetalDoorBase">
+  <ThingDef ParentName="HeronMetalDoorBase">
     <defName>PH_DoorRemoteSingle</defName>
-    <label>remote door (1x1)</label>
-    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
-    <description>Vertical sliding metal door. Divides rooms. Can be opened and closed from a distance with a button or lever.</description>
-    <building>
-      <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
-      <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
-    </building>
+    <label>remote door</label>
+    <description>Vertical sliding metal door. Uses less power than an autodoor but opens more slowly.</description>
     <statBases>
       <Mass>20</Mass>
       <MaxHitPoints>160</MaxHitPoints>
-      <WorkToBuild>1100</WorkToBuild>
+      <WorkToBuild>1000</WorkToBuild>
+      <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
     </statBases>
+    <costList>
+      <Steel>20</Steel>
+      <ComponentIndustrial>1</ComponentIndustrial>
+    </costList>
+    <costStuffCount>25</costStuffCount>
     <size>(1,1)</size>
     <rotatable>false</rotatable>
     <graphicData>
@@ -169,77 +170,134 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <comps>
-      <li Class="CompProperties_Power">
-        <compClass>CompPowerTrader</compClass>
-        <basePowerConsumption>15</basePowerConsumption>
-      </li>
-    </comps>
-    <uiIconPath>Things/Building/Door/DoorRemote_icon</uiIconPath>
-    <costStuffCount>50</costStuffCount>
-    <costList>
-      <Steel>5</Steel>
-      <ComponentIndustrial>1</ComponentIndustrial>
-    </costList>
-    <designationCategory>Structure</designationCategory>
-    <doorType>StretchVertical</doorType>
-    <singleDoor>true</singleDoor>
-    <doorOpenSpeedRate>2</doorOpenSpeedRate>
-    <researchPrerequisites>
-      <li>ProjectHeron_RemoteDoors</li>
-    </researchPrerequisites>
-  </DoorsExpanded.DoorExpandedDef>
-
-  <DoorsExpanded.DoorExpandedDef Name="HeronDoorDoubleRemote" ParentName="HeronMetalDoorBase">
-    <defName>PH_DoorRemoteDouble</defName>
-    <label>remote door (2x1)</label>
-    <thingClass>DoorsExpanded.Building_DoorRemote</thingClass>
-    <description>Vertical sliding metal door. Divides rooms. Can be opened and closed from a distance with a button or lever.</description>
     <building>
       <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
     </building>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>StretchVertical</doorType>
+        <singleDoor>true</singleDoor>
+      </li>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>15</basePowerConsumption> <!-- 30% of equivalent autodoor to compensate for slower door open speed -->
+      </li>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
+      </li>
+    </comps>
+    <researchPrerequisites>
+      <li>ProjectHeron_RemoteDoors</li>
+    </researchPrerequisites>
+  </ThingDef>
+
+  <ThingDef ParentName="HeronMetalDoorBase">
+    <defName>PH_DoorRemoteDouble</defName>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
     <statBases>
-      <Mass>20</Mass>
+      <Mass>40</Mass>
       <MaxHitPoints>320</MaxHitPoints>
-      <WorkToBuild>2200</WorkToBuild>
+      <WorkToBuild>2000</WorkToBuild>
+      <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
     </statBases>
-    <placeWorkers>
-      <li>JecsTools.PlaceWorker_Outline</li>
-    </placeWorkers>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>2</ComponentIndustrial>
+    </costList>
+    <costStuffCount>50</costStuffCount>
     <size>(2,1)</size>
-    <rotatable>true</rotatable>
     <graphicData>
       <texPath>Things/Building/Door/DoorDoubleRemote_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
-      <drawSize>(2,2)</drawSize>
+      <drawSize>(2,1)</drawSize>
       <damageData>
         <!--  no damage marks because they don't move with the door
         <rect>(0,0.12,1,0.76)</rect>-->
         <enabled>false</enabled>
       </damageData>
     </graphicData>
+    <building>
+      <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
+      <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
+    </building>
     <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>PH_DoorRemoteSingle</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>StretchVertical</doorType>
+        <singleDoor>true</singleDoor>
+      </li>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
-        <basePowerConsumption>15</basePowerConsumption>
+        <basePowerConsumption>30</basePowerConsumption> <!-- 30% of equivalent autodoor to compensate for slower door open speed -->
+      </li>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
       </li>
     </comps>
-    <uiIconPath>Things/Building/Door/DoorDoubleRemoteUI_icon</uiIconPath>
-    <costStuffCount>100</costStuffCount>
-    <costList>
-      <Steel>10</Steel>
-      <ComponentIndustrial>2</ComponentIndustrial>
-    </costList>
-    <designationCategory>Structure</designationCategory>
-    <doorType>StretchVertical</doorType>
-    <!-- Top and bottom 4th of door texture is all transparent, so "actual" size of closed door for stretch purposes is (2,1) -->
-    <stretchCloseSize>(2,1)</stretchCloseSize>
-    <singleDoor>true</singleDoor>
-    <doorOpenSpeedRate>2</doorOpenSpeedRate>
     <researchPrerequisites>
       <li>ProjectHeron_RemoteDoors</li>
     </researchPrerequisites>
-  </DoorsExpanded.DoorExpandedDef>
+  </ThingDef>
+
+  <ThingDef ParentName="HeronMetalDoorBase">
+    <defName>PH_DoorRemoteTriple</defName>
+    <!-- label and description are handled by CompProperties_PostProcessText -->
+    <statBases>
+      <Mass>60</Mass>
+      <MaxHitPoints>480</MaxHitPoints>
+      <WorkToBuild>3000</WorkToBuild>
+      <DoorOpenSpeed>0.25</DoorOpenSpeed> <!-- when powered, 0.25*4 = 1x door speed (1/4 autodoor speed) -->
+    </statBases>
+    <costList>
+      <Steel>60</Steel>
+      <ComponentIndustrial>3</ComponentIndustrial>
+    </costList>
+    <costStuffCount>75</costStuffCount>
+    <size>(3,1)</size>
+    <graphicData>
+      <texPath>Things/Building/Door/DoorTripleRemote_Mover</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(3,1)</drawSize>
+      <damageData>
+        <!--  no damage marks because they don't move with the door
+        <rect>(0,0.12,1,0.76)</rect>-->
+        <enabled>false</enabled>
+      </damageData>
+    </graphicData>
+    <building>
+      <soundDoorOpenManual>HeronGarageOpen</soundDoorOpenManual>
+      <soundDoorCloseManual>HeronGarageClose</soundDoorCloseManual>
+    </building>
+    <comps>
+      <li Class="DoorsExpanded.CompProperties_PostProcessText">
+        <defaultLabelAndDescriptionFrom>PH_DoorRemoteSingle</defaultLabelAndDescriptionFrom>
+        <appendSizeToLabel>true</appendSizeToLabel>
+      </li>
+      <li Class="DoorsExpanded.CompProperties_DoorExpanded">
+        <remoteDoor>true</remoteDoor>
+        <doorType>StretchVertical</doorType>
+        <singleDoor>true</singleDoor>
+      </li>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>45</basePowerConsumption> <!-- 30% of equivalent autodoor to compensate for slower door open speed -->
+      </li>
+      <li Class="DoorsExpanded.CompProperties_BreakdownableCustom">
+        <breakdownMTBUnit>2.0</breakdownMTBUnit> <!-- half as likely to breakdown -->
+      </li>
+    </comps>
+    <researchPrerequisites>
+      <li>ProjectHeron_RemoteDoors</li>
+    </researchPrerequisites>
+  </ThingDef>
 
 </Defs>

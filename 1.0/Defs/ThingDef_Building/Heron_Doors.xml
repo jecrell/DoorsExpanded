@@ -203,7 +203,6 @@
       <soundDoorOpenManual>HeronJailDoorOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronJailDoorClose</soundDoorCloseManual>
     </building>
-    <uiIconPath>Things/Building/Door/JailCell_Mover</uiIconPath>
     <costStuffCount>50</costStuffCount>
     <costList>
       <Steel>30</Steel>
@@ -252,7 +251,6 @@
         <enabled>false</enabled>
       </damageData>
     </graphicData>
-    <uiIconPath>Things/Building/Door/Curtain_MenuIcon</uiIconPath>
     <costStuffCount>25</costStuffCount>
     <designationHotKey>Misc2</designationHotKey>
     <tempLeakRate>60</tempLeakRate>

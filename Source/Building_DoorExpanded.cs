@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -10,23 +12,24 @@ using Verse.Sound;
 namespace DoorsExpanded
 {
     /// <summary>
-    /// 
+    ///
     /// Building_DoorExpanded
-    /// 
+    ///
     /// What: A class for multi-celled, larger and more complicated doors.
-    /// 
+    ///
     /// HowWhy: This class is a copy of the Building_Door class without inheriting it.
     /// This prevents it from being passed into region checks that cause region
     /// link errors. It also spawns in Building_DoorRegionHandler classed Things
     /// to act as invisible doors between the spaces of the larger door. This
     /// prevents portal errors.
-    /// 
+    ///
     /// </summary>
     // TODO: Since we're spending so much effort copying and patching things such that a door that's not a
     // Building_Door acts like Building_Door with extra features just to avoid RimWorld limitations regarding doors,
     // at this point, shouldn't we consider attacking those limitations directly rather than all these workarounds?
     public class Building_DoorExpanded : Building
     {
+        // All of these constants are currently the same as those in Building_Door.
         private const float OpenTicks = 45f;
         private const int CloseDelayTicks = 110;
         private const int WillCloseSoonThreshold = 111;
@@ -37,6 +40,7 @@ namespace DoorsExpanded
         internal const float VisualDoorOffsetEnd = 0.45f;
 
         private List<Building_DoorRegionHandler> invisDoors = new List<Building_DoorRegionHandler>();
+        private CompProperties_DoorExpanded props;
         private CompPowerTrader powerComp;
         private CompForbiddable forbiddenComp;
         private bool openInt;
@@ -49,11 +53,15 @@ namespace DoorsExpanded
         private bool preventDoorOpenRecursion;
         private bool preventDoorTryCloseRecursion;
 
-        public DoorExpandedDef Def => (DoorExpandedDef)def;
+        [Obsolete("Use Props instead")]
+        public DoorExpandedDef Def => def as DoorExpandedDef;
+
+        public CompProperties_DoorExpanded Props =>
+            props ??= def.GetDoorExpandedProps() ?? throw new Exception("Missing " + typeof(CompProperties_DoorExpanded));
 
         public List<Building_DoorRegionHandler> InvisDoors => invisDoors;
 
-        public bool Open => Def.doorType == DoorType.FreePassage || openInt;
+        public bool Open => props.doorType == DoorType.FreePassage || openInt;
 
         protected virtual bool OpenInt
         {
@@ -161,23 +169,7 @@ namespace DoorsExpanded
 
         public bool SlowsPawns => /*!DoorPowerOn ||*/ TicksToOpenNow > 20;
 
-        public int TicksToOpenNow
-        {
-            get
-            {
-                if (Def.doorType == DoorType.FreePassage)
-                {
-                    return 0;
-                }
-                var ticksToOpenNow = OpenTicks / this.GetStatValue(StatDefOf.DoorOpenSpeed);
-                if (DoorPowerOn)
-                {
-                    ticksToOpenNow *= PowerOffDoorOpenSpeedFactor;
-                }
-                ticksToOpenNow *= Def.doorOpenSpeedRate;
-                return Mathf.RoundToInt(ticksToOpenNow);
-            }
-        }
+        public int TicksToOpenNow => DoorOpenTicks(StatRequest.For(this), DoorPowerOn);
 
         internal bool CanTryCloseAutomatically => FriendlyTouchedRecently && !HoldOpen;
 
@@ -188,26 +180,94 @@ namespace DoorsExpanded
 
         public virtual bool Forbidden => forbiddenComp?.Forbidden ?? false;
 
+        // This method works for both Building_Door and Building_DoorExpanded.
+        private static int DoorOpenTicks(StatRequest statRequest, bool doorPowerOn, bool applyPostProcess = true)
+        {
+            if (statRequest.Def.GetDoorExpandedProps() is CompProperties_DoorExpanded props && props.doorType == DoorType.FreePassage)
+            {
+                return 0;
+            }
+            var ticksToOpenNow = OpenTicks / StatDefOf.DoorOpenSpeed.Worker.GetValue(statRequest, applyPostProcess);
+            if (doorPowerOn)
+            {
+                ticksToOpenNow *= PowerOffDoorOpenSpeedFactor;
+            }
+            return Mathf.RoundToInt(ticksToOpenNow);
+        }
+
+        public static float DoorOpenTime(StatRequest statRequest, bool doorPowerOn, bool applyPostProcess)
+        {
+            return GenTicks.TicksToSeconds(DoorOpenTicks(statRequest, doorPowerOn, applyPostProcess));
+        }
+
+        // This method works for both Building_Door and Building_DoorExpanded.
+        public static string DoorOpenTimeExplanation(StatRequest statRequest, bool doorPowerOn, StatDef stat)
+        {
+            var explanation = new StringBuilder();
+
+            // Treat powered door open speed as the "normal" speed.
+            // This is done partly due to the lack of a vanilla "has power" translation key.
+            var defaultSpeed = OpenTicks * PowerOffDoorOpenSpeedFactor;
+            explanation.AppendLine("StatsReport_BaseValue".Translate() + ": " + stat.ValueToString(defaultSpeed / GenTicks.TicksPerRealSecond));
+
+            if (statRequest.Def.GetDoorExpandedProps() is CompProperties_DoorExpanded props && props.doorType == DoorType.FreePassage)
+            {
+                explanation.AppendLine($"{DoorType.FreePassage}: x0");
+                return explanation.ToString();
+            }
+
+            var doorOpenSpeedStat = StatDefOf.DoorOpenSpeed;
+            var doorOpenSpeed = doorOpenSpeedStat.Worker.GetValue(statRequest);
+            explanation.AppendLine($"{doorOpenSpeedStat.LabelCap}:");
+            var doorOpenSpeedExplanation = doorOpenSpeedStat.Worker.GetExplanationFull(statRequest, doorOpenSpeedStat.toStringNumberSense, doorOpenSpeed);
+            explanation.AppendLine("    " + string.Join("\n    ",
+                doorOpenSpeedExplanation.Split(new[] { '\n' }, System.StringSplitOptions.RemoveEmptyEntries)));
+            explanation.AppendLine($"    1/x => x{(1f / doorOpenSpeed).ToStringPercent()}");
+
+            if (!doorPowerOn)
+            {
+                explanation.AppendLine($"{"NoPower".Translate()}: x{(1f / PowerOffDoorOpenSpeedFactor).ToStringPercent()}");
+            }
+
+            return explanation.ToString();
+        }
+
+        // This method works for both Building_Door and Building_DoorExpanded.
+        public static bool DoorNeedsPower(ThingDef def) => def.HasComp(typeof(CompPowerTrader));
+
+        // This method works for both Building_Door and Building_DoorExpanded.
+        public static bool? DoorIsPoweredOn(Thing thing)
+        {
+            if (thing is Building_Door door)
+                return door.DoorPowerOn;
+            else if (thing is Building_DoorExpanded doorEx)
+                return doorEx.DoorPowerOn;
+            return null;
+        }
+
         public override void PostMake()
         {
             base.PostMake();
+            _ = Props; // ensures props is initialized
             powerComp = GetComp<CompPowerTrader>();
             forbiddenComp = GetComp<CompForbiddable>();
         }
 
         public override void PostMapInit()
         {
-            SpawnInvisDoorsAsNeeded(Map);
+            if (Spawned)
+                SpawnInvisDoorsAsNeeded(Map, this.OccupiedRect());
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
+            TLog.Log(this);
             // Non-1x1 rotations change the footprint of the blueprint, so this needs to be done before that footprint is
             // cached in various ways in base.SpawnSetup.
             // Fortunately once rotated, no further non-1x1 rotations will change the footprint further.
             // Restricted rotation logic in both patched Designator_Place and Blueprint shouldn't allow invalid rotations by
             // this point, but better safe than sorry, especially if this is spawned without Designator_Place or Blueprint.
-            Rotation = DoorRotationAt(Def, Position, Rotation, map);
+            Rotation = DoorRotationAt(def, props, Position, Rotation, map);
 
             // Note: We only want invisDoors to register in the edificeGrid (during its SpawnSetup).
             // A harmony patch to EdificeGrid.Register, which is called in Building.SpawnSetup,
@@ -220,7 +280,7 @@ namespace DoorsExpanded
             // Therefore, we delay spawning (and the involved sanity checks) of invis doors until game is initialized.
             if (!respawningAfterLoad)
             {
-                SpawnInvisDoorsAsNeeded(map);
+                SpawnInvisDoorsAsNeeded(map, this.OccupiedRect());
             }
 
             powerComp = GetComp<CompPowerTrader>();
@@ -234,44 +294,84 @@ namespace DoorsExpanded
         }
 
         // Note: This method is also filled with sanity checks for invis doors that manifest as warnings.
-        private void SpawnInvisDoorsAsNeeded(Map map)
+        private void SpawnInvisDoorsAsNeeded(Map map, CellRect occupiedRect)
         {
-            //Log.Message($"SpawnInvisDoorsAsNeeded called in {this}.{new System.Diagnostics.StackFrame(1).GetMethod().Name}, " +
-            //    $"#invisDoors={invisDoors.Count}/{this.OccupiedRect().Area}");
-            var occupiedRect = this.OccupiedRect();
+            if (TLog.Enabled)
+                TLog.Log(this, $"{this} (#invisDoors={invisDoors.Count}/{occupiedRect.Area})");
+            var invisDoorsToRespawn = new List<Building_DoorRegionHandler>();
             var invisDoorsToReposition = new List<Building_DoorRegionHandler>();
+            var spawnedInvisDoors = new List<Building_DoorRegionHandler>();
+            var errors = new List<string>();
 
             if (invisDoors.Count > 0)
             {
-                var invisDoorCells = new HashSet<IntVec3>(); // only for detecting multiple existing invis door at same cell
+                var invisDoorCells = new HashSet<IntVec3>(); // only for detecting multiple existing invis doors at same cell
                 for (var i = invisDoors.Count - 1; i >= 0; i--)
                 {
                     var invisDoor = invisDoors[i];
+                    var removeInvisDoor = false;
                     if (invisDoor == null)
                     {
-                        Log.Warning($"{this}.invisDoors[{i}] is unexpectedly null - removing");
-                        invisDoors.RemoveAt(i);
+                        errors.Add($"{this}.invisDoors[{i}] is unexpectedly null - removing it");
+                        removeInvisDoor = true;
                     }
-                    else if (!invisDoor.Spawned)
+                    else if (invisDoor.Destroyed)
                     {
-                        var stateStr = invisDoor.Destroyed ? "destroyed" : "unspawned";
-                        Log.Warning($"{this}.invisDoors[{i}] is unexpectedly {stateStr} - removing");
+                        errors.Add($"{invisDoor} is unexpectedly destroyed - removing it");
+                        removeInvisDoor = true;
+                    }
+                    else
+                    {
+                        if (!invisDoor.Spawned)
+                        {
+                            // Error msg is added later in this case.
+                            removeInvisDoor = true;
+                            invisDoorsToRespawn.Add(invisDoor);
+                        }
+                        else
+                        {
+                            var cell = invisDoor.Position;
+                            if (!occupiedRect.Contains(cell))
+                            {
+                                errors.Add($"{invisDoor} has position {cell} outside of {occupiedRect} - destroying it");
+                                removeInvisDoor = true;
+                                invisDoor.Destroy();
+                            }
+                            else if (!invisDoorCells.Add(cell))
+                            {
+                                var existingInvisDoors = cell.GetThingList(map).OfType<Building_DoorRegionHandler>();
+                                errors.Add($"{invisDoor} has position {cell} taken by multiple invis doors " +
+                                    $"({existingInvisDoors.ToStringSafeEnumerable()}) - destroying it");
+                                removeInvisDoor = true;
+                                invisDoor.Destroy();
+                            }
+                        }
+                    }
+
+                    if (removeInvisDoor)
+                    {
                         invisDoors.RemoveAt(i);
                     }
                     else
                     {
-                        if (!invisDoorCells.Add(invisDoor.Position) || !occupiedRect.Contains(invisDoor.Position))
+                        if (invisDoor.ParentDoor == null)
                         {
-                            invisDoorsToReposition.Add(invisDoor);
-                        }
-                        if (invisDoor.ParentDoor != this)
-                        {
-                            Log.Warning($"{invisDoor} has incorrect parent ({invisDoor.ParentDoor}) - fixing it");
+                            errors.Add($"{invisDoor} has no parent - reparenting it to {this}");
                             invisDoor.ParentDoor = this;
                         }
+                        else if (invisDoor.ParentDoor != this)
+                        {
+                            errors.Add($"{invisDoor} has different parent - removing it from {this}");
+                            // Don't destroy this invis door here - let the invis door's parent handle it.
+                            invisDoors.RemoveAt(i);
+                        }
+
                         if (invisDoor.Faction != Faction)
                         {
-                            Log.Warning($"{invisDoor} has incorrect faction ({invisDoor.Faction}) - fixing it");
+                            // This seems to be happening for some users a lot for yet unknown reasons,
+                            // so prevent error spam and improve performance, only do this if dev mode or TLogLevel is debug/trace.
+                            if (Prefs.DevMode || TLog.Enabled)
+                                errors.Add($"{invisDoor} has different faction ({invisDoor.Faction}) - setting it to {Faction}");
                             invisDoor.SetFactionDirect(Faction);
                         }
                     }
@@ -280,38 +380,64 @@ namespace DoorsExpanded
 
             foreach (var cell in occupiedRect)
             {
-                Building_DoorRegionHandler invisDoor = null;
-                foreach (var existingDoor in cell.GetThingList(map).OfType<Building_DoorRegionHandler>())
+                var thingList = cell.GetThingList(map);
+                // Another spawned overlapping doorEx shouldn't ever by possible due to GenSpawn.SpawningWipes checks, but just in case...
+                foreach (var existingThing in thingList)
                 {
-                    if (existingDoor.ParentDoor != this)
+                    if (existingThing != this && existingThing is Building_DoorExpanded existingDoorEx)
                     {
-                        Log.Warning($"Unexpected {invisDoor} already spawned at {cell} - destroying it (including parent)");
-                        existingDoor.ParentDoor.Destroy(DestroyMode.Vanish);
+                        var existingOccupiedRect = existingDoorEx.OccupiedRect();
+                        if (occupiedRect.Overlaps(existingOccupiedRect))
+                        {
+                            errors.Add($"Unexpected {existingDoorEx} (occupying {existingOccupiedRect}) overlaps {this} " +
+                                $"(occupying {occupiedRect}) - refunding it");
+                            // This should also destroy all the invis doors associated with the refunded doorEx.
+                            GenSpawn.Refund(existingDoorEx, map, occupiedRect);
+                        }
+                    }
+                }
+
+                Building_DoorRegionHandler invisDoor = null;
+                var existingInvisDoors = thingList.OfType<Building_DoorRegionHandler>();
+                foreach (var existingInvisDoor in existingInvisDoors)
+                {
+                    if (existingInvisDoor.ParentDoor != this)
+                    {
+                        errors.Add($"Unexpected {invisDoor} already spawned at {cell} - destroying it");
+                        // By this point, it's impossible for another spawned doorEx to overlap this doorEx,
+                        // so if existing invis door's parent is another doorEx, assume it's either unspawned or in another location,
+                        // so don't destroy that doorEx. Just destroy
+                        invisDoor.Destroy();
+                    }
+                    else if (invisDoor != null)
+                    {
+                        // This isn't redundant with the earlier multiple invis doors check, since it's technically possible for
+                        // some existing invis doors at the cell to not all be within invisDoors, thus warranting this sanity check.
+                        errors.Add($"{invisDoor} has position {cell} taken by multiple invis doors " +
+                            $"({existingInvisDoors.ToStringSafeEnumerable()}) - destroying it");
+                        invisDoor.Destroy();
                     }
                     else
                     {
-                        // Note: multiple existing invis doors with ParentDoor == this are handled via invisDoorsToReposition.
-                        invisDoor = existingDoor;
+                        invisDoor = existingInvisDoor;
                     }
                 }
 
                 if (invisDoor == null)
                 {
-                    if (invisDoorsToReposition.Count > 0)
+                    if (invisDoorsToRespawn.Count > 0)
                     {
-                        invisDoor = invisDoorsToReposition.Pop();
-                        Log.Warning($"{invisDoor} has position outside of {occupiedRect} - setting position to {cell}");
-                        invisDoor.Position = cell;
+                        invisDoor = invisDoorsToRespawn.Pop();
+                        errors.Add($"{invisDoor} is unexpectedly unspawned - respawning it at {cell}");
                     }
                     else
                     {
                         invisDoor = (Building_DoorRegionHandler)ThingMaker.MakeThing(HeronDefOf.HeronInvisibleDoor);
                         invisDoor.ParentDoor = this;
                         invisDoor.SetFactionDirect(Faction);
-                        GenSpawn.Spawn(invisDoor, cell, map);
-                        //Log.Message($"Spawned {invisDoor} at {cell}");
-                        invisDoors.Add(invisDoor);
                     }
+                    GenSpawn.Spawn(invisDoor, cell, map);
+                    spawnedInvisDoors.Add(invisDoor);
                 }
 
                 // Open is the only field that needs to be manually synced with the parent door;
@@ -319,23 +445,33 @@ namespace DoorsExpanded
                 invisDoor.Open = Open;
             }
 
-            foreach (var invisDoor in invisDoorsToReposition)
+            foreach (var invisDoor in invisDoorsToRespawn)
             {
-                Log.Warning($"{invisDoor} has position outside of {occupiedRect} and is extraneous - destroying it");
-                // Invis doors are always despawned/destroyed in DestroyMode.Vanish mode.
-                invisDoor.Destroy(DestroyMode.Vanish);
+                errors.Add($"{invisDoor} is unexpectedly unspawned and is extraneous - destroying it");
+                invisDoor.Destroy();
+            }
+
+            invisDoors.AddRange(spawnedInvisDoors);
+
+            if (errors.Count > 0)
+            {
+                var errorMsg = $"[Doors Expanded] Encountered errors when spawning invis doors for {this}:\n" + errors.ToLineList("\t");
+                if (spawnedInvisDoors.Count > 0)
+                    errorMsg += "\nSpawned invis doors:\n" + spawnedInvisDoors.Select(invisDoor => invisDoor.ToString()).ToLineList("\t");
+                Log.Error(errorMsg);
             }
         }
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
+            TLog.Log(this);
             var spawnedInvisDoors = invisDoors.Where(invisDoor => invisDoor.Spawned).ToArray();
             foreach (var invisDoor in spawnedInvisDoors)
             {
                 // If this parent door is respawned later, it will always recreate the invis doors,
                 // so destroy (rather than just despawn) existing invis doors.
-                // And invis doors are always despawned/destroyed in DestroyMode.Vanish mode.
-                invisDoor.Destroy(DestroyMode.Vanish);
+                // And invis doors are always despawned/destroyed in the default Vanish mode.
+                invisDoor.Destroy();
             }
             invisDoors.Clear();
             var map = Map;
@@ -363,20 +499,29 @@ namespace DoorsExpanded
             ClearReachabilityCache(map);
         }
 
+        public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
+        {
+            TLog.Log(this);
+            base.Destroy(mode);
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();
             Scribe_Collections.Look(ref invisDoors, nameof(invisDoors), LookMode.Reference);
-            if (invisDoors == null) // in case a save file somehow has missing or null invisDoors
-            {
-                invisDoors = new List<Building_DoorRegionHandler>();
-            }
+            invisDoors ??= new List<Building_DoorRegionHandler>(); // in case a save file somehow has missing or null invisDoors
             Scribe_Values.Look(ref openInt, "open", false);
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
-            if (Scribe.mode == LoadSaveMode.LoadingVars && Open)
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
-                ticksSinceOpen = TicksToOpenNow;
+                // Ensure props is available for Open usage since PostMake hasn't been called yet.
+                // base.ExposeData() ensures that def is available, which is required for props initialization.
+                _ = Props;
+                if (Open)
+                {
+                    ticksSinceOpen = TicksToOpenNow;
+                }
             }
         }
 
@@ -412,7 +557,7 @@ namespace DoorsExpanded
             if (invisDoors.Where(invisDoor => invisDoor != null && invisDoor.Spawned).Count() != occupiedRect.Area ||
                 this.IsHashIntervalTick(GenTicks.TickLongInterval))
             {
-                SpawnInvisDoorsAsNeeded(Map);
+                SpawnInvisDoorsAsNeeded(Map, occupiedRect);
             }
 
             if (FreePassage != freePassageWhenClearedReachabilityCache)
@@ -425,10 +570,9 @@ namespace DoorsExpanded
                 {
                     ticksSinceOpen--;
                 }
-                var closedTempLeakRate = Def.tempLeakRate;
-                if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % closedTempLeakRate == 0)
+                if ((Find.TickManager.TicksGame + thingIDNumber.HashOffset()) % TemperatureTuning.Door_TempEqualizeIntervalClosed == 0)
                 {
-                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
+                    GenTemperature.EqualizeTemperaturesThroughBuilding(this, props.tempEqualizeRate, twoWay: false);
                 }
             }
             else
@@ -645,9 +789,8 @@ namespace DoorsExpanded
         {
             var ticksToOpenNow = TicksToOpenNow;
             var percentOpen = ticksToOpenNow == 0 ? 1f : Mathf.Clamp01((float)ticksSinceOpen / ticksToOpenNow);
-            var def = Def;
 
-            var rotation = DoorRotationAt(def, Position, Rotation, Map);
+            var rotation = DoorRotationAt(def, props, Position, Rotation, Map);
             Rotation = rotation;
 
             var drawPos = DrawPos;
@@ -656,52 +799,53 @@ namespace DoorsExpanded
             for (var i = 0; i < 2; i++)
             {
                 var flipped = i != 0;
-                var material = (!flipped && def.doorAsync is GraphicData doorAsyncGraphic)
+                var material = (!flipped && props.doorAsync is GraphicData doorAsyncGraphic)
                     ? doorAsyncGraphic.GraphicColoredFor(this).MatAt(rotation)
                     : Graphic.MatAt(rotation);
-                Draw(def, material, drawPos, rotation, percentOpen, flipped,
+                Draw(def, props, material, drawPos, rotation, percentOpen, flipped,
                     i == 0 && MoreDebugViewSettings.writeDoors ? debugDrawVectors : null);
-                if (def.singleDoor)
+                if (props.singleDoor)
                     break;
             }
 
-            if (def.doorFrame is GraphicData)
+            if (props.doorFrame is GraphicData)
             {
-                DrawFrameParams(def, drawPos, rotation, false, out var fMesh, out var fMatrix);
-                Graphics.DrawMesh(fMesh, fMatrix, def.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
+                DrawFrameParams(def, props, drawPos, rotation, false, out var fMesh, out var fMatrix);
+                Graphics.DrawMesh(fMesh, fMatrix, props.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
 
-                if (def.doorFrameSplit is GraphicData)
+                if (props.doorFrameSplit is GraphicData)
                 {
-                    DrawFrameParams(def, drawPos, rotation, true, out fMesh, out fMatrix);
-                    Graphics.DrawMesh(fMesh, fMatrix, def.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
+                    DrawFrameParams(def, props, drawPos, rotation, true, out fMesh, out fMatrix);
+                    Graphics.DrawMesh(fMesh, fMatrix, props.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
                 }
             }
 
             Comps_PostDraw();
         }
 
-        internal static void Draw(DoorExpandedDef def, Material material, Vector3 drawPos, Rot4 rotation, float percentOpen,
+        internal static void Draw(ThingDef def, CompProperties_DoorExpanded props,
+            Material material, Vector3 drawPos, Rot4 rotation, float percentOpen,
             bool flipped, DebugDrawVectors drawVectors = null)
         {
             Mesh mesh;
             Quaternion rotQuat;
             Vector3 offsetVector, scaleVector;
-            switch (def.doorType)
+            switch (props.doorType)
             {
                 // There's no difference between Stretch and StretchVertical except for stretchOpenSize's default value.
                 case DoorType.Stretch:
                 case DoorType.StretchVertical:
-                    DrawStretchParams(def, rotation, percentOpen, flipped,
+                    DrawStretchParams(def, props, rotation, percentOpen, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
                 case DoorType.DoubleSwing:
                     // TODO: Should drawPos.y be set to Mathf.Max(drawPos.y, AltitudeLayer.BuildingOnTop.AltitudeFor())
                     // since AltitudeLayer.DoorMoveable is only used to hide sliding doors behind adjacent walls?
-                    DrawDoubleSwingParams(def, drawPos, rotation, percentOpen, flipped,
+                    DrawDoubleSwingParams(def, props, drawPos, rotation, percentOpen, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
                 default:
-                    DrawStandardParams(def, rotation, percentOpen, flipped,
+                    DrawStandardParams(def, props, rotation, percentOpen, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
             }
@@ -718,17 +862,17 @@ namespace DoorsExpanded
             }
         }
 
-        private static void DrawStretchParams(DoorExpandedDef def, Rot4 rotation,
-            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+        private static void DrawStretchParams(ThingDef def, CompProperties_DoorExpanded props,
+            Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var drawSize = def.graphicData.drawSize;
-            var closeSize = def.stretchCloseSize;
-            var openSize = def.stretchOpenSize;
-            var offset = def.stretchOffset.Value;
+            var closeSize = props.stretchCloseSize;
+            var openSize = props.stretchOpenSize;
+            var offset = props.stretchOffset.Value;
 
             var verticalRotation = rotation.IsHorizontal;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
 
             offsetVector = new Vector3(offset.x * percentOpen * persMod, 0f, offset.y * percentOpen * persMod);
 
@@ -754,8 +898,8 @@ namespace DoorsExpanded
             offsetVector = rotQuat * offsetVector;
         }
 
-        private static void DrawDoubleSwingParams(DoorExpandedDef def, Vector3 drawPos, Rot4 rotation,
-            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+        private static void DrawDoubleSwingParams(ThingDef def, CompProperties_DoorExpanded props,
+            Vector3 drawPos, Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
@@ -780,7 +924,7 @@ namespace DoorsExpanded
                 rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * percentOpen) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * percentOpen) * def.Size.x;
             offsetVector *= offsetMod;
 
             if (verticalRotation)
@@ -793,12 +937,12 @@ namespace DoorsExpanded
             }
 
             var drawSize = def.graphicData.drawSize;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
             scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
         }
 
-        private static void DrawStandardParams(DoorExpandedDef def, Rot4 rotation,
-            float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+        private static void DrawStandardParams(ThingDef def, CompProperties_DoorExpanded props,
+            Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
@@ -816,22 +960,23 @@ namespace DoorsExpanded
             rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * percentOpen) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * percentOpen) * def.Size.x;
             offsetVector *= offsetMod;
 
             var drawSize = def.graphicData.drawSize;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
             scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
         }
 
-        private static void DrawFrameParams(DoorExpandedDef def, Vector3 drawPos, Rot4 rotation, bool split,
+        private static void DrawFrameParams(ThingDef def, CompProperties_DoorExpanded props,
+            Vector3 drawPos, Rot4 rotation, bool split,
             out Mesh mesh, out Matrix4x4 matrix)
         {
             var verticalRotation = rotation.IsHorizontal;
             var offsetVector = new Vector3(-1f, 0f, 0f);
             mesh = MeshPool.plane10;
 
-            if (def.doorFrameSplit != null)
+            if (props.doorFrameSplit != null)
             {
                 if (rotation == Rot4.West)
                 {
@@ -844,11 +989,11 @@ namespace DoorsExpanded
             var rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + def.doorOpenMultiplier * 1f) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * 1f) * def.Size.x;
             offsetVector *= offsetMod;
 
-            var drawSize = def.doorFrame.drawSize;
-            var persMod = verticalRotation && def.fixedPerspective ? 2f : 1f;
+            var drawSize = props.doorFrame.drawSize;
+            var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
             var scaleVector = new Vector3(drawSize.x * persMod, 1f, drawSize.y * persMod);
 
             var graphicVector = drawPos;
@@ -861,25 +1006,25 @@ namespace DoorsExpanded
             {
                 graphicVector.z -= offsetMod;
                 if (split)
-                    graphicVector.y = AltitudeLayer.DoorMoveable.AltitudeFor();
+                    graphicVector.y = AltitudeLayer.BuildingOnTop.AltitudeFor();
             }
             else if (rotation == Rot4.West)
             {
                 graphicVector.z += offsetMod;
                 if (split)
-                    graphicVector.y = AltitudeLayer.DoorMoveable.AltitudeFor();
+                    graphicVector.y = AltitudeLayer.BuildingOnTop.AltitudeFor();
             }
             graphicVector += offsetVector;
 
-            var frameOffsetVector = def.doorFrameOffset;
-            if (def.doorFrameSplit != null)
+            var frameOffsetVector = props.doorFrameOffset;
+            if (props.doorFrameSplit != null)
             {
                 if (rotation == Rot4.West)
                 {
                     rotQuat = Quaternion.Euler(0f, 270f, 0f);
                     graphicVector.z -= 2.7f;
                     mesh = MeshPool.plane10Flip;
-                    frameOffsetVector = def.doorFrameSplitOffset;
+                    frameOffsetVector = props.doorFrameSplitOffset;
                 }
             }
             graphicVector += frameOffsetVector;
@@ -887,15 +1032,15 @@ namespace DoorsExpanded
             matrix = Matrix4x4.TRS(graphicVector, rotQuat, scaleVector);
         }
 
-        public static Rot4 DoorRotationAt(DoorExpandedDef def, IntVec3 loc, Rot4 rot, Map map)
+        public static Rot4 DoorRotationAt(ThingDef def, CompProperties_DoorExpanded props, IntVec3 loc, Rot4 rot, Map map)
         {
             if (!def.rotatable)
             {
                 var size = def.Size;
-                if ((size.x == 1 && size.z == 1) || def.doorType == DoorType.StretchVertical || def.doorType == DoorType.Stretch)
+                if ((size.x == 1 && size.z == 1) || props.doorType == DoorType.StretchVertical || props.doorType == DoorType.Stretch)
                     rot = Building_Door.DoorRotationAt(loc, map);
             }
-            if (!def.rotatesSouth && rot == Rot4.South)
+            if (!props.rotatesSouth && rot == Rot4.South)
                 rot = Rot4.North;
             return rot;
         }

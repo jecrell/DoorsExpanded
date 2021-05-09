@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
 
+  <DoorsExpanded>Doors Expanded</DoorsExpanded>
+  <DoorsExpanded_logLevel>Log level (for debugging)</DoorsExpanded_logLevel>
+  <DoorsExpanded_logLevel_Normal>Normal</DoorsExpanded_logLevel_Normal>
+  <DoorsExpanded_logLevel_Debug>Debug</DoorsExpanded_logLevel_Debug>
+  <DoorsExpanded_logLevel_StackTrace>Stack Trace</DoorsExpanded_logLevel_StackTrace>
+
+  <PH_RemoteDoor>Can be opened and closed from a distance with a button or lever.</PH_RemoteDoor>
   <PH_ButtonDisconnect>Disconnect button or lever</PH_ButtonDisconnect>
   <PH_ButtonDisconnectDesc>Disconnects any connected button or lever.</PH_ButtonDisconnectDesc>
   <PH_CannotOpenRemotelyWithoutPower>{0} requires power to be opened remotely.</PH_CannotOpenRemotelyWithoutPower>
@@ -10,10 +17,7 @@
   <PH_ButtonNeeded>Connect a button or lever to secure remotely.</PH_ButtonNeeded>
   <PH_ButtonConnect>Connect to a button or lever</PH_ButtonConnect>
   <PH_ButtonConnectDesc>Instantly links the remote door to a button or lever</PH_ButtonConnectDesc>
-  <PH_ButtonConnectSuccess>Successfully set new button or lever at {0}</PH_ButtonConnectSuccess>
   <PH_ButtonConnectFailed>Failed to set new button or lever from {0}</PH_ButtonConnectFailed>
-  <PH_ButtonUnlinked>Unlinked previously connected button or lever at {0}</PH_ButtonUnlinked>
-  <PH_ButtonUnlinkedUnspawned>Unlinked previous connected button or lever</PH_ButtonUnlinkedUnspawned>
   <PH_UseButtonOrLeverNoConnection>Must be connected to a remote door</PH_UseButtonOrLeverNoConnection>
   <PH_UseButtonOrLeverNoPower>Must be connected to power</PH_UseButtonOrLeverNoPower>
   <PH_RemoteDoorSecuredRemotely>Secured remotely</PH_RemoteDoorSecuredRemotely>

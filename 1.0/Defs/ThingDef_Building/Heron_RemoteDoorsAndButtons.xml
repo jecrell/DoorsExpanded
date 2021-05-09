@@ -175,7 +175,6 @@
         <basePowerConsumption>15</basePowerConsumption>
       </li>
     </comps>
-    <uiIconPath>Things/Building/Door/DoorRemote_icon</uiIconPath>
     <costStuffCount>50</costStuffCount>
     <costList>
       <Steel>5</Steel>
@@ -212,7 +211,7 @@
     <graphicData>
       <texPath>Things/Building/Door/DoorDoubleRemote_Mover</texPath>
       <graphicClass>Graphic_Single</graphicClass>
-      <drawSize>(2,2)</drawSize>
+      <drawSize>(2,1)</drawSize>
       <damageData>
         <!--  no damage marks because they don't move with the door
         <rect>(0,0.12,1,0.76)</rect>-->
@@ -225,7 +224,6 @@
         <basePowerConsumption>15</basePowerConsumption>
       </li>
     </comps>
-    <uiIconPath>Things/Building/Door/DoorDoubleRemoteUI_icon</uiIconPath>
     <costStuffCount>100</costStuffCount>
     <costList>
       <Steel>10</Steel>
@@ -233,8 +231,6 @@
     </costList>
     <designationCategory>Structure</designationCategory>
     <doorType>StretchVertical</doorType>
-    <!-- Top and bottom 4th of door texture is all transparent, so "actual" size of closed door for stretch purposes is (2,1) -->
-    <stretchCloseSize>(2,1)</stretchCloseSize>
     <singleDoor>true</singleDoor>
     <doorOpenSpeedRate>2</doorOpenSpeedRate>
     <researchPrerequisites>

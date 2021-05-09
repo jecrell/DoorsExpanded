@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
 
+  <PH_RemoteDoor>Kann mit einem Knopf aus der Ferne geöffnet und geschlossen werden.</PH_RemoteDoor>
   <PH_ButtonDisconnect>Knopf oder Hebel trennen</PH_ButtonDisconnect>
   <PH_ButtonDisconnectDesc>Trennt alle angeschlossenen Knöpfe oder Hebel.</PH_ButtonDisconnectDesc>
   <PH_CannotOpenRemotelyWithoutPower>{0} Zum Öffnen der Tür muss eine Stromversorgung hergestllt werden.</PH_CannotOpenRemotelyWithoutPower>
@@ -10,10 +11,7 @@
   <PH_ButtonNeeded>Schließen Sie einen Knopf oder Hebel an, um eine Fernbedienbarkeit zu gewährleisten.</PH_ButtonNeeded>
   <PH_ButtonConnect>Mit einem Knopf oder Hebel verbinden</PH_ButtonConnect>
   <PH_ButtonConnectDesc>Verbindet die Tür sofort mit einem Knopf</PH_ButtonConnectDesc>
-  <PH_ButtonConnectSuccess>Neuer Knopf erfolgreich verbunden {0}</PH_ButtonConnectSuccess>
   <PH_ButtonConnectFailed>Neuer Knopf konnte nicht festgelegt werden {0}</PH_ButtonConnectFailed>
-  <PH_ButtonUnlinked>Nicht zuvor verknüpfter Knopf bei {0}</PH_ButtonUnlinked>
-  <PH_ButtonUnlinkedUnspawned>Nicht verknüpfte vorheriger verbundener Knopf</PH_ButtonUnlinkedUnspawned>
   <PH_UseButtonOrLeverNoConnection>Muss an eine Fernbedienbare Tür angeschlossen werden</PH_UseButtonOrLeverNoConnection>
   <PH_UseButtonOrLeverNoPower>Muss an die Stromversorgung angeschlossen sein</PH_UseButtonOrLeverNoPower>
   <PH_RemoteDoorSecuredRemotely>Ferngesteuert</PH_RemoteDoorSecuredRemotely>
