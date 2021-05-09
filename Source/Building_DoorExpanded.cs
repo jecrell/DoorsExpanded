@@ -368,7 +368,10 @@ namespace DoorsExpanded
 
                         if (invisDoor.Faction != Faction)
                         {
-                            errors.Add($"{invisDoor} has different faction ({invisDoor.Faction}) - setting it to {Faction}");
+                            // This seems to be happening for some users a lot for yet unknown reasons,
+                            // so prevent error spam and improve performance, only do this if dev mode or TLogLevel is debug/trace.
+                            if (Prefs.DevMode || TLog.Enabled)
+                                errors.Add($"{invisDoor} has different faction ({invisDoor.Faction}) - setting it to {Faction}");
                             invisDoor.SetFactionDirect(Faction);
                         }
                     }
