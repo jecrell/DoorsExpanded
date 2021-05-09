@@ -1,3 +1,7 @@
+1.3.3.1 (05-09-2021)
+========================
+- Workaround "invis door has different faction" errors (yet unknown cause) by only logging them if in dev mode or if mod's log option is debug/stacktrace
+
 1.3.3.0 (05-06-2021)
 ========================
 - Add 1x1 blast door (thanks Jiopaba/InsanityPrelude!)

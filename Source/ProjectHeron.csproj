@@ -8,7 +8,7 @@
     <NoStdLib>true</NoStdLib>
     <LangVersion>8.0</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <Version>1.3.3.0</Version>
+    <Version>1.3.3.1</Version>
   </PropertyGroup>
   <PropertyGroup>
     <!-- Always using "Release" build -->
