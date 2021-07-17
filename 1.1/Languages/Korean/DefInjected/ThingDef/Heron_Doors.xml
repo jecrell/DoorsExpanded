@@ -48,8 +48,11 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+  <PH_DoorBlastSingle.label>방폭 문</PH_DoorBlastSingle.label> <!-- size suffix is auto-appended to label -->
+  <PH_DoorBlastSingle.description>손상에 훨씬 더 탄력적인 무거운 문.</PH_DoorBlastSingle.description> <!-- Google Translate -->
+
   <PH_DoorBlastDoor.label>방폭 문</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
-  <PH_DoorBlastDoor.description>폭발물에 대해 두 배 튼튼하고 평범한 둔기와 칼붙이에 세 배 더 잘 견디는 묵직한 한 쌍의 문입니다.</PH_DoorBlastDoor.description> <!-- needs translation update -->
+  <PH_DoorBlastDoor.description>손상에 훨씬 더 탄력적인 무거운 한 쌍의 문.</PH_DoorBlastDoor.description> <!-- Google Translate -->
 
   <!-- PH_DoorThickBlastDoor's label & description default to PH_DoorBlastDoor's, and size suffix is auto-appended to label -->
 

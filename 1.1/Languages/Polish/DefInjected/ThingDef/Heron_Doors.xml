@@ -48,8 +48,11 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+  <PH_DoorBlastSingle.label>drzwi pancerne</PH_DoorBlastSingle.label> <!-- size suffix is auto-appended to label -->
+  <PH_DoorBlastSingle.description>Ciężkie drzwi, które są znacznie bardziej odporne na uszkodzenia.</PH_DoorBlastSingle.description> <!-- Google Translate -->
+
   <PH_DoorBlastDoor.label>drzwi pancerne</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
-  <PH_DoorBlastDoor.description>Ciężkie drzwi, które mają podwójną odporność na wybuchy i potrójną odporność na tępę i ostre bronie.</PH_DoorBlastDoor.description> <!-- needs translation update -->
+  <PH_DoorBlastDoor.description>Ciężka para drzwi, które są znacznie bardziej odporne na uszkodzenia.</PH_DoorBlastDoor.description> <!-- Google Translate -->
 
   <!-- PH_DoorThickBlastDoor's label & description default to PH_DoorBlastDoor's, and size suffix is auto-appended to label -->
 

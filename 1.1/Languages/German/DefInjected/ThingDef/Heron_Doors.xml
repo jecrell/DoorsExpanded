@@ -47,8 +47,11 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+  <PH_DoorBlastSingle.label>Explosionsschutztür</PH_DoorBlastSingle.label> <!-- size suffix is auto-appended to label -->
+  <PH_DoorBlastSingle.description>Eine schwere Tür, die viel widerstandsfähiger gegen Beschädigungen ist.</PH_DoorBlastSingle.description> <!-- Google Translate -->
+
   <PH_DoorBlastDoor.label>Explosionsschutztür</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
-  <PH_DoorBlastDoor.description>Ein schweres Türpaar, das doppelt so stark gegen Sprengstoff und dreimal so widerstandsfähig gegen stumpfe und geschärfte Standardwaffen ist.</PH_DoorBlastDoor.description> <!-- needs translation update -->
+  <PH_DoorBlastDoor.description>Ein schweres Türenpaar, das viel widerstandsfähiger gegen Beschädigungen ist.</PH_DoorBlastDoor.description> <!-- Google Translate -->
 
   <!-- PH_DoorThickBlastDoor's label & description default to PH_DoorBlastDoor's, and size suffix is auto-appended to label -->
 

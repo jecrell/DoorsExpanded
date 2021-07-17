@@ -48,8 +48,11 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+  <PH_DoorBlastSingle.label>ブラストドア</PH_DoorBlastSingle.label> <!-- size suffix is auto-appended to label -->
+  <PH_DoorBlastSingle.description>損傷に対してはるかに弾力性のある重いドア。</PH_DoorBlastSingle.description> <!-- Google Translate -->
+
   <PH_DoorBlastDoor.label>ブラストドア</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
-  <PH_DoorBlastDoor.description>爆発に対して2倍の防御力を発揮する厚い二枚のドアで,標準的な近接武器(殴)や鋭利な武器(突,斬)に対して3倍の抵抗力を備えています.</PH_DoorBlastDoor.description> <!-- needs translation update -->
+  <PH_DoorBlastDoor.description>損傷に対してはるかに弾力性のある重いドアのペア。</PH_DoorBlastDoor.description> <!-- Google Translate -->
 
   <!-- PH_DoorThickBlastDoor's label & description default to PH_DoorBlastDoor's, and size suffix is auto-appended to label -->
 

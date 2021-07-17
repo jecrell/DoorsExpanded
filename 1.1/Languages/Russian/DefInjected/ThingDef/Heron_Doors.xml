@@ -48,8 +48,11 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+  <PH_DoorBlastSingle.label>взрывозащищенная дверь</PH_DoorBlastSingle.label> <!-- size suffix is auto-appended to label -->
+  <PH_DoorBlastSingle.description>Тяжелая дверь, более устойчивая к повреждениям.</PH_DoorBlastSingle.description> <!-- Google Translate -->
+
   <PH_DoorBlastDoor.label>взрывозащищенная дверь</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
-  <PH_DoorBlastDoor.description>Пара тяжёлых дверей, которые в два раза устойчивее от взрывчатых веществ, и в три раза к стандартному тупому и заточенному оружию.</PH_DoorBlastDoor.description> <!-- needs translation update -->
+  <PH_DoorBlastDoor.description>Тяжелая пара дверей, которые гораздо более устойчивы к повреждениям.</PH_DoorBlastDoor.description> <!-- Google Translate -->
 
   <!-- PH_DoorThickBlastDoor's label & description default to PH_DoorBlastDoor's, and size suffix is auto-appended to label -->
 

@@ -47,6 +47,9 @@
   ██████  ███████ ██   ██ ███████    ██        ██████   ██████   ██████  ██   ██ ███████
   -->
 
+  <PH_DoorBlastSingle.label>Porte anti-souffle</PH_DoorBlastSingle.label> <!-- size suffix is auto-appended to label -->
+  <PH_DoorBlastSingle.description>Une porte lourde qui est beaucoup plus résistante aux dommages que les portes classiques.</PH_DoorBlastSingle.description> <!-- Google Translate -->
+
   <PH_DoorBlastDoor.label>Porte anti-souffle</PH_DoorBlastDoor.label> <!-- size suffix is auto-appended to label -->
   <PH_DoorBlastDoor.description>Une paire de portes lourdes qui sont beaucoup plus résistantes aux dommages que les portes classique.</PH_DoorBlastDoor.description>
 
