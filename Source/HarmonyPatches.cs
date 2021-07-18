@@ -1,6 +1,7 @@
 ﻿//#define PATCH_CALL_REGISTRY
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -271,6 +272,9 @@ namespace DoorsExpanded
                 transpiler: nameof(DoorExpandedProjectileCheckForFreeIntercept));
             Patch(original: AccessTools.Method(typeof(TrashUtility), nameof(TrashUtility.TrashJob)),
                 transpiler: nameof(DoorExpandedTrashJobTranspiler));
+            Patch(original: AccessTools.Method(typeof(Thing), nameof(Thing.SetFactionDirect)),
+                prefix: nameof(DoorExpandedSetFactionDirectPrefix),
+                priority: Priority.VeryHigh);
 
             // Patches for ghost (pre-placement) and blueprints for door expanded.
             foreach (var original in typeof(Designator_Place).FindLambdaMethods(nameof(Designator_Place.DoExtraGuiControls), typeof(void)))
@@ -1026,6 +1030,30 @@ namespace DoorsExpanded
             // This prevents enemies from setting Building_DoorExpanded's on fire.
             return DoorExpandedIsDoorTranspiler(instructions);
         }
+
+        // Thing.SetFactionDirect
+        private static bool DoorExpandedSetFactionDirectPrefix(Thing __instance, Faction newFaction)
+        {
+            if (__instance is Building_DoorExpanded doorEx)
+            {
+                // Simulate virtual call. This also involves preventing infinite loop from "override" method calling "base" method.
+                if (setFactionDirectAlreadyCalled.TryAdd(__instance, true))
+                {
+                    try
+                    {
+                        doorEx.SetFactionDirect(newFaction);
+                    }
+                    finally
+                    {
+                        setFactionDirectAlreadyCalled.TryRemove(__instance, out _);
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static readonly ConcurrentDictionary<Thing, bool> setFactionDirectAlreadyCalled = new ConcurrentDictionary<Thing, bool>();
 
         // Designator_Place.DoExtraGuiControls (internal lambda)
         // Designator_Place.HandleRotationShortcuts

@@ -368,10 +368,7 @@ namespace DoorsExpanded
 
                         if (invisDoor.Faction != Faction)
                         {
-                            // This seems to be happening for some users a lot for yet unknown reasons,
-                            // so prevent error spam and improve performance, only do this if dev mode or TLogLevel is debug/trace.
-                            if (Prefs.DevMode || TLog.Enabled)
-                                errors.Add($"{invisDoor} has different faction ({invisDoor.Faction}) - setting it to {Faction}");
+                            errors.Add($"{invisDoor} has different faction ({invisDoor.Faction}) - setting it to {Faction}");
                             invisDoor.SetFactionDirect(Faction);
                         }
                     }
@@ -522,6 +519,18 @@ namespace DoorsExpanded
                 {
                     ticksSinceOpen = TicksToOpenNow;
                 }
+            }
+        }
+
+        // Simulated to be "virtual" via Harmony patch on Thing.SetFactionDirect.
+        public new void SetFactionDirect(Faction newFaction)
+        {
+            if (Faction == newFaction)
+                return;
+            base.SetFactionDirect(newFaction);
+            foreach (var invisDoor in invisDoors)
+            {
+                invisDoor.SetFactionDirect(newFaction);
             }
         }
 
