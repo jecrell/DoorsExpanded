@@ -43,57 +43,58 @@ Changelog
 ========================
 1.3.3.2 (07-18-2021)
 ========================
-- Actually fix "invis door has different faction" errors (and remove previous workaround)
-- Add Spanish translation (thanks Crusader!)
-- Add/update machine-translations for new blast doors where applicable, and some other translation cleanup
+Actually fix "invis door has different faction" errors (and remove previous workaround)
+Add Spanish translation (thanks Crusader!)
+Add/update machine-translations for new blast doors where applicable, and some other translation cleanup
 
 1.3.3.1 (05-09-2021)
 ========================
-- Workaround "invis door has different faction" errors (yet unknown cause) by only logging them if in dev mode or if mod's log option is debug/stacktrace
+Workaround "invis door has different faction" errors (yet unknown cause) by only logging them if in dev mode or if mod's log option is debug/stacktrace
 
 1.3.3.0 (05-06-2021)
 ========================
-- Add 1x1 blast door (thanks Jiopaba/InsanityPrelude!)
-- Add French translation (thanks qux!)
-- Attempt to fix potential errors (like NullReferenceException) due to stale linked doors (removed/unspawned outside of this mod's control)
-- Allow patches (or future changes) to change building's thingClass from Building_DoorExpanded to another class (like Building_Door) without breaking saves
-- Rebuild to latest RW version
-- Mod option for log level (for debugging)
+Add 1x1 blast door (thanks Jiopaba/InsanityPrelude!)
+Add French translation (thanks qux!)
+Attempt to fix potential errors (like NullReferenceException) due to stale linked doors (removed/unspawned outside of this mod's control)
+Allow patches (or future changes) to change building's thingClass from Building_DoorExpanded to another class (like Building_Door) without breaking saves
+Rebuild to latest RW version
+Mod option for log level (for debugging)
 
 1.3.2.1 (08-13-2020)
 ========================
-- Fix regressions in RW 1.1 version by compiling separate assemblies for RW 1.1 and RW 1.2 to account for different enum/constant values in RW assemblies
-- Internal: Migrate to SDK-style csproj, assembly name/version attributes align with actual name/version
+Fix regressions in RW 1.1 version by compiling separate assemblies for RW 1.1 and RW 1.2 to account for different enum/constant values in RW assemblies
+Internal: Migrate to SDK-style csproj, assembly name/version attributes align with actual name/version
 
 1.3.2.0 (08-11-2020)
 ========================
-- RimWorld 1.2 compatibility
-- New doors:
-  - 2x1 and 3x1 autodoors
-  - 3x1 remote garage-style doors
-  - 2x1 and 3x1 tribal curtains
-- Improved compatibility with:
-  - Minify Everything (note: existing broken doors may not be fixed, but new doors should be fine)
-  - Home Mover
-- Remote door changes:
-  - Fix blast doors not being remotely securable - blast doors now require power like autodoors
-  - Autodoors, including the vanilla 1x1 autodoor, are remote controllable
-  - Blast doors and remote garage-style doors can now breakdown like autodoors, but only at half the normal frequency
-  - Remote doors rebalanced such that they open more slowly than autodoors but cost less and use less power (and breakdown less frequently)
-  - Tweak all the various costs of blast doors and remote garage-style doors such that: blast doors &gt; autodoors &gt; remote doors &gt; vanilla doors
-  - Remove superfluous remote button/lever linking/unlinking messages
-- Show east/west door frames above buildings (fixes blast door frames showing below walls)
-- Door open time (in seconds) stats are now displayed instead of door open speed stat
-- Modders: DoorExpandedDef deprecated in favor of new CompProperties_DoorExpanded (see Heron_Doors.xml for examples):
-  - Misleading DoorExpandedDef.doorOpenSpeedRate deprecated in favor of statBase for vanilla DoorOpenSpeed (backcompat default to 1.0/doorOpenSpeedRate)
-  - Misleading DoorExpandedDef.tempLeakRate deprecated in favor of CompProperties_DoorExpanded.tempEqualizeRate (backcompat default to 375.0/tempLeakRate)
-  - All other DoorExpandedDef fields can be copied as-is to CompProperties_DoorExpanded
-  - Non-abstract door defs have had their Name attributes (used for XML inheritance) removed,
-    since fields of comp properties (such as CompProperties_DoorExpanded) can't be overwritten in a derived def.
-    Specifically, "HeronDoor", "HeronDoorRemote", "HeronDoorDoubleRemote" Name attributes have been removed.
-- Replace Pawn_PathFollower.TryEnterNextPathCell transpiler with Building_Door.StartManualOpenBy prefix patch (to avoid misleading report in Dubs Performance Analyzer)
-- Improve debug logging, add more logging when the "Verbose logging" setting is enabled, add full path cost in "write path costs"
-- Misc label &amp; description tweaks and XML &amp; texture cleanup
+Note: Starting from this version, changes only apply to RimWorld 1.1+.
+RimWorld 1.2 compatibility
+New doors:
+- 2x1 and 3x1 autodoors
+- 3x1 remote garage-style doors
+- 2x1 and 3x1 tribal curtains
+Improved compatibility with:
+- Minify Everything (note: existing broken doors may not be fixed, but new doors should be fine)
+- Home Mover
+Remote door changes:
+- Fix blast doors not being remotely securable - blast doors now require power like autodoors
+- Autodoors, including the vanilla 1x1 autodoor, are remote controllable
+- Blast doors and remote garage-style doors can now breakdown like autodoors, but only at half the normal frequency
+- Remote doors rebalanced such that they open more slowly than autodoors but cost less and use less power (and breakdown less frequently)
+- Tweak all the various costs of blast doors and remote garage-style doors such that: blast doors &gt; autodoors &gt; remote doors &gt; vanilla doors
+- Remove superfluous remote button/lever linking/unlinking messages
+Show east/west door frames above buildings (fixes blast door frames showing below walls)
+Door open time (in seconds) stats are now displayed instead of door open speed stat
+Modders: DoorExpandedDef deprecated in favor of new CompProperties_DoorExpanded (see Heron_Doors.xml for examples):
+- Misleading DoorExpandedDef.doorOpenSpeedRate deprecated in favor of statBase for vanilla DoorOpenSpeed (backcompat default to 1.0/doorOpenSpeedRate)
+- Misleading DoorExpandedDef.tempLeakRate deprecated in favor of CompProperties_DoorExpanded.tempEqualizeRate (backcompat default to 375.0/tempLeakRate)
+- All other DoorExpandedDef fields can be copied as-is to CompProperties_DoorExpanded
+- Non-abstract door defs have had their Name attributes (used for XML inheritance) removed,
+  since fields of comp properties (such as CompProperties_DoorExpanded) can't be overwritten in a derived def.
+  Specifically, "HeronDoor", "HeronDoorRemote", "HeronDoorDoubleRemote" Name attributes have been removed.
+Replace Pawn_PathFollower.TryEnterNextPathCell transpiler with Building_Door.StartManualOpenBy prefix patch (to avoid misleading report in Dubs Performance Analyzer)
+Improve debug logging, add more logging when the "Verbose logging" setting is enabled, add full path cost in "write path costs"
+Misc label &amp; description tweaks and XML &amp; texture cleanup
 
 1.3.1.0 (05-06-2020)
 ========================
@@ -103,7 +104,6 @@ Blast doors can be remote controlled now. Additional rebalancing and cleanup. Pa
 - Blast doors now have half flammability (so half the flammability of the material they're made of).
 - Tribal curtains cost halved to 25 fabric or leather as part of RimWorld 1.0/1.1 rebalance.
 - Remove obsolete Manifest.xml loadBefore/loadAfter and migrate vanilla door mass patch to code to prevent some warnings.
-- This is the last version with changes backported to the RimWorld 1.0 version.
 
 1.3.0.1 (03-14-2020)
 ========================
