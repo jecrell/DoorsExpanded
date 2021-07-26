@@ -35,7 +35,7 @@
     </When>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="Lib.Harmony" Version="2.0.2" ExcludeAssets="runtime" />
+    <PackageReference Include="Lib.Harmony" Version="2.1.*" ExcludeAssets="runtime" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Building_Door_Reference\Building_Door.cs" />
@@ -44,9 +44,6 @@
     <None Include="Building_Door_Reference\Building_Door.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\**\*" Exclude="..\.git\**\*;..\Source\**\*">
-      <Link>!ModFolder\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
+    <Content Include="..\**\*" Exclude="..\.git\**\*;..\Source\**\*" LinkBase="!ModFolder" />
   </ItemGroup>
 </Project>
