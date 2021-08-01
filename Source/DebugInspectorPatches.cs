@@ -152,6 +152,7 @@ namespace DoorsExpanded
         {
             if (Find.Selector.SingleSelectedObject is Pawn pawn)
             {
+                // TODO: Map.pathGrid no longer exists - investigate
                 debugString.AppendLine($"CalculatedCostAt({mouseCell}, false, {pawn.Position}): " +
                     pawn.Map.pathGrid.CalculatedCostAt(mouseCell, perceivedStatic: false, pawn.Position));
                 debugString.AppendLine($"CostToMoveIntoCell({pawn}, {mouseCell}): " + CostToMoveIntoCell(pawn, mouseCell));
@@ -326,6 +327,7 @@ namespace DoorsExpanded
         // Room.DebugString
         public static string RoomMoreDebugString(string result, Room __instance)
         {
+            // TODO: Room.Neighbors no longer exists - investigate
             return result + "\n  Neighbors=\n  - " + __instance.Neighbors.Join(delimiter: "\n  - ");
         }
     }

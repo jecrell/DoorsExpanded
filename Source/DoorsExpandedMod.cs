@@ -33,9 +33,7 @@ namespace DoorsExpanded
             Text.Font = GameFont.Small;
             foreach (TLogLevel logLevel in typeof(TLogLevel).GetEnumValues())
             {
-#pragma warning disable CS0612 // Type or member is obsolete
                 if (listing.RadioButton($"{labelKey}_{logLevel}".Translate(), Settings.logLevel == logLevel, tabIn: 10f))
-#pragma warning restore CS0612 // Type or member is obsolete
                     Settings.logLevel = logLevel;
             }
             listing.End();

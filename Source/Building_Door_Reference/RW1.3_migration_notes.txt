@@ -1,0 +1,205 @@
+﻿TODO: investigate whether any new usage of Building_Door
+
+relevant classes that are unchanged:
+	GenStep_Terrain
+	FloodFillerFog
+	GlowFlooder
+	SectionLayer_LightingOverlay
+	MouseoverReadout
+	CoverUtility
+	EdificeGrid
+
+relevant classes that have clean diffs:
+	Building_Door
+	ThingDef
+	BuildingProperties - potentially relevant new fields:
+		isPlaceOverableWall - for PlaceWorker_OnTopOfWall
+		relatedBuildCommands - for remotes?
+		useIdeoColor - for tribal curtains?
+		roamerCanOpen - for tribal curtains?
+	GenGrid
+	GridsUtility
+	Projectile
+	SectionLayer_IndoorMask
+	FogGrid
+	SnowGrid
+	PathGrid
+	GenSpawn
+	PathFinder
+	CompForbiddable
+	GenTemperature
+	TrashUtility
+	Thing
+	Designator_Place
+	GhostDrawer
+	GhostUtility
+	Blueprint
+	FloatMenuMakerMap
+	CompBreakdownable
+	BackCompatibility
+	GenTypes
+	Dialog_DebugSettingsMenu
+	EditWindow_DebugInspector
+
+relevant classes with dirty diffs (see more details below):
+	RoomGroup (deleted) => ~half of Room
+	~half of Room => District (new)
+	RegionAndRoomUpdater - TODO
+	related to above:
+		RoomGroupTempTracker => RoomTempTracker
+		Region - clean diff
+
+members that (deleted) RoomGroup and Room and (new) District share (old Room's version moved to District, while RoomGroup's version moved to new Room):
+	public int ID
+	private int cachedOpenRoofCount
+	private int cachedCellCount
+	public Map Map
+	public IEnumerable<IntVec3> Cells
+	public int CellCount
+	public IEnumerable<Region> Regions (RoomGroup) => public List<Region> Regions (new Room, District)
+	public int RegionCount
+	public void Notify_RoofChanged()
+	public string DebugString()
+	internal void DebugDraw()
+
+Room members that stayed:
+	public bool isPrisonCell => private bool isPrisonCell
+	private bool statsAndRoleDirty
+	private DefMap<RoomStatDef, float> stats
+	private RoomRoleDef role
+	private static int nextRoomID
+	private const int RegionCountHuge = 60
+	private const int MaxRegionsToAssignRoomRole
+	private static readonly Color PrisonFieldColor
+	private static readonly Color NonPrisonFieldColor
+	private HashSet<Thing> uniqueContainedThingsSet
+	private List<Thing> uniqueContainedThings
+	private HashSet<Thing> uniqueContainedThingsOfDef
+	private static List<IntVec3> fields
+	public bool Dereferenced
+		looks moved when diffing old Room vs new Room
+	public bool IsHuge
+	public bool PsychologicallyOutdoors
+	public bool OutdoorsForWork
+	public IEnumerable<IntVec3> BorderCells
+	public IEnumerable<Pawn> Owners
+	public IEnumerable<Building_Bed> ContainedBeds
+	public bool Fogged
+	public List<Thing> ContainedAndAdjacentThings
+	public RoomRoleDef Role
+	public void Notify_ContainedThingSpawnedOrDespawned(Thing th)
+	public void Notify_TerrainChanged()
+	public void Notify_BedTypeChanged()
+	public void Notify_RoomShapeOrContainedBedsChanged() => public void Notify_RoomShapeChanged()
+	public bool ContainsCell(IntVec3 cell)
+	public bool ContainsThing(ThingDef def)
+	public IEnumerable<Thing> ContainedThings(ThingDef def)
+	public int ThingCount(ThingDef def)
+	public float GetStat(RoomStatDef roomStat)
+	public void DrawFieldEdges()
+	private void UpdateRoomStatsAndRole()
+
+
+RoomGroup members that moved to Room:
+	public int ID
+	private List<Room> rooms => private List<District> districts
+	private RoomGroupTempTracker tempTracker => private RoomTempTracker tempTracker
+	private int cachedOpenRoofCount
+	private int cachedCellCount
+	private static int nextRoomGroupID => private static int nextRoomID
+	private const float UseOutdoorTemperatureUnroofedFraction
+	public List<Room> Rooms => public List<District> Districts
+	public RoomGroupTempTracker TempTracker => public RoomTempTracker TempTracker
+	public Map Map
+		Room.Map already exists, but its code is moved to District.Map
+	public int RoomCount => public int DistrictCount
+	public float Temperature
+		merged with existing Room.Temperature
+	public bool UsesOutdoorTemperature
+		merged with existing Room.UsesOutdoorTemperature
+	public IEnumerable<IntVec3> Cells
+	public int CellCount
+	public IEnumerable<Region> Regions => public List<Region> Regions
+		Room.Regions already exists, but its code is moved to District.Regions
+	public int RegionCount
+		Room.RegionCount already exists, but its code is moved to District.RegionCount
+	public int OpenRoofCount
+		merged with existing Room.OpenRoofCount
+	public bool AnyRoomTouchesMapEdge => public bool TouchesMapEdge
+	public static RoomGroup MakeNew(Map map) => public static Room MakeNew(Map map)
+		Room.MakeNew already exists, but its code is moved to District.MakeNew
+	public void AddRoom(Room room) => public void AddDistrict(District district)
+	public void RemoveRoom(Room room) => public void RemoveDistrict(District district)
+	public bool PushHeat(float energy)
+	public void Notify_RoofChanged()
+		Room.Notify_RoofChanged already exists, but its code is moved to District.Notify_RoofChanged
+	public void Notify_RoomGroupShapeChanged() => public void Notify_RoomShapeChanged()
+		merged with existing Room.Notify_RoomShapeOrContainedBedsChanged
+	public string DebugString()
+		Room.DebugString already exists, but its code is moved to District.DebugString
+	internal void DebugDraw()
+		Room.DebugDraw already exists, but its code is moved to District.DebugDraw
+
+Room members that moved to District:
+	public sbyte mapIndex
+	private RoomGroup groupInt => private Room roomInt
+	private List<Region> regions
+	public int ID
+	public int lastChangeTick
+	private int numRegionsTouchingMapEdge
+	private int cachedOpenRoofCount
+	private IEnumerator<IntVec3> cachedOpenRoofState
+	private int cachedCellCount
+	public int newOrReusedRoomGroupIndex => public int newOrReusedRoomIndex
+	private static int nextRoomID => private static int nextDistrictID
+	private HashSet<Room> uniqueNeighborsSet => private HashSet<District> uniqueNeighborsSet
+	private List<Room> uniqueNeighbors => private List<District> uniqueNeighbors
+	public Map Map
+	public RegionType RegionType
+	public List<Region> Regions
+	public int RegionCount
+	public bool TouchesMapEdge
+	public bool IsDoorway
+		looks moved when diffing old Room with new District
+	public RoomGroup Group => public Room Room
+	public int CellCount
+	public List<Room> Neighbors => public List<District> Neighbors
+	public IEnumerable<IntVec3> Cells
+	public static District MakeNew(Map map) => public static Room MakeNew(Map map)
+	public void AddRegion(Region r)
+	public void RemoveRegion(Region r)
+	public void Notify_MyMapRemoved()
+	public void Notify_RoofChanged()
+	public void Notify_RoomShapeOrContainedBedsChanged()
+		Room.Notify_RoomShapeOrContainedBedsChanged still remains, only a small portion of the code is moved to District.Notify_RoomShapeOrContainedBedsChanged
+	public void DecrementMapIndex()
+	public int OpenRoofCountStopAt(int threshold)
+	internal void DebugDraw()
+	internal string DebugString()
+	public override string ToString()
+	public override int GetHashCode()
+
+Room members that were deleted:
+	public RoomStatScoreStage GetStatScoreStage(RoomStatDef stat)
+
+Room members that are new:
+	private List<Region> tmpRegions
+		due to IEnumerable<Region> Regions changing to List<Region> Regions
+	public bool IsPrisonCell
+		due to isPrisonCell being made private
+	public Region FirstRegion
+	public CellRect ExtentsClose
+	public bool IsDoorway
+		Room.IsDoorway already exists, but its code is moved to District.IsDoorway
+	public bool AnyPassable
+	public bool ProperRoom
+	private int OpenRoofCountStopAt(int threshold)
+		Room.OpenRoofCountStopAt already exists, but its code is moved to District.OpenRoofCountStopAt
+	private string DebugRolesString()
+	public override string ToString()
+		Room.ToString already exists, but its code is moved to District.ToString
+	public override int GetHashCode()
+		Room.GetHashCode already exists, but its code is moved to District.GetHashCode
+
+District members that are new (not from Room):
+	public bool Passable

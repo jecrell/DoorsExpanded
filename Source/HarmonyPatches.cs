@@ -258,11 +258,13 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(EdificeGrid), nameof(EdificeGrid.Register)),
                 prefix: nameof(DoorExpandedEdificeGridRegisterPrefix),
                 priority: Priority.VeryHigh);
+            // ThingDef.IsDoor: despite being a small method, it doesn't seem to be inline, and thus is patchable.
             Patch(original: AccessTools.PropertyGetter(typeof(ThingDef), nameof(ThingDef.IsDoor)),
                 postfix: nameof(DoorExpandedThingDefIsDoorPostfix));
             Patch(original: AccessTools.PropertySetter(typeof(CompForbiddable), nameof(CompForbiddable.Forbidden)),
                 transpiler: nameof(DoorExpandedSetForbiddenTranspiler),
                 transpilerRelated: nameof(DoorExpandedSetForbidden));
+            // TODO: no longer exists - investigate
             Patch(original: AccessTools.Method(typeof(RegionAndRoomUpdater), "ShouldBeInTheSameRoomGroup"),
                 postfix: nameof(DoorExpandedShouldBeInTheSameRoomGroupPostfix));
             Patch(original: AccessTools.Method(typeof(GenTemperature), nameof(GenTemperature.EqualizeTemperaturesThroughBuilding)),
@@ -286,6 +288,7 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Designator_Place), "HandleRotationShortcuts"),
                 transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
                 transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
+            // TODO: DrawGhostThing_NewTmp no longer exists
             Patch(original: AccessTools.Method(typeof(GhostDrawer), "DrawGhostThing_NewTmp") ??
                     AccessTools.Method(typeof(GhostDrawer), nameof(GhostDrawer.DrawGhostThing)),
                 transpiler: nameof(DoorExpandedDrawGhostThingTranspiler),
@@ -298,6 +301,7 @@ namespace DoorsExpanded
                 prefix: nameof(DoorExpandedBlueprintDrawPrefix));
 
             // Patches related to door remotes.
+            // TODO: AddJobGiverWorkOrders_NewTmp no longer exists
             Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders_NewTmp") ??
                     AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
                 transpiler: nameof(DoorRemoteAddJobGiverWorkOrdersTranspiler),
@@ -719,6 +723,8 @@ namespace DoorsExpanded
         public static bool InvisDoorIsDestroyablePostfix(bool result, Thing th)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorIsDestroyablePostfix));
+            // Our invis doors have useHitPoints=false, so would ordinarily be considered non-destroyable,
+            // when we do want the pathfinder to consider them destroyable.
             return result || th is Building_DoorRegionHandler;
         }
 
@@ -999,6 +1005,7 @@ namespace DoorsExpanded
             {
                 var adjCells = GenAdj.CellsAdjacentCardinal(building).ToArray();
                 // Ensure GenTemperature.beqRoomGroups is large enough.
+                // TODO: RoomGroup no longer exists - investigate
                 if (((RoomGroup[])fieldof_GenTemperature_beqRoomGroups.GetValue(null)).Length < adjCells.Length)
                 {
                     fieldof_GenTemperature_beqRoomGroups.SetValue(null, new RoomGroup[adjCells.Length]);

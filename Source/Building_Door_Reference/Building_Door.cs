@@ -1,4 +1,5 @@
 ﻿// Note: This is excluded from the build and is only provided for comparing with Building_DoorExpanded.
+// TODO: update to RW 1.3
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -128,8 +129,7 @@ namespace RimWorld
 
         private bool CanTryCloseAutomatically => FriendlyTouchedRecently && !HoldOpen;
 
-        private bool FriendlyTouchedRecently =>
-            Find.TickManager.TicksGame < lastFriendlyTouchTick + MaxTicksSinceFriendlyTouchToAutoClose;
+        private bool FriendlyTouchedRecently => Find.TickManager.TicksGame < lastFriendlyTouchTick + MaxTicksSinceFriendlyTouchToAutoClose;
 
         public override bool FireBulwark => !Open && base.FireBulwark;
 
