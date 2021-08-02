@@ -1,5 +1,4 @@
 ﻿// Note: This is excluded from the build and is only provided for comparing with Building_DoorExpanded.
-// TODO: update to RW 1.3
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,6 +19,7 @@ namespace RimWorld
         private const float PowerOffDoorOpenSpeedFactor = 0.25f;
         private const float VisualDoorOffsetStart = 0f;
         private const float VisualDoorOffsetEnd = 0.45f;
+        private const float NotifyFogGridDoorOpenPct = 0.4f;
 
         public CompPowerTrader powerComp;
         private bool openInt;
@@ -28,6 +28,7 @@ namespace RimWorld
         protected int ticksUntilClose;
         protected int ticksSinceOpen;
         private bool freePassageWhenClearedReachabilityCache;
+        private Pawn approachingPawn;
 
         public bool Open => openInt;
 
@@ -133,6 +134,8 @@ namespace RimWorld
 
         public override bool FireBulwark => !Open && base.FireBulwark;
 
+        private float OpenPct => Mathf.Clamp01((float)ticksSinceOpen / (float)TicksToOpenNow);
+
         public override void PostMake()
         {
             base.PostMake();
@@ -163,6 +166,7 @@ namespace RimWorld
             Scribe_Values.Look(ref openInt, "open", false);
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
+            Scribe_References.Look(ref approachingPawn, nameof(approachingPawn));
             if (Scribe.mode == LoadSaveMode.LoadingVars && openInt)
             {
                 ticksSinceOpen = TicksToOpenNow;
@@ -234,6 +238,11 @@ namespace RimWorld
                 {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
                 }
+                if (OpenPct >= NotifyFogGridDoorOpenPct && approachingPawn != null)
+                {
+                    Map.fogGrid.Notify_PawnEnteringDoor(this, approachingPawn);
+                    approachingPawn = null;
+                }
             }
         }
 
@@ -251,7 +260,7 @@ namespace RimWorld
             var pawnCanOpen = PawnCanOpen(p);
             if (pawnCanOpen || Open)
             {
-                Map.fogGrid.Notify_PawnEnteringDoor(this, p);
+                approachingPawn = p;
             }
             if (pawnCanOpen && !SlowsPawns)
             {
@@ -267,6 +276,10 @@ namespace RimWorld
 
         public virtual bool PawnCanOpen(Pawn p)
         {
+            if (Map != null && Map.Parent.doorsAlwaysOpenForPlayerPawns && p.Faction == Faction.OfPlayer)
+            {
+                return true;
+            }
             var lord = p.GetLord();
             if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p))
             {
@@ -275,6 +288,10 @@ namespace RimWorld
             if (WildManUtility.WildManShouldReachOutsideNow(p))
             {
                 return true;
+            }
+            if (p.RaceProps.FenceBlocked && !def.building.roamerCanOpen && (!p.roping.IsRopedByPawn || !PawnCanOpen(p.roping.RopedByPawn)))
+            {
+                return false;
             }
             if (Faction == null)
             {
@@ -346,8 +363,7 @@ namespace RimWorld
         public override void Draw()
         {
             Rotation = DoorRotationAt(Position, Map);
-            var percentOpen = Mathf.Clamp01((float)ticksSinceOpen / TicksToOpenNow);
-            var offsetMod = VisualDoorOffsetStart + VisualDoorOffsetEnd * percentOpen;
+            var offsetMod = VisualDoorOffsetStart + VisualDoorOffsetEnd * OpenPct;
             for (var i = 0; i < 2; i++)
             {
                 Vector3 offsetVector;
@@ -369,25 +385,35 @@ namespace RimWorld
                 drawPos.y = AltitudeLayer.DoorMoveable.AltitudeFor();
                 drawPos += offsetVector * offsetMod;
                 Graphics.DrawMesh(mesh, drawPos, Rotation.AsQuat, Graphic.MatAt(Rotation), 0);
+                Graphic.ShadowGraphic?.DrawWorker(drawPos, Rotation, def, this, 0f);
             }
             Comps_PostDraw();
         }
 
-        private static int AlignQualityAgainst(IntVec3 c, Map map)
+        private static int AlignQualityAgainst(IntVec3 c, IntVec3 offset, Map map)
         {
-            if (!c.InBounds(map))
+            var c2 = c + offset;
+            if (!c2.InBounds(map))
             {
                 return 0;
             }
-            if (!c.Walkable(map))
+            if (!c2.WalkableByNormal(map))
             {
                 return 9;
             }
-            var thingList = c.GetThingList(map);
+            var thingList = c2.GetThingList(map);
             for (var i = 0; i < thingList.Count; i++)
             {
                 var thing = thingList[i];
                 if (typeof(Building_Door).IsAssignableFrom(thing.def.thingClass))
+                {
+                    if ((c - offset).GetDoor(map) == null)
+                    {
+                        return 1;
+                    }
+                    return 5;
+                }
+                if (thing.def.IsFence)
                 {
                     return 1;
                 }
@@ -396,6 +422,10 @@ namespace RimWorld
                     if (blueprint.def.entityDefToBuild.passability == Traversability.Impassable)
                     {
                         return 9;
+                    }
+                    if (blueprint.def.entityDefToBuild is ThingDef thingDef && thingDef.IsFence)
+                    {
+                        return 1;
                     }
                     if (typeof(Building_Door).IsAssignableFrom(thing.def.thingClass))
                     {
@@ -410,10 +440,10 @@ namespace RimWorld
         {
             var alignQualityEastWest = 0;
             var alignQualityNorthSouth = 0;
-            alignQualityEastWest += AlignQualityAgainst(loc + IntVec3.East, map);
-            alignQualityEastWest += AlignQualityAgainst(loc + IntVec3.West, map);
-            alignQualityNorthSouth += AlignQualityAgainst(loc + IntVec3.North, map);
-            alignQualityNorthSouth += AlignQualityAgainst(loc + IntVec3.South, map);
+            alignQualityEastWest += AlignQualityAgainst(loc, IntVec3.East, map);
+            alignQualityEastWest += AlignQualityAgainst(loc, IntVec3.West, map);
+            alignQualityNorthSouth += AlignQualityAgainst(loc, IntVec3.North, map);
+            alignQualityNorthSouth += AlignQualityAgainst(loc, IntVec3.South, map);
             if (alignQualityEastWest >= alignQualityNorthSouth)
             {
                 return Rot4.North;
