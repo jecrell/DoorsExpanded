@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configurations>RW1.1;RW1.2</Configurations>
-    <Configuration Condition=" '$(Configuration)' == '' ">RW1.2</Configuration>
+    <Configurations>RW1.3;RW1.3Unstable</Configurations>
+    <Configuration Condition=" '$(Configuration)' == '' ">RW1.3</Configuration>
     <AssemblyName>DoorsExpanded</AssemblyName>
     <TargetFramework>net472</TargetFramework>
     <NoStdLib>true</NoStdLib>
@@ -17,20 +17,20 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <Choose>
-    <When Condition=" '$(Configuration)' == 'RW1.1' ">
+    <When Condition=" '$(Configuration)' == 'RW1.3' ">
       <PropertyGroup>
-        <OutputPath>..\1.1\Assemblies\</OutputPath>
+        <OutputPath>..\1.3\Assemblies\</OutputPath>
       </PropertyGroup>
       <ItemGroup>
-        <PackageReference Include="Krafs.Rimworld.Ref" Version="1.1.*" />
+        <PackageReference Include="Krafs.Rimworld.Ref" Version="1.3.*" /> <!-- only stable versions -->
       </ItemGroup>
     </When>
-    <When Condition=" '$(Configuration)' == 'RW1.2' ">
+    <When Condition=" '$(Configuration)' == 'RW1.3Unstable' ">
       <PropertyGroup>
-        <OutputPath>..\1.2\Assemblies\</OutputPath>
+        <OutputPath>..\1.3\Assemblies\</OutputPath>
       </PropertyGroup>
       <ItemGroup>
-        <PackageReference Include="Krafs.Rimworld.Ref" Version="1.2.*" />
+        <PackageReference Include="Krafs.Rimworld.Ref" Version="1.3.*-*" /> <!-- -* suffix allows beta/prerelease versions -->
       </ItemGroup>
     </When>
   </Choose>

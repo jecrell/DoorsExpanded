@@ -429,9 +429,8 @@ namespace DoorsExpanded
             Patch(original: AccessTools.PropertySetter(typeof(CompForbiddable), nameof(CompForbiddable.Forbidden)),
                 transpiler: nameof(DoorExpandedSetForbiddenTranspiler),
                 transpilerRelated: nameof(DoorExpandedSetForbidden));
-            // TODO: no longer exists - investigate
-            Patch(original: AccessTools.Method(typeof(RegionAndRoomUpdater), "ShouldBeInTheSameRoomGroup"),
-                postfix: nameof(DoorExpandedShouldBeInTheSameRoomGroupPostfix));
+            Patch(original: AccessTools.Method(typeof(RegionAndRoomUpdater), "ShouldBeInTheSameRoom"),
+                postfix: nameof(DoorExpandedShouldBeInTheSameRoomPostfix));
             Patch(original: AccessTools.Method(typeof(GenTemperature), nameof(GenTemperature.EqualizeTemperaturesThroughBuilding)),
                 transpiler: nameof(DoorExpandedEqualizeTemperaturesThroughBuildingTranspiler),
                 transpilerRelated: nameof(GetAdjacentCellsForTemperature));
@@ -453,23 +452,24 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Designator_Place), "HandleRotationShortcuts"),
                 transpiler: nameof(DoorExpandedDesignatorPlaceRotateAgainIfNeededTranspiler),
                 transpilerRelated: nameof(DoorExpandedRotateAgainIfNeeded));
-            // TODO: DrawGhostThing_NewTmp no longer exists
-            Patch(original: AccessTools.Method(typeof(GhostDrawer), "DrawGhostThing_NewTmp") ??
-                    AccessTools.Method(typeof(GhostDrawer), nameof(GhostDrawer.DrawGhostThing)),
+            Patch(original: AccessTools.Method(typeof(GhostDrawer), nameof(GhostDrawer.DrawGhostThing)),
                 transpiler: nameof(DoorExpandedDrawGhostThingTranspiler),
                 transpilerRelated: nameof(DoorExpandedDrawGhostGraphicFromDef));
             Patch(original: AccessTools.Method(typeof(GhostUtility), nameof(GhostUtility.GhostGraphicFor)),
                 transpiler: nameof(DoorExpandedGhostGraphicForTranspiler));
             Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.SpawnSetup)),
                 prefix: nameof(DoorExpandedBlueprintSpawnSetupPrefix));
-            // TODO: Blueprint.Draw no longer exists
-            Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.Draw)),
-                prefix: nameof(DoorExpandedBlueprintDrawPrefix));
+            // Blueprint.Draw no longer exists since RW 1.3+, so we patch Thing.DrawAt, which is called for RealtimeOnly drawerType.
+            // We can't just use a custom Blueprint subclass with overriden Draw, since ThingDefGenerator_Buildings hardcodes
+            // Blueprint_Install for (re)install blueprints.
+            // TODO: Instead of patching this, consider patching ThingDefGenerator_Buildings.NewBlueprintDef_Thing in EarlyPatches to
+            // allow custom Blueprint for (re)install blueprints, and using custom Blueprint and Blueprint_Install subclasses
+            // (potentially also a Blueprint_Install subclass for Building_Door to keep applying the rotation fix for vanilla doors).
+            Patch(original: AccessTools.Method(typeof(Thing), nameof(Thing.DrawAt)),
+                prefix: nameof(DoorExpandedThingDrawAtPrefix));
 
             // Patches related to door remotes.
-            // TODO: AddJobGiverWorkOrders_NewTmp no longer exists
-            Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders_NewTmp") ??
-                    AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
+            Patch(original: AccessTools.Method(typeof(FloatMenuMakerMap), "AddJobGiverWorkOrders"),
                 transpiler: nameof(DoorRemoteAddJobGiverWorkOrdersTranspiler),
                 transpilerRelated: nameof(TranslateCustomizeUseDoorRemoteJobLabel));
 
@@ -1035,12 +1035,12 @@ namespace DoorsExpanded
             return thing;
         }
 
-        // RegionAndRoomUpdater.ShouldBeInTheSameRoomGroup
-        public static bool DoorExpandedShouldBeInTheSameRoomGroupPostfix(bool result, Room a, Room b)
+        // RegionAndRoomUpdater.ShouldBeInTheSameRoom
+        public static bool DoorExpandedShouldBeInTheSameRoomPostfix(bool result, District a, District b)
         {
-            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedShouldBeInTheSameRoomGroupPostfix));
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedShouldBeInTheSameRoomPostfix));
             // All the invis doors each comprise a room.
-            // They should all be combined into a single RoomGroup at least for the purposes of temperature management.
+            // They should all be combined into a single Room at least for the purposes of temperature management.
             if (result)
                 return true;
             if (GetRoomDoor(a) is Building_DoorRegionHandler invisDoorA &&
@@ -1051,11 +1051,11 @@ namespace DoorsExpanded
             return false;
         }
 
-        private static Building_Door GetRoomDoor(Room room)
+        private static Building_Door GetRoomDoor(District district)
         {
-            if (!room.IsDoorway)
+            if (!district.IsDoorway)
                 return null;
-            return room.Regions[0].door;
+            return district.Regions[0].door;
         }
 
         // GenTemperature.EqualizeTemperaturesThroughBuilding
@@ -1067,7 +1067,7 @@ namespace DoorsExpanded
             // only looks at the cardinal directions from the building's singular position cell.
             // We need it look at all cells surrounding the building's OccupiedRect, excluding corners.
             // This transforms the following code:
-            //  int roomGroupCount = 0;
+            //  int roomCount = 0;
             //  float temperatureSum = 0f;
             //  if (twoWay)
             //  ...
@@ -1080,10 +1080,10 @@ namespace DoorsExpanded
             //          ...
             //      }
             //  }
-            //  if (roomGroupCount == 0)
+            //  if (roomCount == 0)
             //      return;
             // into:
-            //  int roomGroupCount = 0;
+            //  int roomCount = 0;
             //  float temperatureSum = 0f;
             //  if (twoWay)
             //  ...
@@ -1097,7 +1097,7 @@ namespace DoorsExpanded
             //          ...
             //      }
             //  }
-            //  if (roomGroupCount == 0)
+            //  if (roomCount == 0)
             //      return;
 
             var instructionList = instructions.AsList();
@@ -1170,18 +1170,17 @@ namespace DoorsExpanded
             else
             {
                 var adjCells = GenAdj.CellsAdjacentCardinal(building).ToArray();
-                // Ensure GenTemperature.beqRoomGroups is large enough.
-                // TODO: RoomGroup no longer exists - investigate
-                if (((RoomGroup[])fieldof_GenTemperature_beqRoomGroups.GetValue(null)).Length < adjCells.Length)
+                // Ensure GenTemperature.beqRooms is large enough.
+                if (((Room[])fieldof_GenTemperature_beqRooms.GetValue(null)).Length < adjCells.Length)
                 {
-                    fieldof_GenTemperature_beqRoomGroups.SetValue(null, new RoomGroup[adjCells.Length]);
+                    fieldof_GenTemperature_beqRooms.SetValue(null, new Room[adjCells.Length]);
                 }
                 return adjCells;
             }
         }
 
-        private static readonly FieldInfo fieldof_GenTemperature_beqRoomGroups =
-            AccessTools.Field(typeof(GenTemperature), "beqRoomGroups");
+        private static readonly FieldInfo fieldof_GenTemperature_beqRooms =
+            AccessTools.Field(typeof(GenTemperature), "beqRooms");
 
         // Projectile.CheckForFreeIntercept
         public static IEnumerable<CodeInstruction> DoorExpandedProjectileCheckForFreeIntercept(
@@ -1368,11 +1367,15 @@ namespace DoorsExpanded
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedBlueprintSpawnSetupPrefix));
             ref var blueprint = ref __instance;
-            // This needs to be a prefix (as opposed to a postfix), since Thing.SpawnSetup has logic which depends on
-            // drawerType and rotation.
+            // This needs to be a prefix (as opposed to a postfix), since Thing.SpawnSetup has logic which depends on rotation.
             if (blueprint.def.entityDefToBuild is ThingDef thingDef &&
                 thingDef.GetCompProperties<CompProperties_DoorExpanded>() is CompProperties_DoorExpanded doorExProps)
             {
+                // Historical note: following notes used to be the case, but RW 1.3 changed ThingDefGenerator_Buildings such that
+                // blueprint defs now inherit their drawerType from the non-blueprint def (except for the now-redundant Building_Door
+                // blueprint case which is always RealTime, even though vanilla doors should already RealTime drawerType).
+                // Thus we no longer need to fix drawerType, and now this patch only fixes rotation.
+
                 // ThingDefGenerator_Buildings.NewBlueprintDef_Thing configures generated blueprint defs such that their
                 // def.drawerType is MapMeshAndRealTime. This means that they have both a "update-when-needed" drawing that
                 // calls the Print method (MapMesh), and an "update-on-tick" drawing that calls the Draw method (RealTime).
@@ -1385,7 +1388,7 @@ namespace DoorsExpanded
                 // This could be done in a harmony patch that is applied before ThingDefGenerator_Buildings runs
                 // (must happen before StaticConstructorOnStartup) and would be more efficient, but it's easier to patch here
                 // in SpawnSetup and Draw (see below) and any performance cost is negligible.
-                blueprint.def.drawerType = DrawerType.RealtimeOnly;
+                //blueprint.def.drawerType = DrawerType.RealtimeOnly;
 
                 // Non-1x1 rotations change the footprint of the blueprint, so this needs to be done before that footprint
                 // is cached in various ways in base.SpawnSetup, including in BlueprintGrid.
@@ -1401,11 +1404,17 @@ namespace DoorsExpanded
             }
         }
 
-        // Blueprint.Draw
-        public static bool DoorExpandedBlueprintDrawPrefix(Blueprint __instance)
+        // ThingWithComps.Draw
+        public static bool DoorExpandedThingDrawAtPrefix(Thing __instance)
+        {
+            if (__instance is Blueprint blueprint)
+                return DoorExpandedBlueprintDrawPrefix(blueprint);
+            return true;
+        }
+
+        private static bool DoorExpandedBlueprintDrawPrefix(Blueprint blueprint)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedBlueprintDrawPrefix));
-            ref var blueprint = ref __instance;
             if (blueprint.def.entityDefToBuild is ThingDef thingDef &&
                 thingDef.GetCompProperties<CompProperties_DoorExpanded>() is CompProperties_DoorExpanded doorExProps)
             {

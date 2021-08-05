@@ -33,8 +33,8 @@ namespace DoorsExpanded
                 transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(AddMoreDebugViewSettingsTranspiler)));
             harmony.Patch(original: AccessTools.Method(typeof(EditWindow_DebugInspector), "CurrentDebugString"),
                 transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(EditWindowDebugInspectorTranspiler)));
-            harmony.Patch(original: AccessTools.Method(typeof(Room), "DebugString"),
-                postfix: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(RoomMoreDebugString)));
+            harmony.Patch(original: AccessTools.Method(typeof(District), "DebugString"),
+                postfix: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(DistrictMoreDebugString)));
         }
 
         private static Dictionary<string, bool> patchCallRegistry;
@@ -152,9 +152,8 @@ namespace DoorsExpanded
         {
             if (Find.Selector.SingleSelectedObject is Pawn pawn)
             {
-                // TODO: Map.pathGrid no longer exists - investigate
                 debugString.AppendLine($"CalculatedCostAt({mouseCell}, false, {pawn.Position}): " +
-                    pawn.Map.pathGrid.CalculatedCostAt(mouseCell, perceivedStatic: false, pawn.Position));
+                    pawn.Map.pathing.For(pawn).pathGrid.CalculatedCostAt(mouseCell, perceivedStatic: false, pawn.Position));
                 debugString.AppendLine($"CostToMoveIntoCell({pawn}, {mouseCell}): " + CostToMoveIntoCell(pawn, mouseCell));
                 using var pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, mouseCell, pawn);
                 debugString.AppendLine($"FindPath({pawn.Position}, {mouseCell}, {pawn}).TotalCost: " + pawnPath.TotalCost);
@@ -324,10 +323,9 @@ namespace DoorsExpanded
         private static readonly AccessTools.FieldRef<Building_Door, int> Building_Door_ticksSinceOpen =
             AccessTools.FieldRefAccess<Building_Door, int>("ticksSinceOpen");
 
-        // Room.DebugString
-        public static string RoomMoreDebugString(string result, Room __instance)
+        // District.DebugString
+        public static string DistrictMoreDebugString(string result, District __instance)
         {
-            // TODO: Room.Neighbors no longer exists - investigate
             return result + "\n  Neighbors=\n  - " + __instance.Neighbors.Join(delimiter: "\n  - ");
         }
     }
