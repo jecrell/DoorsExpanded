@@ -1314,7 +1314,7 @@ namespace DoorsExpanded
                 // Always delegate door expanded graphics to our custom code.
                 for (var i = 0; i < 2; i++)
                 {
-                    Building_DoorExpanded.Draw(thingDef, doorExProps, graphic.MatAt(rot), loc, rot, percentOpen: 0, flipped: i != 0);
+                    Building_DoorExpanded.Draw(thingDef, doorExProps, graphic, loc, rot, openPct: 0, flipped: i != 0);
                     if (doorExProps.singleDoor)
                         break;
                 }
@@ -1423,10 +1423,10 @@ namespace DoorsExpanded
                 var rotation = blueprint.Rotation;
                 rotation = Building_DoorExpanded.DoorRotationAt(thingDef, doorExProps, blueprint.Position, rotation, blueprint.Map);
                 blueprint.Rotation = rotation;
-                var material = blueprint.Graphic.MatAt(rotation);
+                var graphic = blueprint.Graphic;
                 for (var i = 0; i < 2; i++)
                 {
-                    Building_DoorExpanded.Draw(thingDef, doorExProps, material, drawPos, rotation, percentOpen: 0, flipped: i != 0);
+                    Building_DoorExpanded.Draw(thingDef, doorExProps, graphic, drawPos, rotation, openPct: 0, flipped: i != 0);
                     if (doorExProps.singleDoor)
                         break;
                 }

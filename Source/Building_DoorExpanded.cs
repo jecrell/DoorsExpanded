@@ -38,6 +38,7 @@ namespace DoorsExpanded
         private const float PowerOffDoorOpenSpeedFactor = 0.25f;
         private const float VisualDoorOffsetStart = 0f;
         internal const float VisualDoorOffsetEnd = 0.45f;
+        private const float NotifyFogGridDoorOpenPct = 0.4f;
 
         private List<Building_DoorRegionHandler> invisDoors = new List<Building_DoorRegionHandler>();
         private CompProperties_DoorExpanded props;
@@ -49,6 +50,7 @@ namespace DoorsExpanded
         protected int ticksUntilClose;
         protected int ticksSinceOpen;
         private bool freePassageWhenClearedReachabilityCache;
+        private Pawn approachingPawn;
         private bool lastForbiddenState;
         private bool preventDoorOpenRecursion;
         private bool preventDoorTryCloseRecursion;
@@ -179,6 +181,23 @@ namespace DoorsExpanded
         public override bool FireBulwark => !Open && base.FireBulwark;
 
         public virtual bool Forbidden => forbiddenComp?.Forbidden ?? false;
+
+        private float OpenPct
+        {
+            get
+            {
+                // If TicksToOpenNow == 0 (instantaneous open), have to use different logic to avoid NRE.
+                var ticksToOpenNow = TicksToOpenNow;
+                if (ticksToOpenNow == 0)
+                {
+                    return Open ? 1f : 0f;
+                }
+                else
+                {
+                    return Mathf.Clamp01((float)ticksSinceOpen / ticksToOpenNow);
+                }
+            }
+        }
 
         // This method works for both Building_Door and Building_DoorExpanded.
         private static int DoorOpenTicks(StatRequest statRequest, bool doorPowerOn, bool applyPostProcess = true)
@@ -510,6 +529,7 @@ namespace DoorsExpanded
             Scribe_Values.Look(ref openInt, "open", false);
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
+            Scribe_References.Look(ref approachingPawn, nameof(approachingPawn));
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
                 // Ensure props is available for Open usage since PostMake hasn't been called yet.
@@ -623,6 +643,15 @@ namespace DoorsExpanded
                 {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
                 }
+                if (OpenPct >= NotifyFogGridDoorOpenPct && approachingPawn != null)
+                {
+                    // Following is kinda inefficient, but this isn't perfomance critical code, so it shouldn't matter.
+                    foreach (var invisDoor in invisDoors)
+                    {
+                        Map.fogGrid.Notify_PawnEnteringDoor(invisDoor, approachingPawn);
+                    }
+                    approachingPawn = null;
+                }
             }
         }
 
@@ -640,11 +669,7 @@ namespace DoorsExpanded
             var pawnCanOpen = PawnCanOpen(p);
             if (pawnCanOpen || Open)
             {
-                // Following is kinda inefficient, but this isn't perfomance critical code, so it shouldn't matter.
-                foreach (var invisDoor in invisDoors)
-                {
-                    Map.fogGrid.Notify_PawnEnteringDoor(invisDoor, p);
-                }
+                approachingPawn = p;
             }
             if (pawnCanOpen && !SlowsPawns)
             {
@@ -678,6 +703,10 @@ namespace DoorsExpanded
 
         public virtual bool PawnCanOpen(Pawn p)
         {
+            if (Map != null && Map.Parent.doorsAlwaysOpenForPlayerPawns && p.Faction == Faction.OfPlayer)
+            {
+                return true;
+            }
             var lord = p.GetLord();
             if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p))
             {
@@ -686,6 +715,10 @@ namespace DoorsExpanded
             if (WildManUtility.WildManShouldReachOutsideNow(p))
             {
                 return true;
+            }
+            if (p.RaceProps.FenceBlocked && !def.building.roamerCanOpen && (!p.roping.IsRopedByPawn || !PawnCanOpen(p.roping.RopedByPawn)))
+            {
+                return false;
             }
             if (Faction == null)
             {
@@ -788,7 +821,7 @@ namespace DoorsExpanded
         // This exists to expose draw vectors for debugging purposes.
         internal class DebugDrawVectors
         {
-            public float percentOpen;
+            public float openPct;
             public Vector3 offsetVector, scaleVector, graphicVector;
         }
 
@@ -796,23 +829,21 @@ namespace DoorsExpanded
 
         public override void Draw()
         {
-            var ticksToOpenNow = TicksToOpenNow;
-            var percentOpen = ticksToOpenNow == 0 ? 1f : Mathf.Clamp01((float)ticksSinceOpen / ticksToOpenNow);
-
-            var rotation = DoorRotationAt(def, props, Position, Rotation, Map);
-            Rotation = rotation;
-
             var drawPos = DrawPos;
             drawPos.y = AltitudeLayer.DoorMoveable.AltitudeFor();
+            var rotation = DoorRotationAt(def, props, Position, Rotation, Map);
+            Rotation = rotation;
+            var openPct = OpenPct;
 
             for (var i = 0; i < 2; i++)
             {
                 var flipped = i != 0;
-                var material = (!flipped && props.doorAsync is GraphicData doorAsyncGraphic)
-                    ? doorAsyncGraphic.GraphicColoredFor(this).MatAt(rotation)
-                    : Graphic.MatAt(rotation);
-                Draw(def, props, material, drawPos, rotation, percentOpen, flipped,
+                var graphic = (!flipped && props.doorAsync is GraphicData doorAsyncGraphic)
+                    ? doorAsyncGraphic.GraphicColoredFor(this)
+                    : Graphic;
+                Draw(def, props, graphic, drawPos, rotation, openPct, flipped,
                     i == 0 && MoreDebugViewSettings.writeDoors ? debugDrawVectors : null);
+                graphic.ShadowGraphic?.DrawWorker(drawPos, rotation, def, this, 0f);
                 if (props.singleDoor)
                     break;
             }
@@ -833,7 +864,7 @@ namespace DoorsExpanded
         }
 
         internal static void Draw(ThingDef def, CompProperties_DoorExpanded props,
-            Material material, Vector3 drawPos, Rot4 rotation, float percentOpen,
+            Graphic graphic, Vector3 drawPos, Rot4 rotation, float openPct,
             bool flipped, DebugDrawVectors drawVectors = null)
         {
             Mesh mesh;
@@ -844,27 +875,27 @@ namespace DoorsExpanded
                 // There's no difference between Stretch and StretchVertical except for stretchOpenSize's default value.
                 case DoorType.Stretch:
                 case DoorType.StretchVertical:
-                    DrawStretchParams(def, props, rotation, percentOpen, flipped,
+                    DrawStretchParams(def, props, rotation, openPct, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
                 case DoorType.DoubleSwing:
                     // TODO: Should drawPos.y be set to Mathf.Max(drawPos.y, AltitudeLayer.BuildingOnTop.AltitudeFor())
                     // since AltitudeLayer.DoorMoveable is only used to hide sliding doors behind adjacent walls?
-                    DrawDoubleSwingParams(def, props, drawPos, rotation, percentOpen, flipped,
+                    DrawDoubleSwingParams(def, props, drawPos, rotation, openPct, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
                 default:
-                    DrawStandardParams(def, props, rotation, percentOpen, flipped,
+                    DrawStandardParams(def, props, rotation, openPct, flipped,
                         out mesh, out rotQuat, out offsetVector, out scaleVector);
                     break;
             }
             var graphicVector = drawPos + offsetVector;
             var matrix = Matrix4x4.TRS(graphicVector, rotQuat, scaleVector);
-            Graphics.DrawMesh(mesh, matrix, material, layer: 0);
+            Graphics.DrawMesh(mesh, matrix, graphic.MatAt(rotation), layer: 0);
 
             if (drawVectors != null)
             {
-                drawVectors.percentOpen = percentOpen;
+                drawVectors.openPct = openPct;
                 drawVectors.offsetVector = offsetVector;
                 drawVectors.scaleVector = scaleVector;
                 drawVectors.graphicVector = graphicVector;
@@ -872,7 +903,7 @@ namespace DoorsExpanded
         }
 
         private static void DrawStretchParams(ThingDef def, CompProperties_DoorExpanded props,
-            Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+            Rot4 rotation, float openPct, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var drawSize = def.graphicData.drawSize;
@@ -883,10 +914,10 @@ namespace DoorsExpanded
             var verticalRotation = rotation.IsHorizontal;
             var persMod = verticalRotation && props.fixedPerspective ? 2f : 1f;
 
-            offsetVector = new Vector3(offset.x * percentOpen * persMod, 0f, offset.y * percentOpen * persMod);
+            offsetVector = new Vector3(offset.x * openPct * persMod, 0f, offset.y * openPct * persMod);
 
-            var scaleX = Mathf.LerpUnclamped(openSize.x, closeSize.x, 1 - percentOpen) / closeSize.x * drawSize.x * persMod;
-            var scaleZ = Mathf.LerpUnclamped(openSize.y, closeSize.y, 1 - percentOpen) / closeSize.y * drawSize.y * persMod;
+            var scaleX = Mathf.LerpUnclamped(openSize.x, closeSize.x, 1 - openPct) / closeSize.x * drawSize.x * persMod;
+            var scaleZ = Mathf.LerpUnclamped(openSize.y, closeSize.y, 1 - openPct) / closeSize.y * drawSize.y * persMod;
             scaleVector = new Vector3(scaleX, 1f, scaleZ);
 
             // South-facing stretch animation should have same vertical direction as north-facing one.
@@ -908,7 +939,7 @@ namespace DoorsExpanded
         }
 
         private static void DrawDoubleSwingParams(ThingDef def, CompProperties_DoorExpanded props,
-            Vector3 drawPos, Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+            Vector3 drawPos, Rot4 rotation, float openPct, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
@@ -928,12 +959,12 @@ namespace DoorsExpanded
             }
 
             if (verticalRotation)
-                rotQuat = Quaternion.AngleAxis(rotation.AsAngle + (percentOpen * (flipped ? 90f : -90f)), Vector3.up);
+                rotQuat = Quaternion.AngleAxis(rotation.AsAngle + (openPct * (flipped ? 90f : -90f)), Vector3.up);
             else
                 rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * percentOpen) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * openPct) * def.Size.x;
             offsetVector *= offsetMod;
 
             if (verticalRotation)
@@ -951,7 +982,7 @@ namespace DoorsExpanded
         }
 
         private static void DrawStandardParams(ThingDef def, CompProperties_DoorExpanded props,
-            Rot4 rotation, float percentOpen, bool flipped, out Mesh mesh, out Quaternion rotQuat,
+            Rot4 rotation, float openPct, bool flipped, out Mesh mesh, out Quaternion rotQuat,
             out Vector3 offsetVector, out Vector3 scaleVector)
         {
             var verticalRotation = rotation.IsHorizontal;
@@ -969,7 +1000,7 @@ namespace DoorsExpanded
             rotQuat = rotation.AsQuat;
             offsetVector = rotQuat * offsetVector;
 
-            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * percentOpen) * def.Size.x;
+            var offsetMod = (VisualDoorOffsetStart + props.doorOpenMultiplier * openPct) * def.Size.x;
             offsetVector *= offsetMod;
 
             var drawSize = def.graphicData.drawSize;

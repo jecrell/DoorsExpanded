@@ -242,7 +242,7 @@ namespace DoorsExpanded
                             var parentDoor = invisDoor.ParentDoor;
                             debugString.AppendLine("- ParentDoor: " + parentDoor);
                             debugString.AppendLine("  - DrawPos: " + parentDoor.DrawPos);
-                            debugString.AppendLine("  - debugDrawVectors.percentOpen: " + parentDoor.debugDrawVectors?.percentOpen);
+                            debugString.AppendLine("  - debugDrawVectors.openPct: " + parentDoor.debugDrawVectors?.openPct);
                             debugString.AppendLine("  - debugDrawVectors.offsetVector: " + parentDoor.debugDrawVectors?.offsetVector);
                             debugString.AppendLine("  - debugDrawVectors.scaleVector: " + parentDoor.debugDrawVectors?.scaleVector);
                             debugString.AppendLine("  - debugDrawVectors.graphicVector: " + parentDoor.debugDrawVectors?.graphicVector);
