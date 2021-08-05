@@ -93,41 +93,183 @@ namespace DoorsExpanded
             // JobGiver_Manhunter.TryGiveJob
             // JobGiver_SeekAllowedArea.TryGiveJob
 
-            // Notes on what methods don't need patching despite def.Fillage being potentially used on invis doors,
-            // but that method ultimately use def.Fillage on every thing at the cell to the net effect of no negative impact:
+            // Notes on what methods don't need patching despite referencing Building_Door:
+            // SymbolResolver_AncientComplex_Defences.Resolve - logic regarding doors seems to have no effect?
+            // SymbolResolver_EdgeWalls.TrySpawnWall - just checks whether door exists at cell
+            // Blueprint_Door.Draw - used for normal doors, while we have our own blueprint drawing logic
+            // CompAbilityEffect_WithDest.CanTeleportThingTo - would call invisDoor.Open which delegates to parentDoor
+            // CompSpawner.TryFindSpawnCell - would call invisDoor.FreePassage which delegates to parentDoor
+            // DoorsDebugDrawer.DrawDebug - would highlight invis doors, which is fine
+            // Fire.DoComplexCalcs - just checks whether door exists at cell
+            // ForbidUtility.IsForbiddenToPass
+            // - actually no door-specific logic
+            // - ultimately delegates to our patched CompForbiddable.Forbidden
+            // SignalAction_OpenDoor.DoAction - would call invisDoor.StartManualOpenBy which delegates to parentDoor
+            // ThingDefGenerator_Buildings.NewBlueprintDef_Thing - see DoorExpandedBlueprintSpawnSetupPrefix
+            // Verb_Jump.ValidJumpTarget - would call invisDoor.Open which delegates to parentDoor
+            // AttackTargetFinder.FindBestReachableMeleeTarget - would call invisDoor.CanPhysicallyPass which delegates to parentDoor
+            // GenPath.ShouldNotEnterCell
+            // - would call invisDoor.IsForbidden which ultimately delegates to our patched CompForbiddable.Forbidden
+            // - would call invisDoor.PawnCanOpen which delegates to parentDoor
+            // PathFinder.GetBuildingCost
+            // - would call invisDoor.IsForbiddenToPass (see above)
+            // - would call invisDoor properties/methods which delegate to parentDoor
+            // PathFinder.BlocksDiagonalMovement - just checks whether door exists at cell
+            // Pawn_PathFollower.PawnCanOccupy - would (ultimately) call invisDoor properties/methods which delegate to parentDoor
+            // Pawn_PathFollower.NextCellDoorToWaitForOrManuallyOpen - ditto
+            // Pawn_PathFollower.TryEnterNextPathCell - ditto
+            // Pawn_PathFollower.SetupMoveIntoNextCell - ditto
+            // Pawn_PathFollower.NeedNewPath - ditto
+            // PawnPathUtility.FirstBlockingBuilding - would call invisDoor properties/methods which delegate to parentDoor
+            // PawnPathUtility.TryFindLastCellBeforeBlockingDoor - ditto
+            // AnimalPenBlueprintEnclosureCalculator.PassCheck - delegates to AnimalPenEnclosureCalculator.RoamerCanPass
+            // AnimalPenEnclosureCalculator.RoamerCanPass
+            // - would call invisDoor.FreePassage which delegates to parentDoor
+            // - this system handles e.g. 2x2 doors just fine, so would work just fine with invis doors
+            // CellFinder.TryFindBestPawnStandCell - would call invisDoor properties/methods which delegate to parentDoor
+            // CellFinder.GetAdjacentCardinalCellsForBestStandCell - ditto
+            // FogGrid.Notify_PawnEnteringDoor - see FogGrid.FloodUnfogAdjacent patch below
+            // GridsUtility.GetDoor - see below
+            // Region.door - see below
+
+            // Notes on what methods don't need patching despite calling GridUtility.GetDoor (would be invis door),
+            // excluding anything already mentioned above:
+            // ComplexWorker.FindBestSpawnLocation - just checks whether door exists at cell
+            // BaseGenUtility.AnyDoorAdjacentCardinalTo - ditto
+            // SymbolResolver_ExtraDoor.WallHasDoor - ditto
+            // SymbolResolver_ExtraDoor.GetDistanceToExistingDoors - ditto
+            // SymbolResolver_Filth.CanPlaceFilth - ditto
+            // SymbolResolver_OutdoorsPath.Resolve - ditto
+            // SymbolResolver_OutdoorsPath.CanTraverse - ditto
+            // SymbolResolver_OutdoorsPath.CanPlacePath - ditto
+            // SymbolResolver_Street.CausesStreet - ditto
+            // SymbolResolver_TerrorBuildings.Resolve - ditto
+            // BreachingUtility.BlocksBreaching - ditto
+            // ComplexThreatWorker_SleepingThreat.CanSpawnAt - ditto
+            // GenStep_PrisonerWillingToJoin.ScatterAt - ditto
+            // MeditationUtility.AllMeditationSpotCandidates
+            // RCellFinder.CanWanderToCell - ditto
+            // Toils_Interpersonal.GotoInteractablePosition - ditto
+            // WorkGiver_CleanFilth.JobOnThing - gets cell's door's region; should work for our invis doors
+            // TouchPathEndModeUtility.IsCornerTouchAllowed - just checks whether door exists at cell
+            // Graphic_LinkedAsymmetric.Print - ditto
+            // Graphic_LinkedAsymmetric.ShouldLinkWith - ditto
+            // Pawn.InteractionCell - ditto
+            // RegionMaker.TryGenerateRegionFrom - would have invis door assigned to region.door (see below)
+            // RegionTypeUtility.GetExpectedRegionType - just checks whether door exists at cell
+            // ThingUtility.InteractionCellWhenAt - ditto
+
+            // Notes on what methods don't need patching despite referencing Region.door (would be invis door):
+            // Region.Allows
+            // - lookups by door position
+            // - would call invisDoor.IsForbiddenToPass (see above)
+            // - would call invisDoor properties/methods which delegate to parentDoor
+            // Building_OrbitalTradeBeacon.TradeableCellsAround - just checks whether door exists at cell
+            // JobGiver_ConfigurableHostilityResponse.TryGetFleeJob - would call invisDoor.Open which delegates to parentDoor
+            // JobGiver_PrisonerEscape.ShouldStartEscaping - would call invisDoor.FreePassage which delegates to parentDoor
+            // SelfDefenseUtility.ShouldStartFleeing - would call invisDoor.Open which delegates to parentDoor
+            // RegionCostCalculator.GetRegionDistance
+            // - calls PathFinder.GetBuildingCost
+            //   - would call invisDoor.IsForbiddenToPass (see above)
+            //   - would call invisDoor.PawnCanOpen which delegates to parentDoor
+            // - checks whether door exists at cell
+            // AnimalPenEnclosureCalculator.EnterRegion - delegates to AnimalPenEnclosureCalculator.RoamerCanPass
+            // AnimalPenEnclosureCalculator.ProcessRegion - ditto
+            // AnimalPenEnclosureStateCalculator.VisitPassableDoorway/VisitImpassableDoorway - same door as above
+            // GenClamor.DoClamor - would call invisDoor.Open which delegates to parentDoor
+            // Region.IsDoorway - see below
+
+            // Notes on what methods don't need patching despite calling Region.IsDoorway (would be invis door):
+            // - for normal/invis doors, the region is a single cell
+            // JobGiver_SeekAllowedArea.TryGiveJob - just checks whether doors exists at cell
+            // JobGiver_SeekSafeTemperature.ClosestRegionWithinTemperatureRange - ditto
+            // AnimalPenEnclosureCalculator.EnterRegion/ProcessRegion - see above notes on AnimalPenEnclosureCalculator
+            // CellFinderLoose.GetFleeDestToolUser - just checks whether doors exists at cell
+            // District.IsDoorway
+            // - for normal/invis doors, the single region (and cell) comprises the whole district
+            // - RCellFinder.TryFindRandomSpotJustOutsideColony
+            //   - just checks whether doors exists at cell
+            // - Room.IsDoorway - see below
+            // GenClosest.RegionwiseBFSWorker - just checks whether doors exists at cell
+            // RegionTraverser.ShouldCountRegion - makes BFS avoid counting door regions for limit purposes, so works as-is
+            // Room.Notify_ContainedThingSpawnedOrDespawned
+            // - handles adjacent doors just fine
+            // - but still needs patching for other reasons - see InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix
+            // RoomTempTracker.RegenerateEqualizationData - handles adjacent doors just fine
+
+            // Notes on what methods don't need patching despite calling Room.IsDoorway (would be invis door):
+            // - for normal/invis doors, the single district (and region and cell) comprises the whole room
+            // Need_RoomSize.SpacePerceptibleNow - just checks whether doors exists at cell
+            // Pawn_StyleObserverTracker.StyleObserverTick - ditto
+            // WanderRoomUtility.IsValidWanderDest - ditto
+            // AutoBuildRoofAreaSetter.TryGenerateAreaNow - ditto
+            // Room.Notify_ContainedThingSpawnedOrDespawned - see above
+            // RoomTempTracker.EqualizeTemperature
+            // - excludes doors from RoomTempTracker equalization except in a specific edge case (surrounded on all four sides
+            //   by other doors or walls in a "closed" system) to address the exploit described in
+            //   https://www.reddit.com/r/RimWorld/comments/b1wz9a/rimworld_temperature_physics_allow_you_to_build/
+
+            // Notes on what methods don't need patching despite ThingDef.IsDoor potentially being confused between invis doors
+            // and parent doors (ThingDef.IsDoor will be patched to also return true for parent doors):
+            // BreachingUtility.IsWorthBreachingBuilding - fine for both invis doors and parent doors
+            // CompForbiddable.CompGetGizmosExtra - method only called for parent doors
+            // JobGiver_MineRandom.TryGiveJob - IsDoor only called for invis doors
+            // PlantUtility.CanEverPlantAt - IsDoor only called for invis doors
+            // Sketch.ExposeData - just checks whether door and wall exists in same cell
+            // SketchUtility.GetDoor
+            // - SketchResolver_AddThingsCentral.CanPlaceAt - just checks whether doors exists at cell
+            // StatWorker.ShouldShowFor - method and IsDoor should only be called for parent doors
+            // TargetingParameters.CanTarget - fine for both invis doors and parent doors
+            // AnimalPenBlueprintEnclosureCalculator.PassCheck - see above
+            // Buillding.GetGizmos - method only called for parent doors
+            // DebugOutputsGeneral.ThingFillageAndPassability - debug method doesn't matter
+            // GenPlace.PlaceSpotQualityAt - just checks whether doors exists at cell
+            // SectionLayer_IndoorMask.Regenerate - IsDoor only called for invis doors
+            // ThingDef.AffectsRegions - fine since should return same value for invis doors and their parents
+            // ThingDef.AffectsReachability - ditto
+            // ThingDef.CanAffectLinker - ditto
+
+            // Notes on what methods don't need patching despite def.Fillage/fillPercent being potentially used on invis doors
+            // (always none), but that method ultimately use def.Fillage on every thing at the cell (including parent door)
+            // to the net effect of no negative impact:
             // SymbolResolver_Clear.Resolve
             // BeautyUtility.CellBeauty
             // GenConstruct.BlocksConstruction
             // Skyfaller.SpawnThings
             // BuildingsDamageSectionLayerUtility.UsesLinkableCornersAndEdges
             // DamageWorker.ExplosionAffectCell
-            // ForGrid.Unfog (also see InvisDoorMakeFogTranspiler)
+            // FogGrid.Unfog - see also InvisDoorDefMakeFogTranspiler
+            // Projectile.CanHit - see also DoorExpandedProjectileCheckForFreeIntercept
             // RegionTypeUtility.GetExpectedRegionType
+            // ThingDef.BlocksPlanting
 
-            // Notes on what methods don't need patching despite def.Fillage being potentially used on invis doors
+            // Notes on what methods don't need patching despite def.Fillage/fillPercent being potentially used on invis doors
             // for other reasons:
             // Designator_RemoveFloor.CanDesignateCell
-            // - def.Fillage usage is only for determining Impassible def.passibility (walls),
-            //   and doesn't return false for invis doors, which is wanted behavior.
-            // Designator_SmoothSurface.CanDesignateCell/SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder
-            // - def.Fillage usage is only for determining whether floors can be smoothed,
-            //   SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder returns true for invis doors, which is wanted behavior.
-            // Sketch.CanBeSeenOver (and other Sketch* methods)
-            // - Assume that ThingDefs used in Sketch objects are never invis doors.
-            // PawnPathUtility.FirstBlockingBuilding
-            // - def.Fillage usage is only for determining PassThroughOnly def.passibility, which doors should never have.
+            // - only for determining Impassible def.passibility (walls), and doesn't return false for invis doors, which is fine
+            // Designator_SmoothSurface.CanDesignateCell, SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder
+            // - only for determining whether floors can be smoothed, SmoothSurfaceDesignatorUtility.CanSmoothFloorUnder returns
+            //   true for invis doors, which is fine
+            // ShipLandingArea.RecalculateBlockingThing - will end up selecting parent door as firstBlockingThing, which is fine
+            // Sketch.CanBeSeenOver, SketchResolver_FloorFill.ResolveInt/FloorFillRoom
+            // - assume that ThingDefs used in Sketch objects are never invis doors
+            // PawnPathUtility.FirstBlockingBuilding - only for determining PassThroughOnly passibility, which doors should never have
+            // Building.SpawnSetup/DeSpawn
+            // - this will do nothing for an invis door, and ultimately be called for the parent door, such that for parent doors
+            //   with full fillage, the dirty flag logic will be correct
             // CoverGrid.Register/DeRegister/RecalculateCell
-            // - This will do nothing for an invis door, and ultimately be called for the parent door,
-            //   with the algorithm uses all cells within the parent door.
-            //   The net effect is parent doors, not invis doors, will be in the cover grid.
-            // SectionLayer_Snow.Filled
-            // - Method is unused.
+            // - this will do nothing for an invis door, and ultimately be called for the parent door,
+            //   with the algorithm using all cells within the parent door, such that the net effect is parent doors,
+            //   not invis doors, will be in the cover grid
+            // DebugOutputsGeneral.ThingFillageAndPassability/ThingFillPercents - debug methods don't matter
+            // SectionLayer_Snow.Filled - unused method
             // SnowGrid.CanCoexistWithSnow
-            // - See InvisDoorCanHaveSnowTranspiler.
-            // - Only other use of the method is for determining snow depth at cell and is ultimately called for the parent door.
-            // Verb.CanHitFromCellIgnoringRange (and other Verb* methods)
-            // - Target should never be an invis door.
-            // TODO: Fill above section out more for documentation purposes.
+            // - see InvisDoorCanHaveSnowTranspiler
+            // - only other use of the method is for determining snow depth at cell and is ultimately called for the parent door
+            // Thing.FireBulwark - overridden in Bulding_DoorExpanded and Building_DoorRegionHandler
+            // Verb.CanHitFromCellIgnoringRange, Verb_LaunchProjectile.TryCastShot - target should never be an invis door
+            // ShotReport.HitReportFor - ditto
+            // ThingDef.SpecialDisplayStats - should never be shown for invis door
 
             // Notes on usage of patch priority:
             // - Destructive prefix patches (prefix patch that returns false, preventing remaining non-postfix/finalizer logic)
@@ -138,6 +280,29 @@ namespace DoorsExpanded
             // - Prefix patches that delegate calls to invis door methods to parent door methods have highest (first) priority
             //   to get ahead of other mods' destructive prefix patches. Unfortunately, our Building_Door patches must be destructive
             //   prefix patches, and there's no safe way to redirect other mods' Building_Door patches to Building_DoorExpanded patches.
+
+            // TODO:
+            // BeautyUtility.FillBeautyRelevantCells should be patched, since it doesn't handle adjacent normal doors cluster well,
+            // assuming that neighboring rooms of doors aren't doors themselves. This is inconsequential in vanilla, but afflicts our
+            // larger doors composed of cluster of invis doors.
+            // This is evident if you create a 3x3 cross of normal doors, enable beauty overlay, and highlight the center door.
+            // That said, this is a minor issue, so low priority to fix.
+            // IdeoUtility.GetJoinedRooms has a similar issue.
+            // TODO:
+            // RoomTempTracker.RegenerateEqualizationData has logic to include only cells on the other side of walls bordering the room
+            // (technically, any impassable building with full fillage) for wall equalization purposes, and it explicitly ignores cells
+            // on the other side of external doors, unless it's blocked by another wall. However, the detection of whether the door is
+            // on the border of the room is faulty, since it assumes that there is only a single door when examining its region neighbors.
+            // This means that if another door is right on the other side of border door, that other door is erroneously included.
+            // This probably isn't a huge deal in vanilla, where layering doors one after another is rare, but that's always the case for
+            // some our doors, so it should be fixed.
+            // Also, a door (which itself comprises a 1x1 room) includes cells on the other side of the walls that neighbor it,
+            // and doors that aren't adjacent to walls don't include any cells. It looks pretty weird, but it's not a big deal,
+            // since doors themselves are excluded from being affected by RoomTempTracker (they are instead equalized via
+            // GenTemperature.EqualizeTemperaturesThroughBuilding).
+            // There's one exceptional case which is addressed in RoomTempTracker.EqualizeTemperature - see above.
+            // TODO:
+            // RitualPosition_ThingDef.IsUsableThing - needs to redirect invisDoor.Fillage to parentDoor
 
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.FreePassage)),
@@ -297,6 +462,7 @@ namespace DoorsExpanded
                 transpiler: nameof(DoorExpandedGhostGraphicForTranspiler));
             Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.SpawnSetup)),
                 prefix: nameof(DoorExpandedBlueprintSpawnSetupPrefix));
+            // TODO: Blueprint.Draw no longer exists
             Patch(original: AccessTools.Method(typeof(Blueprint), nameof(Blueprint.Draw)),
                 prefix: nameof(DoorExpandedBlueprintDrawPrefix));
 
