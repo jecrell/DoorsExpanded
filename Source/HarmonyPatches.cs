@@ -292,46 +292,12 @@ namespace DoorsExpanded
             //   prefix patches, and there's no safe way to redirect other mods' Building_Door patches to Building_DoorExpanded patches.
 
             // TODO:
-            // Room.IsDoorway only returns true for 1x1 doors since it requires exactly 1 region requirement, and our patch to
-            // RegionAndRoomUpdater.ShouldBeInTheSameRoom makes it so a larger door is a single room of multiple single cell districts
-            // (each containing 1 region). This needs to be fixed to return true for our larger doors.
-            // (This would also partially fix BeautyUtility.FillBeautyRelevantCells.)
-
-            // TODO:
             // BeautyUtility.FillBeautyRelevantCells should be patched, since it doesn't handle adjacent normal doors cluster well,
             // assuming that neighboring rooms of doors aren't doors themselves. This is inconsequential in vanilla, but afflicts our
             // larger doors composed of cluster of invis doors.
             // This is evident if you create a 3x3 cross of normal doors, enable beauty overlay, and highlight the center door.
             // That said, this is a minor issue, so low priority to fix.
             // IdeoUtility.GetJoinedRooms has a similar issue.
-
-            // TODO:
-            // RoomTempTracker.RegenerateEqualizationData has logic to include only cells on the other side of walls bordering the room
-            // (technically, any impassable building with full fillage) for wall equalization purposes, and it explicitly ignores cells
-            // on the other side of external doors, unless it's blocked by another wall. However, the detection of whether the door is
-            // on the border of the room is faulty, since it assumes that there is only a single door when examining its region neighbors.
-            // This means that if another door is right on the other side of border door, that other door is erroneously included.
-            // This probably isn't a huge deal in vanilla, where layering doors one after another is rare, but that's always the case for
-            // some our doors, so it should be fixed.
-            // Also, a door (which itself comprises a 1x1 room) includes cells on the other side of the walls that neighbor it,
-            // and doors that aren't adjacent to walls don't include any cells. It looks pretty weird, but it's not a big deal,
-            // since doors themselves are excluded from being affected by RoomTempTracker (they are instead equalized via
-            // GenTemperature.EqualizeTemperaturesThroughBuilding).
-            // There's one exceptional case which is addressed in RoomTempTracker.EqualizeTemperature - see above.
-
-            // TODO:
-            // RitualPosition_ThingDef.IsUsableThing - needs to redirect invisDoor.Fillage to parentDoor
-
-            // TODO:
-            // PrisonBreakUtility.InitiatePrisonBreakMtbDays
-            // - increases prisoner escape chance for each bordering door, needs to be patched to consider large door as a single door
-
-            // TODO:
-            // CompForbidden, which invis doors include, no longer toggles the forbidden overlay from a PostDraw method. It now toggles
-            // the overlay from a new UpdateOverlayHandle method that's called by the Forbidden setter and PostSpawnSetup method.
-            // Building_DoorRegionHandler overrides Draw to do nothing, which prevents CompForbidden.PostDraw from toggling the overlay
-            // for our invis doors. This no longer works with the removal of PostDraw (though should still override Draw to do nothing).
-            // We need to patch UpdateOverlayHandle to prevent invis doors from showing the forbidden overlay.
 
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.FreePassage)),
@@ -385,6 +351,9 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Projectile), "ImpactSomething"),
                 transpiler: nameof(InvisDoorDefFillageTranspiler));
             Patch(original: AccessTools.Method(rwAssembly.GetType("Verse.SectionLayer_IndoorMask"), "HideRainPrimary"),
+                transpiler: nameof(InvisDoorDefFillageTranspiler));
+            Patch(original: AccessTools.Method(typeof(RitualPosition_ThingDef), nameof(RitualPosition_ThingDef.IsUsableThing),
+                    new[] { typeof(Thing), typeof(IntVec3), typeof(TargetInfo) }),
                 transpiler: nameof(InvisDoorDefFillageTranspiler));
             foreach (var original in typeof(FloodFillerFog).FindLambdaMethods(nameof(FloodFillerFog.FloodUnfog), typeof(bool)))
             {
@@ -441,6 +410,9 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Room), nameof(Room.Notify_ContainedThingSpawnedOrDespawned)),
                 prefix: nameof(InvisDoorRoomNotifyContainedThingSpawnedOrDespawnedPrefix),
                 priority: Priority.VeryHigh);
+            Patch(original: AccessTools.Method(typeof(CompForbiddable), "UpdateOverlayHandle"),
+                prefix: nameof(InvisDoorCompForbiddableUpdateOverlayHandlePrefix),
+                priority: Priority.VeryHigh);
             Patch(original: AccessTools.Method(typeof(MouseoverReadout), nameof(MouseoverReadout.MouseoverReadoutOnGUI)),
                 transpiler: nameof(MouseoverReadoutTranspiler));
 
@@ -452,6 +424,8 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(EdificeGrid), nameof(EdificeGrid.Register)),
                 prefix: nameof(DoorExpandedEdificeGridRegisterPrefix),
                 priority: Priority.VeryHigh);
+            Patch(original: AccessTools.PropertyGetter(typeof(Room), nameof(Room.IsDoorway)),
+                transpiler: nameof(DoorExpandedRoomIsDoorwayTranspiler));
             // Despite ThingDef.IsDoor being a small method that's potentially inlined, Harmony 2 allows patching it.
             Patch(original: AccessTools.PropertyGetter(typeof(ThingDef), nameof(ThingDef.IsDoor)),
                 postfix: nameof(DoorExpandedThingDefIsDoorPostfix));
@@ -463,6 +437,8 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(GenTemperature), nameof(GenTemperature.EqualizeTemperaturesThroughBuilding)),
                 transpiler: nameof(DoorExpandedEqualizeTemperaturesThroughBuildingTranspiler),
                 transpilerRelated: nameof(DoorExpandedGetAdjacentCellsForTemperature));
+            Patch(AccessTools.Method(typeof(RoomTempTracker), "RegenerateEqualizationData"),
+                transpiler: nameof(DoorExpandedRegenerateEqualizationDataTranspiler));
             Patch(original: AccessTools.Method(typeof(Projectile), "CheckForFreeIntercept"),
                 transpiler: nameof(DoorExpandedProjectileCheckForFreeIntercept));
             Patch(original: AccessTools.Method(typeof(TrashUtility), nameof(TrashUtility.TrashJob)),
@@ -470,6 +446,9 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Thing), nameof(Thing.SetFactionDirect)),
                 prefix: nameof(DoorExpandedSetFactionDirectPrefix),
                 priority: Priority.VeryHigh);
+            Patch(original: AccessTools.Method(typeof(PrisonBreakUtility), nameof(PrisonBreakUtility.InitiatePrisonBreakMtbDays)),
+                transpiler: nameof(DoorExpandedInitiatePrisonBreakMtbDaysTranspiler),
+                transpilerRelated: nameof(DoorExpandedInitiatePrisonBreakMtbDaysAddAllRegionsInDoor));
 
             // Patches for ghost (pre-placement) and blueprints for door expanded.
             foreach (var original in typeof(Designator_Place).FindLambdaMethods(nameof(Designator_Place.DoExtraGuiControls), typeof(void)))
@@ -936,6 +915,18 @@ namespace DoorsExpanded
             return !(th.Spawned && th is Building_DoorRegionHandler);
         }
 
+        // CompForbiddable.UpdateOverlayHandle
+        public static bool InvisDoorCompForbiddableUpdateOverlayHandlePrefix(ThingWithComps ___parent)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(InvisDoorCompForbiddableUpdateOverlayHandlePrefix));
+            // CompForbidden, which invis doors include, no longer toggles the forbidden overlay from a PostDraw method as of RW 1.3+.
+            // It now toggles the overlay from a new UpdateOverlayHandle method that's called by the Forbidden setter and PostSpawnSetup.
+            // Building_DoorRegionHandler overrides Draw to do nothing, which prevents CompForbidden.PostDraw from toggling the overlay
+            // for our invis doors. This no longer works with the removal of PostDraw (though should still override Draw to do nothing).
+            // We need to patch UpdateOverlayHandle to prevent invis doors from showing the forbidden overlay.
+            return ___parent is not Building_DoorRegionHandler;
+        }
+
         // MouseoverReadout.MouseoverReadoutOnGUI
         public static IEnumerable<CodeInstruction> MouseoverReadoutTranspiler(IEnumerable<CodeInstruction> instructions,
             MethodBase method, ILGenerator ilGen)
@@ -1027,6 +1018,36 @@ namespace DoorsExpanded
             // Only the door expanded's invis doors are registered in the edifice grid,
             // not the parent door expanded itself.
             return !(ed is Building_DoorExpanded);
+        }
+
+        // Room.IsDoorway
+        public static IEnumerable<CodeInstruction> DoorExpandedRoomIsDoorwayTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // Room.IsDoorway only returns true for 1x1 doors since it requires exactly 1 region requirement, and our patch to
+            // RegionAndRoomUpdater.ShouldBeInTheSameRoom makes it so a larger door is a single room of multiple single cell districts
+            // (each containing 1 region). This needs to be fixed to return true for our larger doors. More specifically, the district
+            // count check needs to be changed to allow at least one district rather than exactly 1 district.
+            //
+
+            // This transforms the following code:
+            //  if (districts.Count != 1)
+            //      return false;
+            // into:
+            //  if (districts.Count == 0)
+            //      return false;
+
+            var instructionList = instructions.AsList();
+
+            // Must match ldc.i4.1 and bne.un.s exactly (or equivalent instructions).
+            var index = instructionList.FindSequenceIndex(
+                instr => instr.LoadsConstant(1),
+                instr => instr.opcode == OpCodes.Bne_Un || instr.opcode == OpCodes.Bne_Un_S);
+            instructionList.SafeReplaceRange(index, 2, new[]
+            {
+                new CodeInstruction(OpCodes.Brfalse, instructionList[index + 1].operand), // branch if 0
+            });
+
+            return instructionList;
         }
 
         // ThingDef.IsDoor
@@ -1214,6 +1235,86 @@ namespace DoorsExpanded
         private static readonly FieldInfo fieldof_GenTemperature_beqRooms =
             AccessTools.Field(typeof(GenTemperature), "beqRooms");
 
+        // RoomTempTracker.RegenerateEqualizationData
+        public static IEnumerable<CodeInstruction> DoorExpandedRegenerateEqualizationDataTranspiler(IEnumerable<CodeInstruction> instructions,
+            MethodBase method, ILGenerator ilGen)
+        {
+            // RoomTempTracker.RegenerateEqualizationData has logic to include only cells on the other side of walls bordering the room
+            // (technically, any impassable building with full fillage) for wall equalization purposes, and it explicitly ignores cells
+            // on the other side of external doors, unless it's blocked by another wall. However, the detection of whether the door is
+            // on the border of the room is faulty, since it assumes that there is only a single door when examining its region neighbors.
+            // This means that if another door is right on the other side of border door, that other door is erroneously included.
+            // This probably isn't a huge deal in vanilla, where layering doors one after another is rare, but that's always the case for
+            // some our doors, so it should be fixed.
+            // Also, a door (which itself comprises a 1x1 room) includes cells on the other side of the walls that neighbor it,
+            // and doors that aren't adjacent to walls don't include any cells. It looks pretty weird, but it's not a big deal,
+            // since doors themselves are excluded from being affected by RoomTempTracker (they are instead equalized via
+            // GenTemperature.EqualizeTemperaturesThroughBuilding).
+            // There's one exceptional case which is addressed in RoomTempTracker.EqualizeTemperature to address the exploit described in
+            // https://www.reddit.com/r/RimWorld/comments/b1wz9a/rimworld_temperature_physics_allow_you_to_build/
+
+            // This transforms the following code:
+            //  Region region = intVec.GetRegion(map);
+            //  if (...)
+            //  {
+            //      ...
+            //      Region regionA = ...
+            //      Region regionB = ...
+            //      if (regionA.Room != room && !regionA.IsDoorway)
+            //      {
+            //          ...
+            //      }
+            //      if (regionB.Room != room && !regionB.IsDoorway)
+            //      {
+            //          ...
+            //      }
+            //      ...
+            //  }
+            // into:
+            //  Region region = intVec.GetRegion(map);
+            //  if (...)
+            //  {
+            //      ...
+            //      Region regionA = ...
+            //      Region regionB = ...
+            //      if (regionA.Room != room && regionA != region)
+            //      {
+            //          ...
+            //      }
+            //      if (regionB.Room != room && regionB != region)
+            //      {
+            //          ...
+            //      }
+            //      ...
+            //  }
+
+            var methodof_GridsUtility_GetRegion = AccessTools.Method(typeof(GridsUtility), nameof(GridsUtility.GetRegion));
+            var methodof_Region_get_IsDoorway = AccessTools.PropertyGetter(typeof(Region), nameof(Region.IsDoorway));
+            var instructionList = instructions.AsList();
+            var locals = new Locals(method, ilGen);
+
+            var getRegionIndex = instructionList.FindIndex(instr => instr.Calls(methodof_GridsUtility_GetRegion));
+            var regionStoreIndex = instructionList.FindIndex(getRegionIndex + 1, locals.IsStloc);
+            var regionVar = locals.FromStloc(instructionList[regionStoreIndex]);
+
+            var index = regionStoreIndex + 1;
+            while (true)
+            {
+                index = instructionList.FindIndex(index, instr => instr.Calls(methodof_Region_get_IsDoorway));
+                if (index == -1)
+                    break;
+                var newInstructions = new[]
+                {
+                    regionVar.ToLdloc(),
+                    new CodeInstruction(OpCodes.Ceq),
+                };
+                instructionList.SafeReplaceRange(index, 1, newInstructions);
+                index += newInstructions.Length;
+            }
+
+            return instructionList;
+        }
+
         // Projectile.CheckForFreeIntercept
         public static IEnumerable<CodeInstruction> DoorExpandedProjectileCheckForFreeIntercept(
             IEnumerable<CodeInstruction> instructions)
@@ -1258,6 +1359,46 @@ namespace DoorsExpanded
         }
 
         private static readonly ConcurrentDictionary<Thing, bool> setFactionDirectAlreadyCalled = new ConcurrentDictionary<Thing, bool>();
+
+        // PrisonBreakUtility.InitiatePrisonBreakMtbDays
+        public static IEnumerable<CodeInstruction> DoorExpandedInitiatePrisonBreakMtbDaysTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            // InitiatePrisonBreakMtbDays increases prisoner escape chance for each bordering door (specifically a portal region),
+            // and for larger doors, it would count each bordering invis door of the same parent door. To prevent this, when an invis door
+            // region is encountered, add all regions of that invis door's room (i.e. all regions of the parent door) to tmpRegions
+            // (the set of regions already counted) to prevent them from being counted in subsequent iterations of the method's region loop.
+
+            // This transforms the following code:
+            //  tmpRegions.Add(otherRegion);
+            // into:
+            //  DoorExpandedInitiatePrisonBreakMtbDaysAddAllRegionsInDoor(tmpRegions, otherRegion);
+
+            // Assume that HashSet<Region>.Add call is operating on tmpRegions (hard to verify without CIL stack tracking).
+            return Transpilers.MethodReplacer(instructions,
+                AccessTools.Method(typeof(HashSet<Region>), nameof(HashSet<Region>.Add)),
+                AccessTools.Method(typeof(HarmonyPatches), nameof(DoorExpandedInitiatePrisonBreakMtbDaysAddAllRegionsInDoor)));
+        }
+
+        private static bool DoorExpandedInitiatePrisonBreakMtbDaysAddAllRegionsInDoor(HashSet<Region> tmpRegions, Region otherRegion)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedInitiatePrisonBreakMtbDaysAddAllRegionsInDoor));
+            var room = otherRegion.Room;
+            if (room is null) // shouldn't be possible, but if this somehow happens, fallback to the existing behavior
+            {
+                return tmpRegions.Add(otherRegion);
+            }
+            else
+            {
+                var success = false;
+                foreach (var region in room.Regions)
+                {
+                    if (tmpRegions.Add(region))
+                        success = true;
+                }
+                return success;
+            }
+        }
 
         // Designator_Place.DoExtraGuiControls (internal lambda)
         // Designator_Place.HandleRotationShortcuts
