@@ -842,7 +842,7 @@ namespace DoorsExpanded
                     ? doorAsyncGraphic.GraphicColoredFor(this)
                     : Graphic;
                 Draw(def, props, graphic, drawPos, rotation, openPct, flipped,
-                    i == 0 && MoreDebugViewSettings.writeDoors ? debugDrawVectors : null);
+                    i == 0 && DebugViewSettingsMoreWrite.writeDoors ? debugDrawVectors : null);
                 graphic.ShadowGraphic?.DrawWorker(drawPos, rotation, def, this, 0f);
                 if (props.singleDoor)
                     break;

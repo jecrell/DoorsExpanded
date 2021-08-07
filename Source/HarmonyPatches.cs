@@ -216,12 +216,12 @@ namespace DoorsExpanded
             // JobGiver_MineRandom.TryGiveJob - IsDoor only called for invis doors
             // PlantUtility.CanEverPlantAt - IsDoor only called for invis doors
             // Sketch.ExposeData - just checks whether door and wall exists in same cell
-            // SketchUtility.GetDoor
+            // SketchGenUtility.GetDoor
             // - SketchResolver_AddThingsCentral.CanPlaceAt - just checks whether doors exists at cell
             // StatWorker.ShouldShowFor - method and IsDoor should only be called for parent doors
             // TargetingParameters.CanTarget - fine for both invis doors and parent doors
             // AnimalPenBlueprintEnclosureCalculator.PassCheck - see above
-            // Buillding.GetGizmos - method only called for parent doors
+            // Building.GetGizmos - method only called for parent doors
             // DebugOutputsGeneral.ThingFillageAndPassability - debug method doesn't matter
             // GenPlace.PlaceSpotQualityAt - just checks whether doors exists at cell
             // SectionLayer_IndoorMask.Regenerate - IsDoor only called for invis doors
@@ -271,6 +271,16 @@ namespace DoorsExpanded
             // ShotReport.HitReportFor - ditto
             // ThingDef.SpecialDisplayStats - should never be shown for invis door
 
+            // Notes on what methods don't need patching despite referencing RegionType.Portal (indicates region is a door):
+            // WorkGiver_CleanFilth.JobOnThing - see above
+            // RCellFinder.SpotToChewStandingNear - just checks whether doors exists at cell
+            // CellFinderLoose.CanFleeToLocation - ditto
+            // RegionMaker.TryGenerateRegionFrom - logic that associates Region.Portal with doors (region.door in this case)
+            // RegionTypeUtility.GetExpectedRegionType - ditto
+            // RegionTypeUtility.IsOneCellRegion/AllowsMultipleRegionsPerDistrict
+            // - enforces that door regions are single cell, which is fine with the invis doors that comprise parent doors
+            // RegionTempTracker.RegenerateEqualizationData - see above
+
             // Notes on usage of patch priority:
             // - Destructive prefix patches (prefix patch that returns false, preventing remaining non-postfix/finalizer logic)
             //   that simply prevent a method from running based off a simple filter have high priority yet NOT highest priority,
@@ -282,12 +292,19 @@ namespace DoorsExpanded
             //   prefix patches, and there's no safe way to redirect other mods' Building_Door patches to Building_DoorExpanded patches.
 
             // TODO:
+            // Room.IsDoorway only returns true for 1x1 doors since it requires exactly 1 region requirement, and our patch to
+            // RegionAndRoomUpdater.ShouldBeInTheSameRoom makes it so a larger door is a single room of multiple single cell districts
+            // (each containing 1 region). This needs to be fixed to return true for our larger doors.
+            // (This would also partially fix BeautyUtility.FillBeautyRelevantCells.)
+
+            // TODO:
             // BeautyUtility.FillBeautyRelevantCells should be patched, since it doesn't handle adjacent normal doors cluster well,
             // assuming that neighboring rooms of doors aren't doors themselves. This is inconsequential in vanilla, but afflicts our
             // larger doors composed of cluster of invis doors.
             // This is evident if you create a 3x3 cross of normal doors, enable beauty overlay, and highlight the center door.
             // That said, this is a minor issue, so low priority to fix.
             // IdeoUtility.GetJoinedRooms has a similar issue.
+
             // TODO:
             // RoomTempTracker.RegenerateEqualizationData has logic to include only cells on the other side of walls bordering the room
             // (technically, any impassable building with full fillage) for wall equalization purposes, and it explicitly ignores cells
@@ -301,8 +318,20 @@ namespace DoorsExpanded
             // since doors themselves are excluded from being affected by RoomTempTracker (they are instead equalized via
             // GenTemperature.EqualizeTemperaturesThroughBuilding).
             // There's one exceptional case which is addressed in RoomTempTracker.EqualizeTemperature - see above.
+
             // TODO:
             // RitualPosition_ThingDef.IsUsableThing - needs to redirect invisDoor.Fillage to parentDoor
+
+            // TODO:
+            // PrisonBreakUtility.InitiatePrisonBreakMtbDays
+            // - increases prisoner escape chance for each bordering door, needs to be patched to consider large door as a single door
+
+            // TODO:
+            // CompForbidden, which invis doors include, no longer toggles the forbidden overlay from a PostDraw method. It now toggles
+            // the overlay from a new UpdateOverlayHandle method that's called by the Forbidden setter and PostSpawnSetup method.
+            // Building_DoorRegionHandler overrides Draw to do nothing, which prevents CompForbidden.PostDraw from toggling the overlay
+            // for our invis doors. This no longer works with the removal of PostDraw (though should still override Draw to do nothing).
+            // We need to patch UpdateOverlayHandle to prevent invis doors from showing the forbidden overlay.
 
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.FreePassage)),
@@ -423,7 +452,7 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(EdificeGrid), nameof(EdificeGrid.Register)),
                 prefix: nameof(DoorExpandedEdificeGridRegisterPrefix),
                 priority: Priority.VeryHigh);
-            // ThingDef.IsDoor: despite being a small method, it doesn't seem to be inline, and thus is patchable.
+            // Despite ThingDef.IsDoor being a small method that's potentially inlined, Harmony 2 allows patching it.
             Patch(original: AccessTools.PropertyGetter(typeof(ThingDef), nameof(ThingDef.IsDoor)),
                 postfix: nameof(DoorExpandedThingDefIsDoorPostfix));
             Patch(original: AccessTools.PropertySetter(typeof(CompForbiddable), nameof(CompForbiddable.Forbidden)),
@@ -433,7 +462,7 @@ namespace DoorsExpanded
                 postfix: nameof(DoorExpandedShouldBeInTheSameRoomPostfix));
             Patch(original: AccessTools.Method(typeof(GenTemperature), nameof(GenTemperature.EqualizeTemperaturesThroughBuilding)),
                 transpiler: nameof(DoorExpandedEqualizeTemperaturesThroughBuildingTranspiler),
-                transpilerRelated: nameof(GetAdjacentCellsForTemperature));
+                transpilerRelated: nameof(DoorExpandedGetAdjacentCellsForTemperature));
             Patch(original: AccessTools.Method(typeof(Projectile), "CheckForFreeIntercept"),
                 transpiler: nameof(DoorExpandedProjectileCheckForFreeIntercept));
             Patch(original: AccessTools.Method(typeof(TrashUtility), nameof(TrashUtility.TrashJob)),
@@ -483,7 +512,7 @@ namespace DoorsExpanded
             // Patch CompBreakdownable to consider CompProperties_BreakdownableCustom.
             Patch(original: AccessTools.Method(typeof(CompBreakdownable), nameof(CompBreakdownable.CheckForBreakdown)),
                 transpiler: nameof(CompBreakdownableCheckForBreakdownTranspiler),
-                transpilerRelated: nameof(CompBreakdownableMTBUnit));
+                transpilerRelated: nameof(CompBreakdownableCustomMTBUnit));
 
             // Backwards compatibility patches.
             Patch(original: AccessTools.Method(typeof(BackCompatibility), nameof(BackCompatibility.GetBackCompatibleType)),
@@ -811,6 +840,7 @@ namespace DoorsExpanded
             // This removes the slowdown from consecutive invis doors of the same Building_DoorExpanded thing.
             // It keeps the slowdown from consecutive "actual" doors
             // (non-Building_DoorRegionhandler Building_Door or Building_DoorExpanded).
+
             // This transforms the following code:
             //  if (thing is Building_Door && prevCell.IsValid)
             //  {
@@ -912,6 +942,7 @@ namespace DoorsExpanded
         {
             // This transpiler makes MouseoverReadout skip things with null or empty LabelMouseover.
             // In particular, this makes it skip invis doors, which have null LabelMouseover.
+
             // This transforms the following code:
             //  for (...)
             //  {
@@ -1066,6 +1097,7 @@ namespace DoorsExpanded
             // For the twoWay=false case (which is the one we care about), the algorithm for finding surrounding temperatures
             // only looks at the cardinal directions from the building's singular position cell.
             // We need it look at all cells surrounding the building's OccupiedRect, excluding corners.
+
             // This transforms the following code:
             //  int roomCount = 0;
             //  float temperatureSum = 0f;
@@ -1124,7 +1156,7 @@ namespace DoorsExpanded
             {
                 new CodeInstruction(OpCodes.Ldarg_0), // Building b
                 new CodeInstruction(OpCodes.Call,
-                    AccessTools.Method(typeof(HarmonyPatches), nameof(GetAdjacentCellsForTemperature))),
+                    AccessTools.Method(typeof(HarmonyPatches), nameof(DoorExpandedGetAdjacentCellsForTemperature))),
                 adjCellsVar.ToStloc(),
             };
             instructionList.SafeInsertRange(twoWayArgFalseIndex, newInstructions);
@@ -1152,9 +1184,9 @@ namespace DoorsExpanded
             return instructionList;
         }
 
-        private static IntVec3[] GetAdjacentCellsForTemperature(Building building)
+        private static IntVec3[] DoorExpandedGetAdjacentCellsForTemperature(Building building)
         {
-            DebugInspectorPatches.RegisterPatchCalled(nameof(GetAdjacentCellsForTemperature));
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedGetAdjacentCellsForTemperature));
             var size = building.def.Size;
             if (size.x == 1 && size.z == 1)
             {
@@ -1335,6 +1367,7 @@ namespace DoorsExpanded
             // doesn't work with (it returns a Graphic_Single based off thingDef.uiIconPath rather than Graphic_Multi
             // based off thingDef.graphic). So we need to patch GhostDrawer.DrawGhostThing as well.
             // For door expanded, we always want to return a Graphic_Multi based off thingDef.graphic.
+
             // This transforms the following code:
             //  if (... || thingDef.IsDoor)
             // into:
@@ -1407,6 +1440,7 @@ namespace DoorsExpanded
         // ThingWithComps.Draw
         public static bool DoorExpandedThingDrawAtPrefix(Thing __instance)
         {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedThingDrawAtPrefix));
             if (__instance is Blueprint blueprint)
                 return DoorExpandedBlueprintDrawPrefix(blueprint);
             return true;
@@ -1450,6 +1484,7 @@ namespace DoorsExpanded
         public static IEnumerable<CodeInstruction> DoorRemoteAddJobGiverWorkOrdersTranspiler(IEnumerable<CodeInstruction> instructions)
         {
             // Workaround to remove the "Prioritize" prefix for the remote press/flip job in the float menu.
+
             // This transforms the following code:
             //  TranslatorFormattedStringExtensions.Translate("PrioritizeGeneric", ...)
             // into:
@@ -1519,7 +1554,7 @@ namespace DoorsExpanded
                     yield return new CodeInstruction(OpCodes.Ldfld,
                         AccessTools.Field(typeof(ThingComp), nameof(ThingComp.props)));
                     yield return new CodeInstruction(OpCodes.Call,
-                        AccessTools.Method(typeof(HarmonyPatches), nameof(CompBreakdownableMTBUnit)));
+                        AccessTools.Method(typeof(HarmonyPatches), nameof(CompBreakdownableCustomMTBUnit)));
                 }
                 else
                 {
@@ -1528,9 +1563,9 @@ namespace DoorsExpanded
             }
         }
 
-        private static float CompBreakdownableMTBUnit(CompProperties compProps)
+        private static float CompBreakdownableCustomMTBUnit(CompProperties compProps)
         {
-            DebugInspectorPatches.RegisterPatchCalled(nameof(CompBreakdownableMTBUnit));
+            DebugInspectorPatches.RegisterPatchCalled(nameof(CompBreakdownableCustomMTBUnit));
             return compProps is CompProperties_BreakdownableCustom custom ? custom.breakdownMTBUnit : 1f;
         }
 

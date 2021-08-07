@@ -7,19 +7,23 @@ using System.Reflection.Emit;
 using System.Text;
 using HarmonyLib;
 using RimWorld;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
 namespace DoorsExpanded
 {
-    public static class MoreDebugViewSettings
+    public static class DebugViewSettingsMoreDraw
     {
-#pragma warning disable CS0649
+        public static bool drawDoorTempEqualization;
+    }
+
+    public static class DebugViewSettingsMoreWrite
+    {
         public static bool writeTemperature;
         public static bool writeEdificeGrid;
         public static bool writeDoors;
         public static bool writePatchCallRegistry;
-#pragma warning restore CS0649
     }
 
     public static class DebugInspectorPatches
@@ -27,14 +31,20 @@ namespace DoorsExpanded
         public static void PatchDebugInspector()
         {
             var harmony = HarmonyPatches.harmony;
+            var type = typeof(DebugInspectorPatches);
             harmony.Patch(original: AccessTools.Constructor(typeof(Dialog_DebugSettingsMenu)),
-                transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(AddMoreDebugViewSettingsTranspiler)));
+                transpiler: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsTranspiler)));
             harmony.Patch(original: AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoListingItems"),
-                transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(AddMoreDebugViewSettingsTranspiler)));
+                transpiler: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsTranspiler)),
+                postfix: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsPostfix)));
             harmony.Patch(original: AccessTools.Method(typeof(EditWindow_DebugInspector), "CurrentDebugString"),
-                transpiler: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(EditWindowDebugInspectorTranspiler)));
+                transpiler: new HarmonyMethod(type, nameof(EditWindowDebugInspectorTranspiler)));
             harmony.Patch(original: AccessTools.Method(typeof(District), "DebugString"),
-                postfix: new HarmonyMethod(typeof(DebugInspectorPatches), nameof(DistrictMoreDebugString)));
+                postfix: new HarmonyMethod(type, nameof(DistrictMoreDebugString)));
+            harmony.Patch(original: AccessTools.Method(typeof(Room), nameof(Room.DebugString)),
+                postfix: new HarmonyMethod(type, nameof(RoomMoreDebugString)));
+            harmony.Patch(original: AccessTools.Method(typeof(DoorsDebugDrawer), nameof(DoorsDebugDrawer.DrawDebug)),
+                postfix: new HarmonyMethod(type, nameof(AddMoreDoorsDebugDrawer)));
         }
 
         private static Dictionary<string, bool> patchCallRegistry;
@@ -80,19 +90,101 @@ namespace DoorsExpanded
         private static FieldInfo[] AddMoreDebugViewSettings(FieldInfo[] fields)
         {
             var fieldList = fields.ToList();
-            var insertionIndex = fieldList.IndexOf(fieldof_DebugViewSettings_writePathCosts) + 1;
-            var fieldsToInsert = typeof(MoreDebugViewSettings).GetFields().AsEnumerable();
+            var fieldsToInsert = typeof(DebugViewSettingsMoreWrite).GetFields().AsEnumerable();
             if (patchCallRegistry == null)
                 fieldsToInsert = fieldsToInsert.Where(field => field != fieldof_MoreDebugViewSettings_writePatchCallRegistry);
-            fieldList.InsertRange(insertionIndex, fieldsToInsert);
+            fieldList.InsertRange(fieldList.IndexOf(fieldof_DebugViewSettings_writePathCosts) + 1, fieldsToInsert);
+            fieldList.InsertRange(fieldList.IndexOf(fieldof_DebugViewSettings_drawDoorsDebug) + 1,
+                typeof(DebugViewSettingsMoreDraw).GetFields());
             return fieldList.ToArray();
         }
 
         private static readonly MethodInfo methodof_Type_GetFields = AccessTools.Method(typeof(Type), nameof(Type.GetFields));
+        private static readonly FieldInfo fieldof_DebugViewSettings_drawDoorsDebug =
+            AccessTools.Field(typeof(DebugViewSettings), nameof(DebugViewSettings.drawDoorsDebug));
         private static readonly FieldInfo fieldof_DebugViewSettings_writePathCosts =
             AccessTools.Field(typeof(DebugViewSettings), nameof(DebugViewSettings.writePathCosts));
         private static readonly FieldInfo fieldof_MoreDebugViewSettings_writePatchCallRegistry =
-            AccessTools.Field(typeof(MoreDebugViewSettings), nameof(MoreDebugViewSettings.writePatchCallRegistry));
+            AccessTools.Field(typeof(DebugViewSettingsMoreWrite), nameof(DebugViewSettingsMoreWrite.writePatchCallRegistry));
+
+        public static void AddMoreDebugViewSettingsPostfix()
+        {
+            // We do dynamic patching here to try to avoid the performance overhead in the patched methods when toggled off.
+            if (temperatureEqualizationMethodsPatched != DebugViewSettingsMoreDraw.drawDoorTempEqualization)
+            {
+                foreach (var pair in temperatureEqualizationMethods)
+                {
+                    var origMethod = pair.Key;
+                    var patchMethod = pair.Value;
+                    if (temperatureEqualizationMethodsPatched)
+                        HarmonyPatches.harmony.Unpatch(origMethod, patchMethod);
+                    else
+                        HarmonyPatches.harmony.Patch(origMethod, transpiler: new HarmonyMethod(patchMethod));
+                }
+                temperatureEqualizationMethodsPatched = DebugViewSettingsMoreDraw.drawDoorTempEqualization;
+            }
+        }
+
+        private static bool temperatureEqualizationMethodsPatched = false;
+        private static readonly Dictionary<MethodInfo, MethodInfo> temperatureEqualizationMethods = new()
+        {
+            [AccessTools.Method(typeof(RoomTempTracker), nameof(RoomTempTracker.EqualizeTemperature))] =
+                AccessTools.Method(typeof(DebugInspectorPatches), nameof(RoomTempTracker_EqualizeTemperature_Transpiler)),
+            [AccessTools.Method(typeof(GenTemperature), nameof(GenTemperature.EqualizeTemperaturesThroughBuilding))] =
+                AccessTools.Method(typeof(DebugInspectorPatches), nameof(GenTemperature_EqualizeTemperaturesThroughBuilding_Transpiler)),
+        };
+
+        public static IEnumerable<CodeInstruction> RoomTempTracker_EqualizeTemperature_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // This transforms the following code:
+            //  this.room.Temperature += WallEqualizationTempChangePerInterval()
+            // into:
+            //  RoomTempTracker_EqualizeTemperature_SetRoomTemperature(this.room,
+            //      this.room.Temperature + WallEqualizationTempChangePerInterval())
+
+            return Transpilers.MethodReplacer(instructions,
+                AccessTools.PropertySetter(typeof(Room), nameof(Room.Temperature)),
+                AccessTools.Method(typeof(DebugInspectorPatches),
+                    nameof(RoomTempTracker_EqualizeTemperature_SetRoomTemperature)));
+        }
+
+        private static void RoomTempTracker_EqualizeTemperature_SetRoomTemperature(Room room, float temperature)
+        {
+            SetRoomTemperatureAndDrawDelta(room, temperature, Color.red);
+        }
+
+        public static IEnumerable<CodeInstruction> GenTemperature_EqualizeTemperaturesThroughBuilding_Transpiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            // This transforms the following code:
+            //  room.Temperature += tempDelta
+            // into:
+            //  SetRoomTemperatureAndDrawDelta(room, room.Temperature + tempDelta)
+
+            return Transpilers.MethodReplacer(instructions,
+                AccessTools.PropertySetter(typeof(Room), nameof(Room.Temperature)),
+                AccessTools.Method(typeof(DebugInspectorPatches),
+                    nameof(GenTemperature_EqualizeTemperaturesThroughBuilding_SetRoomTemperature)));
+        }
+
+        private static void GenTemperature_EqualizeTemperaturesThroughBuilding_SetRoomTemperature(Room room, float temperature)
+        {
+            SetRoomTemperatureAndDrawDelta(room, temperature, Color.white);
+        }
+
+        private static void SetRoomTemperatureAndDrawDelta(Room room, float temperature, Color color)
+        {
+            if (room.IsDoorway)
+            {
+                var tempDelta = temperature - room.Temperature;
+                var door = room.FirstRegion.door;
+                if (door is Building_DoorRegionHandler)
+                    Log.Message($"[{color}] temperature of {door}: {room.Temperature} => {temperature}");
+                if (tempDelta != 0f)
+                    MoteMaker.ThrowText(room.ExtentsClose.CenterVector3, room.Map, $"{tempDelta:+0.##;-0.##}", color);
+            }
+            room.Temperature = temperature;
+        }
 
         // EditWindow_DebugInspector.CurrentDebugString
         public static IEnumerable<CodeInstruction> EditWindowDebugInspectorTranspiler(IEnumerable<CodeInstruction> instructions,
@@ -168,20 +260,20 @@ namespace DoorsExpanded
         {
             var map = Find.CurrentMap;
 
-            if (MoreDebugViewSettings.writeTemperature)
+            if (DebugViewSettingsMoreWrite.writeTemperature)
             {
                 debugString.AppendLine("---");
                 debugString.AppendLine("Temperature: " +
                     (GenTemperature.TryGetTemperatureForCell(mouseCell, map, out var temperature) ? $"{temperature:f1}" : ""));
             }
 
-            if (MoreDebugViewSettings.writeEdificeGrid)
+            if (DebugViewSettingsMoreWrite.writeEdificeGrid)
             {
                 debugString.AppendLine("---");
                 debugString.AppendLine("Building at edifice grid: " + map.edificeGrid[mouseCell]);
             }
 
-            if (MoreDebugViewSettings.writeDoors)
+            if (DebugViewSettingsMoreWrite.writeDoors)
             {
                 debugString.AppendLine("---");
                 var pawn = Find.Selector.SingleSelectedObject as Pawn;
@@ -292,6 +384,11 @@ namespace DoorsExpanded
                                 //    (pawn.GetLord()?.extraForbiddenThings?.Contains(parentDoor) ?? false));
                             }
                         }
+                        var room = door.GetRoom();
+                        if (room != null)
+                        {
+                            debugString.AppendLine("- " + room.DebugString().Replace("\n  ", "\n    - ").Replace("\n\n", "\n"));
+                        }
                     }
                     else if (thing is Building_DoorRemoteButton remoteButton)
                     {
@@ -303,7 +400,7 @@ namespace DoorsExpanded
                 }
             }
 
-            if (MoreDebugViewSettings.writePatchCallRegistry)
+            if (DebugViewSettingsMoreWrite.writePatchCallRegistry)
             {
                 debugString.AppendLine("---");
                 debugString.AppendLine("Harmony Patch Call Registry:");
@@ -326,7 +423,33 @@ namespace DoorsExpanded
         // District.DebugString
         public static string DistrictMoreDebugString(string result, District __instance)
         {
-            return result + "\n  Neighbors=\n  - " + __instance.Neighbors.Join(delimiter: "\n  - ");
+            return $"{result}\n  Neighbors=\n  - {__instance.Neighbors.Join(delimiter: "\n  - ")}";
+        }
+
+        // Room.DebugString
+        public static string RoomMoreDebugString(string result, Room __instance)
+        {
+            return $"{result}\n  IsDoorway={__instance.IsDoorway}\n  TouchesMapEdge={__instance.TouchesMapEdge}" +
+                $"\n  UsesOutdoorTemperature={__instance.UsesOutdoorTemperature}";
+        }
+
+        // DoorsDebugDrawer.DrawDebug
+        public static void AddMoreDoorsDebugDrawer()
+        {
+            if (DebugViewSettingsMoreDraw.drawDoorTempEqualization)
+            {
+                var mouseCell = UI.MouseCell();
+                var things = mouseCell.GetThingList(Find.CurrentMap);
+                foreach (var thing in things)
+                {
+                    if ((thing is Building_Door && thing is not Building_DoorRegionHandler) || thing is Building_DoorExpanded)
+                    {
+                        var adjCells = GenAdj.CellsAdjacentCardinal(thing);
+                        foreach (var cell in adjCells)
+                            CellRenderer.RenderCell(cell, 0.3f);
+                    }
+                }
+            }
         }
     }
 }

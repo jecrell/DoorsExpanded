@@ -15,15 +15,21 @@ new references to GridsUtility.GetDoor:
 	ComplexThreatWorker_SleepingThreat - ditto
 	MeditationUtility - ditto
 	Graphic_LinkedAsymmetric - ditto
-	WorkGiver_CleanFilth.JobOnThing - gets cell's door's region, should work for our invis doors
+	WorkGiver_CleanFilth - gets cell's door's region, should work for our invis doors
 
 new references to Region.IsDoorway (Region.door will always be invis door rather than parent door):
 	AnimalPenEnclosureCalculator - see above
 
 new references to District.IsDoorway (formerly Room.IsDoorway - see below):
 	Room.IsDoorway
+		only returns true for 1x1 doors due to 1 region requirement due to our RegionAndRoomUpdater.ShouldBeInTheSameRoom patch
+		needs to be fixed to return true for >1x1 doors that have more than 1 region
 
-new references to Room.IsDoorway (new - see below):
+new references to Room.IsDoorway (new - see above and below):
+	BeautyUtility
+		equivalent logic using room.IsDoorway rather than room.Regions.Count == 1 && room.Regions[0].type == RegionType.Portal
+		actually didn't detect >1x1 doors as doors since they have more than 1 region (fixing Room.IsDoorway would address this)
+		also doesn't handle adjacent normal/invis doors cluster well, assuming that neighboring rooms of doors aren't doors themselves
 	IdeoUtility - doesn't handle adjacent normal/invis doors cluster well, assuming that neighboring rooms of doors aren't doors themselves
 	RoomTempTracker
 		equivalent logic in old RoomGroupTempTracker (using new IsDoorway rather than scanning for RegionType.Portal)
@@ -44,7 +50,16 @@ new references to ThingDef.Fillage/fillPercent:
 	RitualPosition_ThingDef - needs to be redirected to parent door
 	DebugOutputsGeneral - debug method doesn't matter
 
-relevant classes that are unchanged:
+new references to RegionType.Portal (indicates region is a door):
+	PrisonBreakUtility - increases prisoner escape chance for each bordering door, needs to be patched to consider large door as a single door
+	WorkGiver_CleanFilth - see above
+
+other:
+	CompForbidden
+		forbidden overlay toggling no longer in PostDraw, so Building_DoorRegionHandler overriding Draw to do nothing no longer prevents overlay on invis doors
+		need to patch UpdateOverlayHandle to prevent invis doors from showing forbidden overlay
+
+relevant classes (referenced in this project) that are unchanged:
 	GenStep_Terrain
 	FloodFillerFog
 	GlowFlooder
@@ -52,6 +67,26 @@ relevant classes that are unchanged:
 	MouseoverReadout
 	CoverUtility
 	EdificeGrid
+	DoorsDebugDrawer
+
+other classes that reference doors or related that are unchanged:
+	SymbolResolver_Street
+	GenStep_PrisonerWillingToJoin
+	RegionMaker
+	Building_OrbitalTradeBeacon
+	SelfDefenseUtility
+	GenClamor
+	JobGiver_SeekAllowedArea
+	JobGiver_SeekSafeTemperature
+	GenClosest
+	JobGiver_MineRandom
+	SymbolResolver_Clear
+	Designator_RemoveFloor
+	Designator_SmoothSurface
+	SmoothSurfaceDesignatorUtility
+	ShipLandingArea
+	CoverGrid
+	SectionLayer_Snow
 
 relevant classes that have clean diffs:
 	Building_Door
