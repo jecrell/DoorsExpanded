@@ -234,6 +234,7 @@
     <building>
       <soundDoorOpenManual>HeronCurtainOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronCurtainClose</soundDoorCloseManual>
+      <roamerCanOpen>true</roamerCanOpen>
     </building>
     <graphicData>
       <texPath>Things/Building/Door/Curtain_Mover</texPath>
@@ -275,6 +276,7 @@
     <building>
       <soundDoorOpenManual>HeronCurtainOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronCurtainClose</soundDoorCloseManual>
+      <roamerCanOpen>true</roamerCanOpen>
     </building>
     <graphicData>
       <texPath>Things/Building/Door/CurtainDouble_Mover</texPath>
@@ -318,6 +320,7 @@
     <building>
       <soundDoorOpenManual>HeronCurtainOpen</soundDoorOpenManual>
       <soundDoorCloseManual>HeronCurtainClose</soundDoorCloseManual>
+      <roamerCanOpen>true</roamerCanOpen>
     </building>
     <graphicData>
       <texPath>Things/Building/Door/CurtainTriple_Mover</texPath>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -98,7 +99,17 @@ namespace DoorsExpanded
                 //    $"- stretchOpenSize: {stretchOpenSize}\n" +
                 //    $"- stretchOffset: {stretchOffset}");
             }
+
+            if (parentDef.building is { relatedBuildCommands: null or { Count: 0 } } buildingProps)
+            {
+                cachedDoorRemoteDefs ??= DefDatabase<ThingDef>.AllDefsListForReading
+                    .FindAll(def => typeof(Building_DoorRemoteButton).IsAssignableFrom(def.thingClass));
+                buildingProps.relatedBuildCommands = cachedDoorRemoteDefs;
+            }
         }
+
+        [ThreadStatic]
+        private static List<ThingDef> cachedDoorRemoteDefs;
     }
 
     // Convenience extensions methods for getting CompProperties_DoorExpanded

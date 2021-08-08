@@ -93,9 +93,9 @@ relevant classes that have clean diffs:
 	ThingDef
 	BuildingProperties - potentially relevant new fields:
 		isPlaceOverableWall - for PlaceWorker_OnTopOfWall
-		relatedBuildCommands - for remotes?
-		useIdeoColor - for tribal curtains?
-		roamerCanOpen - for tribal curtains?
+		relatedBuildCommands - for door remotes (buttons/levers)
+		useIdeoColor - for tribal curtains? no, seems that only rugs (floor furniture) use it
+		roamerCanOpen - for tribal curtains? yes, should act like AnimalFlap
 	GenGrid
 	GridsUtility
 	Projectile
