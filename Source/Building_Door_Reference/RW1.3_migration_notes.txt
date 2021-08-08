@@ -26,11 +26,12 @@ new references to District.IsDoorway (formerly Room.IsDoorway - see below):
 		needs to be fixed to return true for >1x1 doors that have more than 1 region
 
 new references to Room.IsDoorway (new - see above and below):
+	IdeoUtility
+		assumes door's room only has a single region (our larger doors have a region per cell) when looking for neighbors - needs patch
 	BeautyUtility
-		equivalent logic using room.IsDoorway rather than room.Regions.Count == 1 && room.Regions[0].type is RegionType.Portal
+		ditto
+		also equivalent logic using room.IsDoorway rather than room.Regions.Count == 1 && room.Regions[0].type is RegionType.Portal
 		actually didn't detect >1x1 doors as doors since they have more than 1 region (fixing Room.IsDoorway would address this)
-		also doesn't handle adjacent normal/invis doors cluster well, assuming that neighboring rooms of doors aren't doors themselves
-	IdeoUtility - doesn't handle adjacent normal/invis doors cluster well, assuming that neighboring rooms of doors aren't doors themselves
 	RoomTempTracker
 		equivalent logic in old RoomGroupTempTracker (using new IsDoorway rather than scanning for RegionType.Portal)
 		that's for addressing the exploit described in https://www.reddit.com/r/RimWorld/comments/b1wz9a/rimworld_temperature_physics_allow_you_to_build/

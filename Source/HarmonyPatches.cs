@@ -291,14 +291,6 @@ namespace DoorsExpanded
             //   to get ahead of other mods' destructive prefix patches. Unfortunately, our Building_Door patches must be destructive
             //   prefix patches, and there's no safe way to redirect other mods' Building_Door patches to Building_DoorExpanded patches.
 
-            // TODO:
-            // BeautyUtility.FillBeautyRelevantCells should be patched, since it doesn't handle adjacent normal doors cluster well,
-            // assuming that neighboring rooms of doors aren't doors themselves. This is inconsequential in vanilla, but afflicts our
-            // larger doors composed of cluster of invis doors.
-            // This is evident if you create a 3x3 cross of normal doors, enable beauty overlay, and highlight the center door.
-            // That said, this is a minor issue, so low priority to fix.
-            // IdeoUtility.GetJoinedRooms has a similar issue.
-
             // See comments in Building_DoorRegionHandler.
             Patch(original: AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.FreePassage)),
                 prefix: nameof(InvisDoorFreePassagePrefix),
@@ -449,6 +441,12 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(PrisonBreakUtility), nameof(PrisonBreakUtility.InitiatePrisonBreakMtbDays)),
                 transpiler: nameof(DoorExpandedInitiatePrisonBreakMtbDaysTranspiler),
                 transpilerRelated: nameof(DoorExpandedInitiatePrisonBreakMtbDaysAddAllRegionsInDoor));
+            Patch(original: AccessTools.Method(typeof(BeautyUtility), nameof(BeautyUtility.FillBeautyRelevantCells)),
+                transpiler: nameof(DoorExpandedRoomNeighborRegionsTranspiler),
+                transpilerRelated: nameof(GetDoorNeighborRegions));
+            Patch(original: AccessTools.Method(typeof(IdeoUtility), "GetJoinedRooms"),
+                transpiler: nameof(DoorExpandedRoomNeighborRegionsTranspiler),
+                transpilerRelated: nameof(GetDoorNeighborRegions));
 
             // Patches for ghost (pre-placement) and blueprints for door expanded.
             foreach (var original in typeof(Designator_Place).FindLambdaMethods(nameof(Designator_Place.DoExtraGuiControls), typeof(void)))
@@ -1397,6 +1395,62 @@ namespace DoorsExpanded
                         success = true;
                 }
                 return success;
+            }
+        }
+
+        // BeautyUtility.FillBeautyRelevantCells
+        // IdeoUtility.GetJoinedRooms
+        public static IEnumerable<CodeInstruction> DoorExpandedRoomNeighborRegionsTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            // The methods being patched assume a door's room only has a single region when looking for neighbors, which isn't true
+            // for our larger doors composed of a region per cell. This patch fixes the door neighbor logic.
+
+            // This transforms the following code:
+            //  room.FirstRegion.Neighbors
+            // into:
+            //  GetDoorNeighborRegions(room);
+
+            var methodof_Room_get_FirstRegion = AccessTools.PropertyGetter(typeof(Room), nameof(Room.FirstRegion));
+            var methodof_Region_get_Neighbors = AccessTools.PropertyGetter(typeof(Region), nameof(Region.Neighbors));
+            var instructionList = instructions.AsList();
+
+            var index = 0;
+            while (true)
+            {
+                index = instructionList.FindSequenceIndex(index,
+                    instr => instr.Calls(methodof_Room_get_FirstRegion),
+                    instr => instr.Calls(methodof_Region_get_Neighbors));
+                if (index == -1)
+                    break;
+                var newInstructions = new[]
+                {
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(GetDoorNeighborRegions))),
+                };
+                instructionList.SafeReplaceRange(index, 2, newInstructions);
+                index += newInstructions.Length;
+            }
+
+            return instructionList;
+        }
+
+        private static IEnumerable<Region> GetDoorNeighborRegions(Room room)
+        {
+            DebugInspectorPatches.RegisterPatchCalled(nameof(GetDoorNeighborRegions));
+            var firstRegion = room.FirstRegion;
+            // If invis door, get neighbors of every region in the parent door.
+            // Exclude regions in the parent door itself from the returned set of neighbors.
+            if (firstRegion.door is Building_DoorRegionHandler)
+            {
+                var doorRegions = room.Regions.ToArray();
+                var neighborRegions = new HashSet<Region>();
+                foreach (var region in doorRegions)
+                    neighborRegions.AddRange(region.Neighbors);
+                neighborRegions.ExceptWith(doorRegions);
+                return neighborRegions;
+            }
+            else
+            {
+                return firstRegion.Neighbors;
             }
         }
 
