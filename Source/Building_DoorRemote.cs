@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -70,7 +70,10 @@ namespace DoorsExpanded
         }
 
         private const float LockPulseFrequency = 1.5f; // OverlayDrawer.PulseFrequency is 4f
-        private const float LockPulseAmplitude = 0.7f; // same as OverlayDrawer.PulseAmplitude
+        private const float LockPulseAmplitude = 0.7f * 0.6f; // OverlayDrawer.PulseAmplitude is 0.7f
+        private const float LockPulseMinAlpha = 0.3f; // 1f - OverlayDrawer.PulseAmplitude (same as vanilla)
+        private static readonly float LockDrawY =
+            AltitudeLayer.MetaOverlays.AltitudeFor() + Altitudes.AltInc * 6; // from OverlayDrawer.RenderQuestionMarkOverlay
 
         public override void Draw()
         {
@@ -78,15 +81,20 @@ namespace DoorsExpanded
             {
                 // This is based off OverlayDrawer.RenderQuestionMarkOverlay/RenderPulsingOverlayInternal, with customized parameters.
                 var drawLoc = DrawPos;
-                drawLoc.y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays) + Altitudes.AltInc * 6;
+                drawLoc.y = LockDrawY;
                 var sineInput = (Time.realtimeSinceStartup + 397f * (thingIDNumber % 571)) * LockPulseFrequency;
-                var alpha = ((float)Math.Sin(sineInput) + 1f) * 0.3f;
-                alpha = 0.3f + alpha * LockPulseAmplitude;
+                var alpha = (Mathf.Sin(sineInput) + 1f) * 0.5f;
+                alpha = 1 - LockPulseMinAlpha + alpha * LockPulseAmplitude;
                 var material = FadedMaterialPool.FadedVersionOf(TexOverlay.LockedOverlay, alpha);
-                Graphics.DrawMesh(MeshPool.plane05, drawLoc, Quaternion.identity, material, 0);
+                var drawBatch = OverlayDrawer_drawBatch(Map.overlayDrawer);
+                drawBatch.DrawMesh(MeshPool.plane05, Matrix4x4.TRS(drawLoc, Quaternion.identity, Vector3.one), material,
+                    layer: 0, renderInstanced: true);
             }
             base.Draw();
         }
+
+        private static readonly AccessTools.FieldRef<OverlayDrawer, DrawBatch> OverlayDrawer_drawBatch =
+            AccessTools.FieldRefAccess<OverlayDrawer, DrawBatch>("drawBatch");
 
         public override void DrawExtraSelectionOverlays()
         {
