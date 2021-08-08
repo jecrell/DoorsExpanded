@@ -46,7 +46,7 @@ Changelog
 ========================
 Note: Starting from this version, changes only apply to RimWorld 1.3+.
 RimWorld 1.3 compatibility
-Add Chinese Simplified translation (thanks Juijote!)
+Add Chinese Simplified translation (thanks Juijote!) - applies to all RW versions
 Various fixes and updates from a new audit of relevant parts of current RW codebase
 More debug info, including new drawDoorTempEqualization debug view
 Misc minor optimizations and cleanup
