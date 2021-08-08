@@ -29,11 +29,11 @@ namespace DoorsExpanded
         public static CodeInstruction TransferLabelsAndBlocksFrom(this CodeInstruction instruction, CodeInstruction otherInstruction,
             IEnumerable<Label> labelsToTransfer = null, IEnumerable<ExceptionBlock> blocksToTransfer = null)
         {
-            if (labelsToTransfer == null)
+            if (labelsToTransfer is null)
                 instruction.labels.AddRange(otherInstruction.labels.PopAll());
             else
                 instruction.labels.AddRange(labelsToTransfer.Where(otherInstruction.labels.Remove));
-            if (blocksToTransfer == null)
+            if (blocksToTransfer is null)
                 instruction.blocks.AddRange(otherInstruction.blocks.PopAll());
             else
                 instruction.blocks.AddRange(blocksToTransfer.Where(otherInstruction.blocks.Remove));

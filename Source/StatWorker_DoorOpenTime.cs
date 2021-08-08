@@ -18,7 +18,7 @@ namespace DoorsExpanded
 
         public override bool ShouldShowFor(StatRequest req)
         {
-            if (req.Def is ThingDef thingDef && thingDef.IsDoor)
+            if (req.Def is ThingDef { IsDoor: true } thingDef)
             {
                 if (!Building_DoorExpanded.DoorNeedsPower(thingDef))
                     return stat == HeronDefOf.DoorOpenTime;
@@ -43,9 +43,9 @@ namespace DoorsExpanded
 
         public override IEnumerable<Dialog_InfoCard.Hyperlink> GetInfoCardHyperlinks(StatRequest statRequest)
         {
-            if (statRequest.Thing?.Stuff is ThingDef thingStuff)
+            if (statRequest.Thing is { Stuff: { } thingStuff })
                 yield return new Dialog_InfoCard.Hyperlink(thingStuff);
-            else if (statRequest.StuffDef is ThingDef stuffDef)
+            else if (statRequest.StuffDef is { } stuffDef)
                 yield return new Dialog_InfoCard.Hyperlink(stuffDef);
         }
     }

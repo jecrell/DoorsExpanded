@@ -51,16 +51,16 @@ namespace DoorsExpanded
         // else can be held open either remotely or by gizmo.
         public override bool HoldOpen => securedRemotely ? HoldOpenRemotely : HoldOpenRemotely || base.HoldOpen;
 
-        public bool HoldOpenRemotely => Button != null && Button.ButtonOn;
+        public bool HoldOpenRemotely => Button is { ButtonOn: true };
 
         public bool ForcedClosed => SecuredRemotely && !Open;
 
         public override bool Forbidden => ForcedClosed || base.Forbidden;
 
         // For purposes of determining whether a door can be closed automatically,
-        // treat a powered door that's linked to an enabled button as always being "friendly touched".
+        // treat a powered door that's linked to an enabled button (NeedsPower is false) as always being "friendly touched".
         internal protected override bool FriendlyTouchedRecently =>
-            (!button?.NeedsPower ?? false) && DoorPowerOn || base.FriendlyTouchedRecently;
+            button is { NeedsPower: false } && DoorPowerOn || base.FriendlyTouchedRecently;
 
         public override void ExposeData()
         {
@@ -90,8 +90,8 @@ namespace DoorsExpanded
 
         public override void DrawExtraSelectionOverlays()
         {
-            if (Button != null)
-                GenDraw.DrawLineBetween(this.TrueCenter(), Button.TrueCenter());
+            if (Button is { } button)
+                GenDraw.DrawLineBetween(this.TrueCenter(), button.TrueCenter());
             base.DrawExtraSelectionOverlays();
         }
 
@@ -119,7 +119,7 @@ namespace DoorsExpanded
                         isActive = () => SecuredRemotely,
                         toggleAction = () => SecuredRemotely = !SecuredRemotely,
                     };
-                    if (Button == null)
+                    if (Button is null)
                         toggle.Disable("PH_ButtonNeeded".Translate());
                     if (!DoorPowerOn)
                         toggle.Disable("PH_PowerNeeded".Translate());
@@ -133,7 +133,7 @@ namespace DoorsExpanded
                         action = ButtonConnect,
                     };
 
-                    if (Button != null)
+                    if (Button is not null)
                     {
                         yield return new Command_Action
                         {

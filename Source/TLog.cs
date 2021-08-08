@@ -18,10 +18,10 @@ namespace DoorsExpanded
 
     static class TLog
     {
-        private static readonly ConcurrentDictionary<string, int> methodToCounter = new ConcurrentDictionary<string, int>();
-        private static readonly ConcurrentDictionary<string, string> stackTraceToId = new ConcurrentDictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, int> methodToCounter = new();
+        private static readonly ConcurrentDictionary<string, string> stackTraceToId = new();
 
-        public static bool Enabled => DoorsExpandedMod.Settings.logLevel != TLogLevel.Normal;
+        public static bool Enabled => DoorsExpandedMod.Settings.logLevel is not TLogLevel.Normal;
 
         public static void Log(object obj, string message = null, [CallerMemberName] string callerMemberName = "")
         {
@@ -51,7 +51,7 @@ namespace DoorsExpanded
                     var sb = new StringBuilder();
                     var method = stackTrace.GetFrame(0).GetMethod();
                     var methodName = method.Name;
-                    if (method.DeclaringType is Type declaringType)
+                    if (method.DeclaringType is { } declaringType)
                         methodName = declaringType + ":" + methodName;
                     var counter = methodToCounter.AddOrUpdate(methodName,
                         addValueFactory: _ => 0,

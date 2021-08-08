@@ -10,7 +10,7 @@ namespace DoorsExpanded
     {
         public override ThingRequest PotentialWorkThingRequest => ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial);
 
-        private static IEnumerable<Thing> ButtonsOrLevers(Pawn pawn, bool forced)
+        private static HashSet<Thing> ButtonsOrLevers(Pawn pawn, bool forced)
         {
             var buttonsOrLevers =
                 from Building_DoorRemoteButton t
@@ -31,12 +31,12 @@ namespace DoorsExpanded
 
         public override bool ShouldSkip(Pawn pawn, bool forced = false)
         {
-            return ButtonsOrLevers(pawn, forced).Count() == 0;
+            return ButtonsOrLevers(pawn, forced).Count == 0;
         }
 
         public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
         {
-            if (!(t is Building_DoorRemoteButton remote))
+            if (t is not Building_DoorRemoteButton remote)
             {
                 return false;
             }

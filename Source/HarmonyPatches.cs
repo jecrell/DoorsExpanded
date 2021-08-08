@@ -32,7 +32,7 @@ namespace DoorsExpanded
     // TODO: Reorganize this into multiple classes/files and use Harmony attribute-based patch classes.
     public static class HarmonyPatches
     {
-        internal static Harmony harmony = new Harmony("rimworld.jecrell.doorsexpanded");
+        internal static Harmony harmony = new("rimworld.jecrell.doorsexpanded");
 
         // Early patching before any XML Def/Patch loading and StaticConstructorOnStartup code.
         // This is called from DoorsExpandedMod constructor for earliest possible patching.
@@ -62,7 +62,7 @@ namespace DoorsExpanded
                 // which then adds installBlueprintDef to the DefDatabase. So must remove from DefDatabase afterwards.
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
-                    if (DefDatabase<ThingDef>.GetNamedSilentFail(installBlueprintDef.defName) != null)
+                    if (DefDatabase<ThingDef>.GetNamedSilentFail(installBlueprintDef.defName) is not null)
                         DefDatabaseThingDefRemove(installBlueprintDef);
                     Log.Message($"[Doors Expanded] Detected minifiedDef for def {def} with installBlueprintDef {installBlueprintDef}, " +
                         "likely added by MinifyEverything mod - removed to avoid minifiable invisible doors");
@@ -523,7 +523,7 @@ namespace DoorsExpanded
 
         private static HarmonyMethod NewHarmonyMethod(string methodName, int priority, string[] before, string[] after, bool? debug)
         {
-            if (methodName == null)
+            if (methodName is null)
                 return null;
             return new HarmonyMethod(AccessTools.Method(typeof(HarmonyPatches), methodName), priority, before, after, debug);
         }
@@ -552,7 +552,7 @@ namespace DoorsExpanded
                     foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
                     {
                         if (method.Name.StartsWith("<", StringComparison.Ordinal) &&
-                            method.ReturnType == returnType && (predicate == null || predicate(method)))
+                            method.ReturnType == returnType && (predicate is null || predicate(method)))
                         {
                             foundMethod = true;
                             yield return method;
@@ -564,7 +564,7 @@ namespace DoorsExpanded
                     foreach (var method in innerType.GetMethods(AccessTools.allDeclared))
                     {
                         if (method.Name.StartsWith("<" + parentMethodName + ">", StringComparison.Ordinal) &&
-                            method.ReturnType == returnType && (predicate == null || predicate(method)))
+                            method.ReturnType == returnType && (predicate is null || predicate(method)))
                         {
                             foundMethod = true;
                             yield return method;
@@ -809,8 +809,6 @@ namespace DoorsExpanded
         }
 
         private static readonly FieldInfo fieldof_Thing_def = AccessTools.Field(typeof(Thing), nameof(Thing.def));
-        private static readonly MethodInfo methodof_GetActualDoor =
-            AccessTools.Method(typeof(HarmonyPatches), nameof(GetActualDoor));
 
         // PathGrid.CalculatedCostAt
         public static IEnumerable<CodeInstruction> InvisDoorCalculatedCostAtTranspiler(IEnumerable<CodeInstruction> instructions,
@@ -824,7 +822,7 @@ namespace DoorsExpanded
             //  if (thing is Building_Door && prevCell.IsValid)
             //  {
             //      Building edifice = prevCell.GetEdifice(map);
-            //      if (edifice != null && edifice is Building_Door)
+            //      if (edifice is not null && edifice is Building_Door)
             //      {
             //          consecutiveDoors = true;
             //      }
@@ -834,7 +832,7 @@ namespace DoorsExpanded
             //  if (thing is Building_Door && prevCell.IsValid)
             //  {
             //      Building edifice = prevCell.GetEdifice(map);
-            //      if (edifice != null && edifice is Building_Door)
+            //      if (edifice is not null && edifice is Building_Door)
             //      {
             //          if (GetActualDoor(thing) != GetActualDoor(edifice))
             //              consecutiveDoors = true;
@@ -842,7 +840,6 @@ namespace DoorsExpanded
             //  }
             //  ...
 
-            var methodof_GetActualDoor = AccessTools.Method(typeof(HarmonyPatches), nameof(GetActualDoor));
             var instructionList = instructions.AsList();
             var locals = new Locals(method, ilGen);
 
@@ -862,6 +859,9 @@ namespace DoorsExpanded
 
             return instructionList;
         }
+
+        private static readonly MethodInfo methodof_GetActualDoor =
+            AccessTools.Method(typeof(HarmonyPatches), nameof(GetActualDoor));
 
         // Get x from instruction sequence: ldloc.s <x>; isinst Building_Door.
         private static LocalVar GetIsinstDoorVar(Locals locals, List<CodeInstruction> instructionList, ref int startIndex)
@@ -910,9 +910,9 @@ namespace DoorsExpanded
             // If an invis door's DeSpawn is somehow called before the parent door's DeSpawn is called,
             // this can result in a NRE since region links are cleared prematurely
             // (specifically RegionLink.GetOtherRegion can return null, unexpectedly for the algorithm).
-            // So skip if the given Thing is an invis door, and let parent door's DeSpawn handle calling
+            // So skip if the given Thing is a spawned invis door, and let parent door's DeSpawn handle calling
             // Room.Notify_ContainedThingSpawnedOrDespawned for each invis door's Room after they're all despawned.
-            return !(th.Spawned && th is Building_DoorRegionHandler);
+            return th is not Building_DoorRegionHandler { Spawned: true };
         }
 
         // CompForbiddable.UpdateOverlayHandle
@@ -1017,7 +1017,7 @@ namespace DoorsExpanded
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedEdificeGridRegisterPrefix));
             // Only the door expanded's invis doors are registered in the edifice grid,
             // not the parent door expanded itself.
-            return !(ed is Building_DoorExpanded);
+            return ed is not Building_DoorExpanded;
         }
 
         // Room.IsDoorway
@@ -1320,11 +1320,11 @@ namespace DoorsExpanded
             IEnumerable<CodeInstruction> instructions)
         {
             // Projectile.CheckForFreeIntercept has code that looks like:
-            //  if (thing.def.Fillage == FillCategory.Full)
+            //  if (thing.def.Fillage is FillCategory.Full)
             //  {
-            //      if (!(thing is Building_Door building_Door && building_Door.Open))
+            //      if (thing is not Building_Door { Open: true })
             //      ...
-            // Invis doors have Fillage == FillCategory.None, while parent doors are not Building_Door.
+            // Invis doors have Fillage is FillCategory.None, while parent doors are not Building_Door.
             // So we need to patch the Building_Door check to work for Building_DoorExpanded.
             return DoorExpandedIsOpenDoorTranspiler(instructions);
         }
@@ -1358,7 +1358,7 @@ namespace DoorsExpanded
             return true;
         }
 
-        private static readonly ConcurrentDictionary<Thing, bool> setFactionDirectAlreadyCalled = new ConcurrentDictionary<Thing, bool>();
+        private static readonly ConcurrentDictionary<Thing, bool> setFactionDirectAlreadyCalled = new();
 
         // PrisonBreakUtility.InitiatePrisonBreakMtbDays
         public static IEnumerable<CodeInstruction> DoorExpandedInitiatePrisonBreakMtbDaysTranspiler(
@@ -1464,8 +1464,8 @@ namespace DoorsExpanded
             RotationDirection rotDirection)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedRotateAgainIfNeeded));
-            if (placingRot == Rot4.South && designatorPlace.PlacingDef.GetDoorExpandedProps() is CompProperties_DoorExpanded doorExProps &&
-                !doorExProps.rotatesSouth)
+            // If placingRot is South and rotatesSouth is false, rotate again.
+            if (placingRot == Rot4.South && designatorPlace.PlacingDef.GetDoorExpandedProps() is { rotatesSouth: false })
             {
                 placingRot.Rotate(rotDirection);
             }
@@ -1482,7 +1482,7 @@ namespace DoorsExpanded
             float extraRotation)
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedDrawGhostGraphicFromDef));
-            if (thingDef.GetDoorExpandedProps() is CompProperties_DoorExpanded doorExProps)
+            if (thingDef.GetDoorExpandedProps() is {} doorExProps)
             {
                 // Always delegate door expanded graphics to our custom code.
                 for (var i = 0; i < 2; i++)
@@ -1543,7 +1543,7 @@ namespace DoorsExpanded
             ref var blueprint = ref __instance;
             // This needs to be a prefix (as opposed to a postfix), since Thing.SpawnSetup has logic which depends on rotation.
             if (blueprint.def.entityDefToBuild is ThingDef thingDef &&
-                thingDef.GetCompProperties<CompProperties_DoorExpanded>() is CompProperties_DoorExpanded doorExProps)
+                thingDef.GetDoorExpandedProps() is { } doorExProps)
             {
                 // Historical note: following notes used to be the case, but RW 1.3 changed ThingDefGenerator_Buildings such that
                 // blueprint defs now inherit their drawerType from the non-blueprint def (except for the now-redundant Building_Door
@@ -1583,36 +1583,31 @@ namespace DoorsExpanded
         {
             DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedThingDrawAtPrefix));
             if (__instance is Blueprint blueprint)
-                return DoorExpandedBlueprintDrawPrefix(blueprint);
-            return true;
-        }
-
-        private static bool DoorExpandedBlueprintDrawPrefix(Blueprint blueprint)
-        {
-            DebugInspectorPatches.RegisterPatchCalled(nameof(DoorExpandedBlueprintDrawPrefix));
-            if (blueprint.def.entityDefToBuild is ThingDef thingDef &&
-                thingDef.GetCompProperties<CompProperties_DoorExpanded>() is CompProperties_DoorExpanded doorExProps)
             {
-                // Always delegate door expanded graphics to our custom code.
-                var drawPos = blueprint.DrawPos;
-                var rotation = blueprint.Rotation;
-                rotation = Building_DoorExpanded.DoorRotationAt(thingDef, doorExProps, blueprint.Position, rotation, blueprint.Map);
-                blueprint.Rotation = rotation;
-                var graphic = blueprint.Graphic;
-                for (var i = 0; i < 2; i++)
+                if (blueprint.def.entityDefToBuild is ThingDef thingDef &&
+                    thingDef.GetDoorExpandedProps() is { } doorExProps)
                 {
-                    Building_DoorExpanded.Draw(thingDef, doorExProps, graphic, drawPos, rotation, openPct: 0, flipped: i != 0);
-                    if (doorExProps.singleDoor)
-                        break;
+                    // Always delegate door expanded graphics to our custom code.
+                    var drawPos = blueprint.DrawPos;
+                    var rotation = blueprint.Rotation;
+                    rotation = Building_DoorExpanded.DoorRotationAt(thingDef, doorExProps, blueprint.Position, rotation, blueprint.Map);
+                    blueprint.Rotation = rotation;
+                    var graphic = blueprint.Graphic;
+                    for (var i = 0; i < 2; i++)
+                    {
+                        Building_DoorExpanded.Draw(thingDef, doorExProps, graphic, drawPos, rotation, openPct: 0, flipped: i != 0);
+                        if (doorExProps.singleDoor)
+                            break;
+                    }
+                    Comps_PostDraw(blueprint, emptyObjArray);
+                    return false;
                 }
-                Comps_PostDraw(blueprint, emptyObjArray);
-                return false;
-            }
-            else if (blueprint is Blueprint_Install && IsVanillaDoorDef(blueprint.def.entityDefToBuild))
-            {
-                // Since it's convenient to do so, we'll also "fix" (re)install blueprints for Building_Door thingClass,
-                // in case another mod makes them (re)installable.
-                blueprint.Rotation = Building_Door.DoorRotationAt(blueprint.Position, blueprint.Map);
+                else if (blueprint is Blueprint_Install && IsVanillaDoorDef(blueprint.def.entityDefToBuild))
+                {
+                    // Since it's convenient to do so, we'll also "fix" (re)install blueprints for Building_Door thingClass,
+                    // in case another mod makes them (re)installable.
+                    blueprint.Rotation = Building_Door.DoorRotationAt(blueprint.Position, blueprint.Map);
+                }
             }
             return true;
         }
@@ -1749,7 +1744,7 @@ namespace DoorsExpanded
                     }
                     return false;
                 });
-                if (invisDoors != null && innerContainer.Count == 0)
+                if (invisDoors is not null && innerContainer.Count == 0)
                 {
                     minifiedThing.Destroy();
                     __result = true; // true => avoid spawning
@@ -1814,8 +1809,8 @@ namespace DoorsExpanded
             AccessTools.PropertyGetter(typeof(Building_Door), nameof(Building_Door.Open));
 
         private static bool IsOpenDoor(Thing thing) =>
-            thing is Building_Door door && door.Open ||
-            thing is Building_DoorExpanded doorEx && doorEx.Open;
+            thing is Building_Door { Open: true } ||
+            thing is Building_DoorExpanded { Open: true };
 
         // Generic transpiler that transforms all following instances of code:
         //  thing is Building_Door
@@ -1837,7 +1832,7 @@ namespace DoorsExpanded
             }
         }
 
-        private static bool IsDoor(Thing thing) => thing is Building_Door || thing is Building_DoorExpanded;
+        private static bool IsDoor(Thing thing) => thing is Building_Door or Building_DoorExpanded;
 
         public const float DefaultDoorMass = 20f;
 

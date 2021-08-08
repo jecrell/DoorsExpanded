@@ -25,15 +25,16 @@ namespace DoorsExpanded
         public override void ResolveReferences(ThingDef parentDef)
         {
             // Note: ResolveReferences can run more than once for a single def, so ensure it's idempotent.
-            if (defaultLabelAndDescriptionFrom != null)
+            if (defaultLabelAndDescriptionFrom is not null)
             {
                 if (parentDef.label.NullOrEmpty())
-                    parentDef.label = defaultLabelAndDescriptionFrom.GetCompProperties<CompProperties_PostProcessText>()?.origLabel ??
+                    parentDef.label =
+                        defaultLabelAndDescriptionFrom.GetCompProperties<CompProperties_PostProcessText>()?.origLabel ??
                         defaultLabelAndDescriptionFrom.label;
                 if (parentDef.description.NullOrEmpty())
                     parentDef.description = defaultLabelAndDescriptionFrom.description;
             }
-            if (appendSizeToLabel && origLabel == null)
+            if (appendSizeToLabel && origLabel is null)
             {
                 origLabel = parentDef.label;
                 var size = parentDef.Size;

@@ -8,7 +8,7 @@ namespace JecsTools
 {
     public class PlaceWorker_Outline : PlaceWorker
     {
-        private static readonly Color transparentWhite = new Color(1f, 1f, 1f, 0f);
+        private static readonly Color transparentWhite = new(1f, 1f, 1f, 0f);
 
         public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol, Thing thing = null)
         {

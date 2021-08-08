@@ -27,7 +27,7 @@ new references to District.IsDoorway (formerly Room.IsDoorway - see below):
 
 new references to Room.IsDoorway (new - see above and below):
 	BeautyUtility
-		equivalent logic using room.IsDoorway rather than room.Regions.Count == 1 && room.Regions[0].type == RegionType.Portal
+		equivalent logic using room.IsDoorway rather than room.Regions.Count == 1 && room.Regions[0].type is RegionType.Portal
 		actually didn't detect >1x1 doors as doors since they have more than 1 region (fixing Room.IsDoorway would address this)
 		also doesn't handle adjacent normal/invis doors cluster well, assuming that neighboring rooms of doors aren't doors themselves
 	IdeoUtility - doesn't handle adjacent normal/invis doors cluster well, assuming that neighboring rooms of doors aren't doors themselves

@@ -50,8 +50,8 @@ namespace DoorsExpanded
 
         public override void ResolveReferences()
         {
-            var compProps = GetCompProperties<CompProperties_DoorExpanded>();
-            if (compProps == null)
+            var compProps = this.GetDoorExpandedProps();
+            if (compProps is null)
             {
                 compProps = new CompProperties_DoorExpanded
                 {

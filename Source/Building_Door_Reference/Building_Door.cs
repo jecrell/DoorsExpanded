@@ -102,7 +102,7 @@ namespace RimWorld
                 for (var i = 0; i < thingList.Count; i++)
                 {
                     var thing = thingList[i];
-                    if (thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Pawn)
+                    if (thing.def.category is ThingCategory.Item or ThingCategory.Pawn)
                     {
                         return true;
                     }
@@ -111,7 +111,7 @@ namespace RimWorld
             }
         }
 
-        public bool DoorPowerOn => powerComp != null && powerComp.PowerOn;
+        public bool DoorPowerOn => powerComp is { PowerOn: true };
 
         public bool SlowsPawns => !DoorPowerOn || TicksToOpenNow > 20;
 
@@ -167,7 +167,7 @@ namespace RimWorld
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
             Scribe_References.Look(ref approachingPawn, nameof(approachingPawn));
-            if (Scribe.mode == LoadSaveMode.LoadingVars && openInt)
+            if (Scribe.mode is LoadSaveMode.LoadingVars && openInt)
             {
                 ticksSinceOpen = TicksToOpenNow;
             }
@@ -238,7 +238,7 @@ namespace RimWorld
                 {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
                 }
-                if (OpenPct >= NotifyFogGridDoorOpenPct && approachingPawn != null)
+                if (OpenPct >= NotifyFogGridDoorOpenPct && approachingPawn is not null)
                 {
                     Map.fogGrid.Notify_PawnEnteringDoor(this, approachingPawn);
                     approachingPawn = null;
@@ -276,12 +276,11 @@ namespace RimWorld
 
         public virtual bool PawnCanOpen(Pawn p)
         {
-            if (Map != null && Map.Parent.doorsAlwaysOpenForPlayerPawns && p.Faction == Faction.OfPlayer)
+            if (Map is { } map && map.Parent.doorsAlwaysOpenForPlayerPawns && p.Faction == Faction.OfPlayer)
             {
                 return true;
             }
-            var lord = p.GetLord();
-            if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p))
+            if (p.GetLord() is { LordJob: { } lordJob } && lordJob.CanOpenAnyDoor(p))
             {
                 return true;
             }
@@ -293,11 +292,11 @@ namespace RimWorld
             {
                 return false;
             }
-            if (Faction == null)
+            if (Faction is null)
             {
                 return true;
             }
-            if (p.guest != null && p.guest.Released)
+            if (p.guest is { Released: true })
             {
                 return true;
             }
@@ -407,7 +406,7 @@ namespace RimWorld
                 var thing = thingList[i];
                 if (typeof(Building_Door).IsAssignableFrom(thing.def.thingClass))
                 {
-                    if ((c - offset).GetDoor(map) == null)
+                    if ((c - offset).GetDoor(map) is null)
                     {
                         return 1;
                     }
@@ -419,7 +418,7 @@ namespace RimWorld
                 }
                 if (thing is Blueprint blueprint)
                 {
-                    if (blueprint.def.entityDefToBuild.passability == Traversability.Impassable)
+                    if (blueprint.def.entityDefToBuild.passability is Traversability.Impassable)
                     {
                         return 9;
                     }

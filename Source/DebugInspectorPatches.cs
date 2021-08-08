@@ -54,7 +54,7 @@ namespace DoorsExpanded
         [Conditional("PATCH_CALL_REGISTRY")]
         public static void RegisterPatch(string name)
         {
-            if (name != null)
+            if (name is not null)
             {
                 patchCallRegistry ??= new Dictionary<string, bool>();
                 patchCallRegistry[name] = false;
@@ -91,7 +91,7 @@ namespace DoorsExpanded
         {
             var fieldList = fields.ToList();
             var fieldsToInsert = typeof(DebugViewSettingsMoreWrite).GetFields().AsEnumerable();
-            if (patchCallRegistry == null)
+            if (patchCallRegistry is null)
                 fieldsToInsert = fieldsToInsert.Where(field => field != fieldof_MoreDebugViewSettings_writePatchCallRegistry);
             fieldList.InsertRange(fieldList.IndexOf(fieldof_DebugViewSettings_writePathCosts) + 1, fieldsToInsert);
             fieldList.InsertRange(fieldList.IndexOf(fieldof_DebugViewSettings_drawDoorsDebug) + 1,
@@ -277,7 +277,7 @@ namespace DoorsExpanded
             {
                 debugString.AppendLine("---");
                 var pawn = Find.Selector.SingleSelectedObject as Pawn;
-                if (pawn != null)
+                if (pawn is not null)
                 {
                     debugString.AppendLine("From selected pawn " + pawn + " to door");
                     debugString.AppendLine("- CaresAboutForbidden(p, false): " + ForbidUtility.CaresAboutForbidden(pawn, false));
@@ -306,7 +306,7 @@ namespace DoorsExpanded
                         debugString.AppendLine("- CanBeSeenOver: " + door.CanBeSeenOver());
                         debugString.AppendLine("- BaseBlockChance: " + door.BaseBlockChance());
 
-                        if (pawn != null)
+                        if (pawn is not null)
                         {
                             debugString.AppendLine("- For selected pawn: " + pawn);
                             debugString.AppendLine("  - CanPhysicallyPass(p): " + door.CanPhysicallyPass(pawn));
@@ -362,7 +362,7 @@ namespace DoorsExpanded
                                 debugString.AppendLine("  - ForcedClosed: " + parentDoorRemote.ForcedClosed);
                             }
 
-                            if (pawn != null)
+                            if (pawn is not null)
                             {
                                 debugString.AppendLine("  - For selected pawn: " + pawn);
                                 //debugString.AppendLine("    - CanPhysicallyPass(p): " + parentDoor.CanPhysicallyPass(pawn));
@@ -385,7 +385,7 @@ namespace DoorsExpanded
                             }
                         }
                         var room = door.GetRoom();
-                        if (room != null)
+                        if (room is not null)
                         {
                             debugString.AppendLine("- " + room.DebugString().Replace("\n  ", "\n    - ").Replace("\n\n", "\n"));
                         }
@@ -442,7 +442,7 @@ namespace DoorsExpanded
                 var things = mouseCell.GetThingList(Find.CurrentMap);
                 foreach (var thing in things)
                 {
-                    if ((thing is Building_Door && thing is not Building_DoorRegionHandler) || thing is Building_DoorExpanded)
+                    if (thing is Building_Door and not Building_DoorRegionHandler || thing is Building_DoorExpanded)
                     {
                         var adjCells = GenAdj.CellsAdjacentCardinal(thing);
                         foreach (var cell in adjCells)

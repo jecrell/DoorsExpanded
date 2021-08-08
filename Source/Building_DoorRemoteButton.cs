@@ -7,7 +7,7 @@ namespace DoorsExpanded
 {
     public class Building_DoorRemoteButton : Building
     {
-        private List<Building_DoorRemote> linkedDoors = new List<Building_DoorRemote>();
+        private List<Building_DoorRemote> linkedDoors = new();
         private CompPowerTrader powerComp;
         private bool buttonOn = false;
         private bool needsToBeSwitched = false;
@@ -36,18 +36,18 @@ namespace DoorsExpanded
         // base.Graphic is off; fullGraveGraphicData.Graphic is on.
         public override Graphic Graphic => !ButtonOn ? base.Graphic : def.building.fullGraveGraphicData.Graphic;
 
-        public bool NeedsPower => powerComp != null && !powerComp.PowerOn;
+        public bool NeedsPower => powerComp is { PowerOn: false };
 
         private void RemoveNullOrUnspawnedDoors()
         {
             if (TLog.Enabled)
             {
-                var nullOrUnspawnedDoors = linkedDoors.FindAll(door => door is null || !door.Spawned);
+                var nullOrUnspawnedDoors = linkedDoors.FindAll(door => door is not { Spawned: true });
                 if (nullOrUnspawnedDoors.Count > 0)
                     TLog.Log(this, $"{this}: removing null or unspawned linkedDoors: " +
                         nullOrUnspawnedDoors.ToStringSafeEnumerable());
             }
-            linkedDoors.RemoveAll(door => door is null || !door.Spawned);
+            linkedDoors.RemoveAll(door => door is not { Spawned: true });
         }
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
@@ -144,7 +144,7 @@ namespace DoorsExpanded
         public override void ExposeData()
         {
             base.ExposeData();
-            if (Scribe.mode == LoadSaveMode.Saving)
+            if (Scribe.mode is LoadSaveMode.Saving)
                 RemoveNullOrUnspawnedDoors();
             Scribe_Collections.Look(ref linkedDoors, nameof(linkedDoors), LookMode.Reference);
             Scribe_Values.Look(ref needsToBeSwitched, nameof(needsToBeSwitched), false);

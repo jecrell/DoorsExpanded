@@ -40,7 +40,7 @@ namespace DoorsExpanded
         internal const float VisualDoorOffsetEnd = 0.45f;
         private const float NotifyFogGridDoorOpenPct = 0.4f;
 
-        private List<Building_DoorRegionHandler> invisDoors = new List<Building_DoorRegionHandler>();
+        private List<Building_DoorRegionHandler> invisDoors = new();
         private CompProperties_DoorExpanded props;
         private CompPowerTrader powerComp;
         private CompForbiddable forbiddenComp;
@@ -63,7 +63,7 @@ namespace DoorsExpanded
 
         public List<Building_DoorRegionHandler> InvisDoors => invisDoors;
 
-        public bool Open => props.doorType == DoorType.FreePassage || openInt;
+        public bool Open => props.doorType is DoorType.FreePassage || openInt;
 
         protected virtual bool OpenInt
         {
@@ -155,7 +155,7 @@ namespace DoorsExpanded
                     for (var i = 0; i < thingList.Count; i++)
                     {
                         var thing = thingList[i];
-                        if (thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Pawn)
+                        if (thing.def.category is ThingCategory.Item or ThingCategory.Pawn)
                         {
                             return true;
                         }
@@ -165,9 +165,9 @@ namespace DoorsExpanded
             }
         }
 
-        public bool DoorPowerOn => powerComp != null && powerComp.PowerOn;
+        public bool DoorPowerOn => powerComp is { PowerOn: true };
 
-        public bool DoorPowerOff => powerComp != null && !powerComp.PowerOn;
+        public bool DoorPowerOff => powerComp is { PowerOn: false };
 
         public bool SlowsPawns => /*!DoorPowerOn ||*/ TicksToOpenNow > 20;
 
@@ -202,7 +202,7 @@ namespace DoorsExpanded
         // This method works for both Building_Door and Building_DoorExpanded.
         private static int DoorOpenTicks(StatRequest statRequest, bool doorPowerOn, bool applyPostProcess = true)
         {
-            if (statRequest.Def.GetDoorExpandedProps() is CompProperties_DoorExpanded props && props.doorType == DoorType.FreePassage)
+            if (statRequest.Def.GetDoorExpandedProps() is { doorType: DoorType.FreePassage })
             {
                 return 0;
             }
@@ -229,7 +229,7 @@ namespace DoorsExpanded
             var defaultSpeed = OpenTicks * PowerOffDoorOpenSpeedFactor;
             explanation.AppendLine("StatsReport_BaseValue".Translate() + ": " + stat.ValueToString(defaultSpeed / GenTicks.TicksPerRealSecond));
 
-            if (statRequest.Def.GetDoorExpandedProps() is CompProperties_DoorExpanded props && props.doorType == DoorType.FreePassage)
+            if (statRequest.Def.GetDoorExpandedProps() is { doorType: DoorType.FreePassage })
             {
                 explanation.AppendLine($"{DoorType.FreePassage}: x0");
                 return explanation.ToString();
@@ -329,7 +329,7 @@ namespace DoorsExpanded
                 {
                     var invisDoor = invisDoors[i];
                     var removeInvisDoor = false;
-                    if (invisDoor == null)
+                    if (invisDoor is null)
                     {
                         errors.Add($"{this}.invisDoors[{i}] is unexpectedly null - removing it");
                         removeInvisDoor = true;
@@ -373,7 +373,7 @@ namespace DoorsExpanded
                     }
                     else
                     {
-                        if (invisDoor.ParentDoor == null)
+                        if (invisDoor.ParentDoor is null)
                         {
                             errors.Add($"{invisDoor} has no parent - reparenting it to {this}");
                             invisDoor.ParentDoor = this;
@@ -425,7 +425,7 @@ namespace DoorsExpanded
                         // so don't destroy that doorEx. Just destroy
                         invisDoor.Destroy();
                     }
-                    else if (invisDoor != null)
+                    else if (invisDoor is not null)
                     {
                         // This isn't redundant with the earlier multiple invis doors check, since it's technically possible for
                         // some existing invis doors at the cell to not all be within invisDoors, thus warranting this sanity check.
@@ -439,7 +439,7 @@ namespace DoorsExpanded
                     }
                 }
 
-                if (invisDoor == null)
+                if (invisDoor is null)
                 {
                     if (invisDoorsToRespawn.Count > 0)
                     {
@@ -481,7 +481,7 @@ namespace DoorsExpanded
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
             TLog.Log(this);
-            var spawnedInvisDoors = invisDoors.Where(invisDoor => invisDoor.Spawned).ToArray();
+            var spawnedInvisDoors = invisDoors.FindAll(invisDoor => invisDoor.Spawned);
             foreach (var invisDoor in spawnedInvisDoors)
             {
                 // If this parent door is respawned later, it will always recreate the invis doors,
@@ -499,7 +499,7 @@ namespace DoorsExpanded
                 map.regionGrid.GetValidRegionAt_NoRebuild(Position)?.Room?.Notify_ContainedThingSpawnedOrDespawned(invisDoor);
             }
             // Following conditions copied from Building.DeSpawn.
-            if (mode != DestroyMode.WillReplace && def.MakeFog)
+            if (mode is not DestroyMode.WillReplace && def.MakeFog)
             {
                 // FogGrid.Notify_FogBlockerRemoved needs to be called on all invis door positions (same as OccupiedRect()),
                 // or else there can be some cases where despawning a large door doesn't properly defog rooms.
@@ -530,7 +530,7 @@ namespace DoorsExpanded
             Scribe_Values.Look(ref holdOpenInt, "holdOpen", false);
             Scribe_Values.Look(ref lastFriendlyTouchTick, nameof(lastFriendlyTouchTick), 0);
             Scribe_References.Look(ref approachingPawn, nameof(approachingPawn));
-            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            if (Scribe.mode is LoadSaveMode.LoadingVars)
             {
                 // Ensure props is available for Open usage since PostMake hasn't been called yet.
                 // base.ExposeData() ensures that def is available, which is required for props initialization.
@@ -581,17 +581,18 @@ namespace DoorsExpanded
             base.Tick();
 
             var occupiedRect = this.OccupiedRect();
+            var map = Map;
 
             // Periodic sanity checks.
-            if (invisDoors.Where(invisDoor => invisDoor != null && invisDoor.Spawned).Count() != occupiedRect.Area ||
+            if (invisDoors.Count(invisDoor => invisDoor is { Spawned: true }) != occupiedRect.Area ||
                 this.IsHashIntervalTick(GenTicks.TickLongInterval))
             {
-                SpawnInvisDoorsAsNeeded(Map, occupiedRect);
+                SpawnInvisDoorsAsNeeded(map, occupiedRect);
             }
 
             if (FreePassage != freePassageWhenClearedReachabilityCache)
             {
-                ClearReachabilityCache(Map);
+                ClearReachabilityCache(map);
             }
             if (!Open)
             {
@@ -613,7 +614,7 @@ namespace DoorsExpanded
                 var isPawnPresent = false;
                 foreach (var c in occupiedRect)
                 {
-                    var thingList = c.GetThingList(Map);
+                    var thingList = c.GetThingList(map);
                     for (var i = 0; i < thingList.Count; i++)
                     {
                         if (thingList[i] is Pawn pawn)
@@ -643,12 +644,12 @@ namespace DoorsExpanded
                 {
                     GenTemperature.EqualizeTemperaturesThroughBuilding(this, TemperatureTuning.Door_TempEqualizeRate, twoWay: false);
                 }
-                if (OpenPct >= NotifyFogGridDoorOpenPct && approachingPawn != null)
+                if (OpenPct >= NotifyFogGridDoorOpenPct && approachingPawn is not null)
                 {
                     // Following is kinda inefficient, but this isn't perfomance critical code, so it shouldn't matter.
                     foreach (var invisDoor in invisDoors)
                     {
-                        Map.fogGrid.Notify_PawnEnteringDoor(invisDoor, approachingPawn);
+                        map.fogGrid.Notify_PawnEnteringDoor(invisDoor, approachingPawn);
                     }
                     approachingPawn = null;
                 }
@@ -703,12 +704,11 @@ namespace DoorsExpanded
 
         public virtual bool PawnCanOpen(Pawn p)
         {
-            if (Map != null && Map.Parent.doorsAlwaysOpenForPlayerPawns && p.Faction == Faction.OfPlayer)
+            if (Map is { } map && map.Parent.doorsAlwaysOpenForPlayerPawns && p.Faction == Faction.OfPlayer)
             {
                 return true;
             }
-            var lord = p.GetLord();
-            if (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p))
+            if (p.GetLord() is { LordJob: { } lordJob } && lordJob.CanOpenAnyDoor(p))
             {
                 return true;
             }
@@ -720,11 +720,11 @@ namespace DoorsExpanded
             {
                 return false;
             }
-            if (Faction == null)
+            if (Faction is null)
             {
                 return true;
             }
-            if (p.guest != null && p.guest.Released)
+            if (p.guest is { Released: true })
             {
                 return true;
             }
@@ -825,7 +825,7 @@ namespace DoorsExpanded
             public Vector3 offsetVector, scaleVector, graphicVector;
         }
 
-        internal DebugDrawVectors debugDrawVectors = new DebugDrawVectors();
+        internal DebugDrawVectors debugDrawVectors = new();
 
         public override void Draw()
         {
@@ -838,7 +838,7 @@ namespace DoorsExpanded
             for (var i = 0; i < 2; i++)
             {
                 var flipped = i != 0;
-                var graphic = (!flipped && props.doorAsync is GraphicData doorAsyncGraphic)
+                var graphic = (!flipped && props.doorAsync is { } doorAsyncGraphic)
                     ? doorAsyncGraphic.GraphicColoredFor(this)
                     : Graphic;
                 Draw(def, props, graphic, drawPos, rotation, openPct, flipped,
@@ -848,12 +848,12 @@ namespace DoorsExpanded
                     break;
             }
 
-            if (props.doorFrame is GraphicData)
+            if (props.doorFrame is not null)
             {
                 DrawFrameParams(def, props, drawPos, rotation, false, out var fMesh, out var fMatrix);
                 Graphics.DrawMesh(fMesh, fMatrix, props.doorFrame.GraphicColoredFor(this).MatAt(rotation), 0);
 
-                if (props.doorFrameSplit is GraphicData)
+                if (props.doorFrameSplit is not null)
                 {
                     DrawFrameParams(def, props, drawPos, rotation, true, out fMesh, out fMatrix);
                     Graphics.DrawMesh(fMesh, fMatrix, props.doorFrameSplit.GraphicColoredFor(this).MatAt(rotation), 0);
@@ -893,7 +893,7 @@ namespace DoorsExpanded
             var matrix = Matrix4x4.TRS(graphicVector, rotQuat, scaleVector);
             Graphics.DrawMesh(mesh, matrix, graphic.MatAt(rotation), layer: 0);
 
-            if (drawVectors != null)
+            if (drawVectors is not null)
             {
                 drawVectors.openPct = openPct;
                 drawVectors.offsetVector = offsetVector;
@@ -1016,7 +1016,7 @@ namespace DoorsExpanded
             var offsetVector = new Vector3(-1f, 0f, 0f);
             mesh = MeshPool.plane10;
 
-            if (props.doorFrameSplit != null)
+            if (props.doorFrameSplit is not null)
             {
                 if (rotation == Rot4.West)
                 {
@@ -1057,7 +1057,7 @@ namespace DoorsExpanded
             graphicVector += offsetVector;
 
             var frameOffsetVector = props.doorFrameOffset;
-            if (props.doorFrameSplit != null)
+            if (props.doorFrameSplit is not null)
             {
                 if (rotation == Rot4.West)
                 {
@@ -1077,7 +1077,7 @@ namespace DoorsExpanded
             if (!def.rotatable)
             {
                 var size = def.Size;
-                if ((size.x == 1 && size.z == 1) || props.doorType == DoorType.StretchVertical || props.doorType == DoorType.Stretch)
+                if ((size.x == 1 && size.z == 1) || props.doorType is DoorType.StretchVertical or DoorType.Stretch)
                     rot = Building_Door.DoorRotationAt(loc, map);
             }
             if (!props.rotatesSouth && rot == Rot4.South)

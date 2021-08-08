@@ -123,7 +123,7 @@ namespace DoorsExpanded
             var tempParentDoor = (ILoadReferenceable)parentDoor;
             Scribe_References.Look(ref tempParentDoor, nameof(parentDoor));
             parentDoor = tempParentDoor as Building_DoorExpanded;
-            if (tempParentDoor != null && parentDoor == null)
+            if (tempParentDoor is not null && parentDoor is null)
             {
                 if (TLog.Enabled)
                     TLog.Log(this, $"{this} has invalid parentDoor type {tempParentDoor.GetType()} - invalidating position to avoid spawning");
@@ -143,20 +143,21 @@ namespace DoorsExpanded
         public override void Tick()
         {
             // Sanity checks. These are inexpensive and thus done every tick.
-            if (ParentDoor == null || !ParentDoor.Spawned)
+            var parentDoor = ParentDoor;
+            if (parentDoor is not { Spawned: true })
             {
-                var stateStr = ParentDoor == null ? "null" : ParentDoor.Destroyed ? "destroyed" : "unspawned";
+                var stateStr = parentDoor is null ? "null" : parentDoor.Destroyed ? "destroyed" : "unspawned";
                 Log.Error($"{this}.ParentDoor is unexpectedly {stateStr} - destroying this");
                 Destroy();
                 return;
             }
-            if (Faction != ParentDoor.Faction)
-                SetFaction(ParentDoor.Faction);
+            if (Faction != parentDoor.Faction)
+                SetFaction(parentDoor.Faction);
 
             // Some mods (such as OpenedDoorsDontBlockLight) directly read ticksSinceOpen or ticksUntilClose fields,
             // since no public accessor exists for those fields, so for compatibility with such mods, copy them from parent door here.
-            ticksSinceOpen = ParentDoor.TicksSinceOpen;
-            ticksUntilClose = ParentDoor.TicksUntilClose;
+            ticksSinceOpen = parentDoor.TicksSinceOpen;
+            ticksUntilClose = parentDoor.TicksUntilClose;
 
             // We're delegating all the Tick logic to Building_DoorExpanded, which syncs its fields with its invis doors as needed.
             // So we skip calling Building_Door.Tick (via base.Tick()) and instead call Building.Tick (actually ThingWithComps.Tick).
@@ -200,7 +201,7 @@ namespace DoorsExpanded
 
         public override string ToString()
         {
-            if (parentDoor == null)
+            if (parentDoor is null)
                 return base.ToString() + " (NO PARENT)";
             return base.ToString() + $" ({parentDoor}.invisDoors[{parentDoor.InvisDoors.IndexOf(this)}])";
         }

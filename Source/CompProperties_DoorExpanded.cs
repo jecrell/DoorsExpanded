@@ -56,11 +56,11 @@ namespace DoorsExpanded
                     yield return $"contains multiple {typeof(CompProperties_DoorExpanded)}s";
             }
 
-            if (parentDef.category != ThingCategory.Building)
+            if (parentDef.category is not ThingCategory.Building)
                 yield return $"{this} must have category {ThingCategory.Building}";
-            if (parentDef.tickerType != TickerType.Normal)
+            if (parentDef.tickerType is not TickerType.Normal)
                 yield return $"{this} must have tickerType {TickerType.Normal}";
-            if (parentDef.drawerType != DrawerType.RealtimeOnly)
+            if (parentDef.drawerType is not DrawerType.RealtimeOnly)
                 yield return $"{this} must have drawerType {DrawerType.RealtimeOnly}";
         }
 
@@ -80,13 +80,13 @@ namespace DoorsExpanded
             base.ResolveReferences(parentDef);
 
             // See comments regarding stretch property defaults in the fields above.
-            if (parentDef.graphicData != null && (doorType == DoorType.Stretch || doorType == DoorType.StretchVertical))
+            if (parentDef.graphicData is { } graphicData && doorType is DoorType.Stretch or DoorType.StretchVertical)
             {
                 if (stretchCloseSize == Vector2.zero)
-                    stretchCloseSize = parentDef.graphicData.drawSize;
+                    stretchCloseSize = graphicData.drawSize;
                 if (stretchOpenSize == Vector2.zero)
                 {
-                    if (doorType == DoorType.Stretch)
+                    if (doorType is DoorType.Stretch)
                         stretchOpenSize = new Vector2(stretchCloseSize.x * DefaultStretchPercent, stretchCloseSize.y);
                     else
                         stretchOpenSize = new Vector2(stretchCloseSize.x, stretchCloseSize.y * DefaultStretchPercent);
@@ -118,7 +118,18 @@ namespace DoorsExpanded
         public static CompProperties_DoorExpanded GetDoorExpandedProps(this Def def) =>
             def is ThingDef thingDef ? thingDef.GetDoorExpandedProps() : null;
 
-        public static CompProperties_DoorExpanded GetDoorExpandedProps(this ThingDef def) =>
-            def.GetCompProperties<CompProperties_DoorExpanded>();
+        // Avoiding ThingDef.GetCompProperties<T> and implementing a specific non-generic version of it here.
+        // That method is slow because the `isinst` instruction with generic type arg operands is very slow,
+        // while `isinst` instruction against non-generic type operand like used below is fast.
+        public static CompProperties_DoorExpanded GetDoorExpandedProps(this ThingDef def)
+        {
+            var allProps = def.comps;
+            for (int i = 0, count = allProps.Count; i < count; i++)
+            {
+                if (allProps[i] is CompProperties_DoorExpanded props)
+                    return props;
+            }
+            return null;
+        }
     }
 }
