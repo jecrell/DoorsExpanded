@@ -9,15 +9,15 @@ using Verse;
 namespace DoorsExpanded
 {
     /// <summary>
-    /// 
+    ///
     /// Door Region Handler
-    /// 
+    ///
     /// What: These are children doors spawned inside a larger door.
-    /// 
+    ///
     /// Why: This class is used instead of rewriting the base RimWorld code for
     /// handling regions. Regions do not handle large doors well. So this class
     /// will add smaller, invisible doors, inside a bigger door.
-    /// 
+    ///
     /// </summary>
     public class Building_DoorRegionHandler : Building_Door
     {
@@ -76,10 +76,14 @@ namespace DoorsExpanded
         private static readonly AccessTools.FieldRef<Building_Door, bool> Building_Door_holdOpenInt =
             AccessTools.FieldRefAccess<Building_Door, bool>("holdOpenInt");
 
+        private static readonly AccessTools.FieldRef<Thing, IntVec3> Thing_positionInt =
+            AccessTools.FieldRefAccess<Thing, IntVec3>("positionInt");
+
         public override bool FireBulwark => ParentDoor.FireBulwark;
 
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
+            TLog.Log(this);
             // Building_Door.SpawnSetup calls BlockedOpenMomentary, which will be delegating to Building_DoorExpanded.
             // Since that Building_DoorExpanded may not be spawned yet, we want to avoid this.
             // Building_Door.SpawnSetup also calls ClearReachabilityCache, which is redundant with Building_DoorExpanded
@@ -95,6 +99,7 @@ namespace DoorsExpanded
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
+            TLog.Log(this);
             // This check is necessary to prevent errors during operations that despawn all things in the same cell,
             // since despawning/destroying parent doors also destroys their invis doors.
             if (Spawned)
@@ -103,6 +108,7 @@ namespace DoorsExpanded
 
         public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
         {
+            TLog.Log(this);
             // This check is necessary to prevent errors during operations that destroy all things in the same cell,
             // since despawning/destroying parent doors also destroys their invis doors.
             if (!Destroyed)
@@ -112,7 +118,17 @@ namespace DoorsExpanded
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_References.Look(ref parentDoor, nameof(parentDoor));
+            // This roundabout way of setting parentDoor is to handle the case where parentDoor is no longer a Building_DoorExpanded
+            // (potentially due to XML def/patch changes), in which case, we invalidate the position to prevent spawning this invis door.
+            var tempParentDoor = (ILoadReferenceable)parentDoor;
+            Scribe_References.Look(ref tempParentDoor, nameof(parentDoor));
+            parentDoor = tempParentDoor as Building_DoorExpanded;
+            if (tempParentDoor is not null && parentDoor is null)
+            {
+                if (TLog.Enabled)
+                    TLog.Log(this, $"{this} has invalid parentDoor type {tempParentDoor.GetType()} - invalidating position to avoid spawning");
+                Thing_positionInt(this) = IntVec3.Invalid;
+            }
         }
 
         public override void SetFaction(Faction newFaction, Pawn recruiter = null)
@@ -127,25 +143,27 @@ namespace DoorsExpanded
         public override void Tick()
         {
             // Sanity checks. These are inexpensive and thus done every tick.
-            if (ParentDoor == null || !ParentDoor.Spawned)
+            var parentDoor = ParentDoor;
+            if (parentDoor is not { Spawned: true })
             {
-                Destroy(DestroyMode.Vanish);
+                var stateStr = parentDoor is null ? "null" : parentDoor.Destroyed ? "destroyed" : "unspawned";
+                Log.Error($"{this}.ParentDoor is unexpectedly {stateStr} - destroying this");
+                Destroy();
                 return;
             }
-            if (Faction != ParentDoor.Faction)
-                SetFaction(ParentDoor.Faction);
+            if (Faction != parentDoor.Faction)
+                SetFaction(parentDoor.Faction);
 
             // Some mods (such as OpenedDoorsDontBlockLight) directly read ticksSinceOpen or ticksUntilClose fields,
             // since no public accessor exists for those fields, so for compatibility with such mods, copy them from parent door here.
-            ticksSinceOpen = ParentDoor.TicksSinceOpen;
-            ticksUntilClose = ParentDoor.TicksUntilClose;
+            ticksSinceOpen = parentDoor.TicksSinceOpen;
+            ticksUntilClose = parentDoor.TicksUntilClose;
 
             // We're delegating all the Tick logic to Building_DoorExpanded, which syncs its fields with its invis doors as needed.
             // So we skip calling Building_Door.Tick (via base.Tick()) and instead call Building.Tick (actually ThingWithComps.Tick).
             // Not replicating the logic in ThingWithComps.Tick, in case the logic changes or another mod patches that method.
-            if (Building_Tick == null)
-                Building_Tick = (Action)Activator.CreateInstance(typeof(Action), this,
-                    methodof_Building_Tick.MethodHandle.GetFunctionPointer());
+            Building_Tick ??= (Action)Activator.CreateInstance(typeof(Action), this,
+                methodof_Building_Tick.MethodHandle.GetFunctionPointer());
             Building_Tick();
         }
 
@@ -183,7 +201,9 @@ namespace DoorsExpanded
 
         public override string ToString()
         {
-            return base.ToString() + " of " + parentDoor;
+            if (parentDoor is null)
+                return base.ToString() + " (NO PARENT)";
+            return base.ToString() + $" ({parentDoor}.invisDoors[{parentDoor.InvisDoors.IndexOf(this)}])";
         }
     }
 }

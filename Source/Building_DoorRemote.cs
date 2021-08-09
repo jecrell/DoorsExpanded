@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -51,16 +51,16 @@ namespace DoorsExpanded
         // else can be held open either remotely or by gizmo.
         public override bool HoldOpen => securedRemotely ? HoldOpenRemotely : HoldOpenRemotely || base.HoldOpen;
 
-        public bool HoldOpenRemotely => Button != null && Button.ButtonOn;
+        public bool HoldOpenRemotely => Button is { ButtonOn: true };
 
         public bool ForcedClosed => SecuredRemotely && !Open;
 
         public override bool Forbidden => ForcedClosed || base.Forbidden;
 
         // For purposes of determining whether a door can be closed automatically,
-        // treat a powered door that's linked to an enabled button as always being "friendly touched".
+        // treat a powered door that's linked to an enabled button (NeedsPower is false) as always being "friendly touched".
         internal protected override bool FriendlyTouchedRecently =>
-            (!button?.NeedsPower ?? false) && DoorPowerOn || base.FriendlyTouchedRecently;
+            button is { NeedsPower: false } && DoorPowerOn || base.FriendlyTouchedRecently;
 
         public override void ExposeData()
         {
@@ -70,7 +70,10 @@ namespace DoorsExpanded
         }
 
         private const float LockPulseFrequency = 1.5f; // OverlayDrawer.PulseFrequency is 4f
-        private const float LockPulseAmplitude = 0.7f; // same as OverlayDrawer.PulseAmplitude
+        private const float LockPulseAmplitude = 0.7f * 0.6f; // OverlayDrawer.PulseAmplitude is 0.7f
+        private const float LockPulseMinAlpha = 0.3f; // 1f - OverlayDrawer.PulseAmplitude (same as vanilla)
+        private static readonly float LockDrawY =
+            AltitudeLayer.MetaOverlays.AltitudeFor() + Altitudes.AltInc * 6; // from OverlayDrawer.RenderQuestionMarkOverlay
 
         public override void Draw()
         {
@@ -78,20 +81,25 @@ namespace DoorsExpanded
             {
                 // This is based off OverlayDrawer.RenderQuestionMarkOverlay/RenderPulsingOverlayInternal, with customized parameters.
                 var drawLoc = DrawPos;
-                drawLoc.y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays) + Altitudes.AltInc * 6;
+                drawLoc.y = LockDrawY;
                 var sineInput = (Time.realtimeSinceStartup + 397f * (thingIDNumber % 571)) * LockPulseFrequency;
-                var alpha = ((float)Math.Sin(sineInput) + 1f) * 0.3f;
-                alpha = 0.3f + alpha * LockPulseAmplitude;
+                var alpha = (Mathf.Sin(sineInput) + 1f) * 0.5f;
+                alpha = 1 - LockPulseMinAlpha + alpha * LockPulseAmplitude;
                 var material = FadedMaterialPool.FadedVersionOf(TexOverlay.LockedOverlay, alpha);
-                Graphics.DrawMesh(MeshPool.plane05, drawLoc, Quaternion.identity, material, 0);
+                var drawBatch = OverlayDrawer_drawBatch(Map.overlayDrawer);
+                drawBatch.DrawMesh(MeshPool.plane05, Matrix4x4.TRS(drawLoc, Quaternion.identity, Vector3.one), material,
+                    layer: 0, renderInstanced: true);
             }
             base.Draw();
         }
 
+        private static readonly AccessTools.FieldRef<OverlayDrawer, DrawBatch> OverlayDrawer_drawBatch =
+            AccessTools.FieldRefAccess<OverlayDrawer, DrawBatch>("drawBatch");
+
         public override void DrawExtraSelectionOverlays()
         {
-            if (Button != null)
-                GenDraw.DrawLineBetween(this.TrueCenter(), Button.TrueCenter());
+            if (Button is { } button)
+                GenDraw.DrawLineBetween(this.TrueCenter(), button.TrueCenter());
             base.DrawExtraSelectionOverlays();
         }
 
@@ -119,7 +127,7 @@ namespace DoorsExpanded
                         isActive = () => SecuredRemotely,
                         toggleAction = () => SecuredRemotely = !SecuredRemotely,
                     };
-                    if (Button == null)
+                    if (Button is null)
                         toggle.Disable("PH_ButtonNeeded".Translate());
                     if (!DoorPowerOn)
                         toggle.Disable("PH_PowerNeeded".Translate());
@@ -133,7 +141,7 @@ namespace DoorsExpanded
                         action = ButtonConnect,
                     };
 
-                    if (Button != null)
+                    if (Button is not null)
                     {
                         yield return new Command_Action
                         {
@@ -190,13 +198,7 @@ namespace DoorsExpanded
                 {
                     if (Button != otherButton)
                     {
-                        if (Button != null)
-                        {
-                            DisplayUnlinkedMessage();
-                        }
                         Button = otherButton;
-                        Messages.Message("PH_ButtonConnectSuccess".Translate(otherButton.PositionHeld.ToString()), otherButton,
-                            MessageTypeDefOf.PositiveEvent);
                         UpdateOpenStateFromButtonEvent();
                     }
                 }
@@ -209,17 +211,8 @@ namespace DoorsExpanded
 
         private void ButtonDisconnect()
         {
-            DisplayUnlinkedMessage();
             Button = null;
             SecuredRemotely = false;
-        }
-
-        private void DisplayUnlinkedMessage()
-        {
-            if (Button.Spawned)
-                Messages.Message("PH_ButtonUnlinked".Translate(Button.PositionHeld.ToString()), Button, MessageTypeDefOf.SilentInput);
-            else
-                Messages.Message("PH_ButtonUnlinkedUnspawned".Translate(Button.PositionHeld.ToString()), MessageTypeDefOf.SilentInput);
         }
     }
 }
