@@ -10,3 +10,4 @@ Currently included:
 * Autodoors (2x1, 3x2) - Double/triple sized autodoors. All autodoors (including vanilla 1x1 autodoor) also can be opened by remote buttons or levers.
 
 Commissioned by CMDR Toss Antilles.
+Major rewrite by lbmaian
