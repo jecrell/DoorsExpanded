@@ -280,6 +280,7 @@ Room members that are new:
 	public bool ProperRoom
 	private int OpenRoofCountStopAt(int threshold)
 		Room.OpenRoofCountStopAt already exists, but its code is moved to District.OpenRoofCountStopAt
+	public IEnumerable<Thing> ContainedThingsList(IEnumerable<ThingDef> thingDefs)
 	private string DebugRolesString()
 	public override string ToString()
 		Room.ToString already exists, but its code is moved to District.ToString
