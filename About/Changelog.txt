@@ -1,3 +1,10 @@
+1.4.0.1 (09-10-2021)
+========================
+Fix crash due to infinite recursion in RW 1.3.3116+
+Fix blueprints and frames of our doors not having proper labels
+Fix CompProperties_PostProcessText not being removed after processing if not in dev mode (minor optimization)
+Update PlaceWorker_OnTopOfWalls to consider smoothed buildings as walls (note: if JecsTools is loaded before Doors Expanded, this fix won't apply for the time being)
+
 1.4.0.0 (08-08-2021)
 ========================
 Note: Starting from this version, changes only apply to RimWorld 1.3+.
