@@ -35,10 +35,11 @@ namespace DoorsExpanded
                     return;
             }
 
+            var context = Current.Game is { } game ? $"Tick {game.tickManager.TicksGame}" : $"{Current.ProgramState}";
             message ??= obj.ToString();
             if (logLevel is TLogLevel.Debug)
             {
-                message = $"[Tick {Find.TickManager.TicksGame}] {message} called from {obj.GetType()}:{callerMemberName}";
+                message = $"[{context}] {message} called from {obj as Type ?? obj.GetType()}:{callerMemberName}";
             }
             else // if (logLevel is TLogLevel.StackTrace)
             {
@@ -58,12 +59,12 @@ namespace DoorsExpanded
                         updateValueFactory: (_, counter) => counter + 1);
                     return $"{methodName} {{{counter}}}";
                 });
-                message = $"[Tick {Find.TickManager.TicksGame}] {message} called from {id}";
+                message = $"[{context}] {message} called from {id}";
                 if (newId)
                     message += "\n" + stackTraceStr;
             }
 
-            // Workaround for RW 1.2 now monitoring all Unity Debug usage for the 1000 max message limit:
+            // Workaround for RW 1.2+ now monitoring all Unity Debug usage for the 1000 max message limit:
             if (!UnityEngine.Debug.unityLogger.logEnabled)
                 Verse.Log.ResetMessageCount();
 
