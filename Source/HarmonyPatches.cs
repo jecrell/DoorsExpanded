@@ -332,6 +332,10 @@ namespace DoorsExpanded
             Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.StartManualCloseBy)),
                 prefix: nameof(InvisDoorStartManualCloseByPrefix),
                 priority: Priority.First);
+            Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.SpawnSetup)),
+                transpiler: nameof(InvisDoorSpawnSetupTranspiler));
+            Patch(original: AccessTools.Method(typeof(Building_Door), nameof(Building_Door.Tick)),
+                transpiler: nameof(InvisDoorTickTranspiler));
 
             // Patches to redirect access from invis door def to its parent door def.
             Patch(original: AccessTools.Method(typeof(GenStep_Terrain), nameof(GenStep_Terrain.Generate)),
@@ -743,6 +747,56 @@ namespace DoorsExpanded
                 return false;
             }
             return true;
+        }
+
+        // Building_Door.SpawnSetup
+        public static IEnumerable<CodeInstruction> InvisDoorSpawnSetupTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator ilGen)
+        {
+            // Building_Door.SpawnSetup calls BlockedOpenMomentary, which will be delegating to Building_DoorExpanded.
+            // If this is a Building_DoorRegionHandler, that Building_DoorExpanded may not be spawned yet, so we want to avoid this.
+            // (It also calls ClearReachabilityCache, which is redundant with Building_DoorExpanded, although not harmful).
+            // So if this is a Building_DoorRegionHandler, exit early after the call to Building.SpawnSetup.
+            // Historical: this used to be done in Building_DoorRegionHandler.SpawnSetup override, but the way it was done
+            // no longer seems to work in RW 1.3.3116+ (due to the Unity update?); hence, this Harmony patch.
+            return InvisDoorBaseCallTranspiler(instructions, ilGen, AccessTools.Method(typeof(Building), nameof(Building.SpawnSetup)));
+        }
+
+        // Building_Door.Tick
+        public static IEnumerable<CodeInstruction> InvisDoorTickTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator ilGen)
+        {
+            // If this is a Building_DoorRegionHandler, all Tick logic is delegated to Building_DoorExpanded,
+            // which syncs its fields with its invis doors as needed. So all the Tick logic in Building_Door itself should be skipped,
+            // other than that in Building.Tick, or rather ThingWithComps.Tick, since Building.Tick doesn't exist.
+            // Not replicating the logic in ThingWithComps.Tick, in case the logic changes or another mod patches that method.
+            // Historical: this used to be done in Building_DoorRegionHandler.Tick override, but the way it was done
+            // no longer seems to work in RW 1.3.3116+ (due to the Unity update?); hence, this Harmony patch.
+            return InvisDoorBaseCallTranspiler(instructions, ilGen, AccessTools.Method(typeof(Building), nameof(Building.Tick)));
+        }
+
+        // Generic transpiler that transforms all following instances of code:
+        //  base.<baseMethod>(...)
+        // into:
+        //  base.<baseMethod>(...)
+        //  if (this is Building_DoorRegionHandler)
+        //      return;
+        private static IEnumerable<CodeInstruction> InvisDoorBaseCallTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator ilGen,
+            MethodInfo baseMethod)
+        {
+            var instructionsList = instructions.AsList();
+
+            var baseCallIndex = instructionsList.FindIndex(instr => instr.Calls(baseMethod));
+            var afterBaseCallLabel = ilGen.DefineLabel();
+            var afterBaseCallInstr = instructionsList[baseCallIndex + 1];
+            instructionsList.SafeInsertRange(baseCallIndex + 1, new[]
+            {
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Isinst, typeof(Building_DoorRegionHandler)),
+                new CodeInstruction(OpCodes.Brfalse, afterBaseCallLabel),
+                new CodeInstruction(OpCodes.Ret),
+            });
+            afterBaseCallInstr.labels.Add(afterBaseCallLabel);
+
+            return instructionsList;
         }
 
         // GenStep_Terrain.Generate

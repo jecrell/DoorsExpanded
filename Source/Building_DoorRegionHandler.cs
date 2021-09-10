@@ -84,18 +84,9 @@ namespace DoorsExpanded
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             TLog.Log(this);
-            // Building_Door.SpawnSetup calls BlockedOpenMomentary, which will be delegating to Building_DoorExpanded.
-            // Since that Building_DoorExpanded may not be spawned yet, we want to avoid this.
-            // Building_Door.SpawnSetup also calls ClearReachabilityCache, which is redundant with Building_DoorExpanded
-            // (although not harmful).
-            // So we skip calling Building_Door.SpawnSetup (via base.SpawnSetup) and instead call Building.SpawnSetup.
-            var Building_SpawnSetup = (Action<Map, bool>)Activator.CreateInstance(typeof(Action<Map, bool>), this,
-                methodof_Building_SpawnSetup.MethodHandle.GetFunctionPointer());
-            Building_SpawnSetup(map, respawningAfterLoad);
+            // See HarmonyPatches.InvisDoorSpawnSetupTranspiler.
+            base.SpawnSetup(map, respawningAfterLoad);
         }
-
-        private static readonly MethodInfo methodof_Building_SpawnSetup =
-            AccessTools.Method(typeof(Building), nameof(Building.SpawnSetup));
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
@@ -159,17 +150,9 @@ namespace DoorsExpanded
             ticksSinceOpen = parentDoor.TicksSinceOpen;
             ticksUntilClose = parentDoor.TicksUntilClose;
 
-            // We're delegating all the Tick logic to Building_DoorExpanded, which syncs its fields with its invis doors as needed.
-            // So we skip calling Building_Door.Tick (via base.Tick()) and instead call Building.Tick (actually ThingWithComps.Tick).
-            // Not replicating the logic in ThingWithComps.Tick, in case the logic changes or another mod patches that method.
-            Building_Tick ??= (Action)Activator.CreateInstance(typeof(Action), this,
-                methodof_Building_Tick.MethodHandle.GetFunctionPointer());
-            Building_Tick();
+            // See HarmonyPatches.InvisDoorTickTranspiler.
+            base.Tick();
         }
-
-        private static readonly MethodInfo methodof_Building_Tick =
-            AccessTools.Method(typeof(Building), nameof(Building.Tick));
-        private Action Building_Tick;
 
         public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
         {
