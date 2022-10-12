@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configurations>RW1.3;RW1.3Unstable</Configurations>
+    <Configurations>RW1.3;RW1.3Unstable;RW1.4Unstable</Configurations>
     <Configuration Condition=" '$(Configuration)' == '' ">RW1.3</Configuration>
     <AssemblyName>DoorsExpanded</AssemblyName>
     <TargetFramework>net472</TargetFramework>
@@ -17,6 +17,24 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <Choose>
+	  <When Condition=" '$(Configuration)' == 'RW1.4' ">
+		  <PropertyGroup>
+			  <OutputPath>..\1.4\Assemblies\</OutputPath>
+		  </PropertyGroup>
+		  <ItemGroup>
+			  <PackageReference Include="Krafs.Rimworld.Ref" Version="1.4.*" /> <!-- only stable versions -->
+			  <!-- only stable versions -->
+		  </ItemGroup>
+	  </When>
+	  <When Condition=" '$(Configuration)' == 'RW1.4Unstable' ">
+		  <PropertyGroup>
+			  <OutputPath>..\1.4\Assemblies\</OutputPath>
+		  </PropertyGroup>
+		  <ItemGroup>
+			  <PackageReference Include="Krafs.Rimworld.Ref" Version="1.4.*-*" />
+			  <!-- * suffix allows beta/prerelease versions -->
+		  </ItemGroup>
+	  </When>	  
     <When Condition=" '$(Configuration)' == 'RW1.3' ">
       <PropertyGroup>
         <OutputPath>..\1.3\Assemblies\</OutputPath>

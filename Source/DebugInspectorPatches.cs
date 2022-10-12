@@ -30,21 +30,21 @@ namespace DoorsExpanded
     {
         public static void PatchDebugInspector()
         {
-            var harmony = HarmonyPatches.harmony;
-            var type = typeof(DebugInspectorPatches);
-            harmony.Patch(original: AccessTools.Constructor(typeof(Dialog_DebugSettingsMenu)),
-                transpiler: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsTranspiler)));
-            harmony.Patch(original: AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoListingItems"),
-                transpiler: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsTranspiler)),
-                postfix: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsPostfix)));
-            harmony.Patch(original: AccessTools.Method(typeof(EditWindow_DebugInspector), "CurrentDebugString"),
-                transpiler: new HarmonyMethod(type, nameof(EditWindowDebugInspectorTranspiler)));
-            harmony.Patch(original: AccessTools.Method(typeof(District), "DebugString"),
-                postfix: new HarmonyMethod(type, nameof(DistrictMoreDebugString)));
-            harmony.Patch(original: AccessTools.Method(typeof(Room), nameof(Room.DebugString)),
-                postfix: new HarmonyMethod(type, nameof(RoomMoreDebugString)));
-            harmony.Patch(original: AccessTools.Method(typeof(DoorsDebugDrawer), nameof(DoorsDebugDrawer.DrawDebug)),
-                postfix: new HarmonyMethod(type, nameof(AddMoreDoorsDebugDrawer)));
+            //var harmony = HarmonyPatches.harmony;
+            //var type = typeof(DebugInspectorPatches);
+            //harmony.Patch(original: AccessTools.Constructor(typeof(Dialog_DebugSettingsMenu)),
+            //    transpiler: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsTranspiler)));
+            //harmony.Patch(original: AccessTools.Method(typeof(Dialog_DebugSettingsMenu), "DoListingItems"),
+            //    transpiler: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsTranspiler)),
+            //    postfix: new HarmonyMethod(type, nameof(AddMoreDebugViewSettingsPostfix)));
+            //harmony.Patch(original: AccessTools.Method(typeof(EditWindow_DebugInspector), "CurrentDebugString"),
+            //    transpiler: new HarmonyMethod(type, nameof(EditWindowDebugInspectorTranspiler)));
+            //harmony.Patch(original: AccessTools.Method(typeof(District), "DebugString"),
+            //    postfix: new HarmonyMethod(type, nameof(DistrictMoreDebugString)));
+            //harmony.Patch(original: AccessTools.Method(typeof(Room), nameof(Room.DebugString)),
+            //    postfix: new HarmonyMethod(type, nameof(RoomMoreDebugString)));
+            //harmony.Patch(original: AccessTools.Method(typeof(DoorsDebugDrawer), nameof(DoorsDebugDrawer.DrawDebug)),
+            //    postfix: new HarmonyMethod(type, nameof(AddMoreDoorsDebugDrawer)));
         }
 
         private static Dictionary<string, bool> patchCallRegistry;
