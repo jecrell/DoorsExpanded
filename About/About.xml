@@ -19,7 +19,7 @@
       <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
     </li>
   </modDependencies>
-  <description>1.4.1.0 (10-11-2022)
+  <description>1.4.1.1 (10-21-2022)
 
 Adds new types and sizes of doors to RimWorld and an extensible framework for other mods to add such doors.
 
@@ -43,6 +43,10 @@ Michael Fisher, Storm D Bain, Luke Salinas, WonkyWoo WeebHoo, Daniel Schott, Rai
 ========================
 Changelog
 ========================
+1.4.1.1 (10-21-2022)
+========================
+Initial update for RimWorld 1.4 for Doors Expanded
+
 1.4.1.0 (10-11-2022)
 ========================
 Updates DoorsExpanded to support 1.4.3514 Unstable
