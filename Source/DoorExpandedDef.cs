@@ -23,11 +23,12 @@ namespace DoorsExpanded
         public bool singleDoor = false;
         public DoorType doorType = DoorType.Standard;
         public bool rotatesSouth = true;
-        [Obsolete("Use CompProperties_DoorExpanded.tempEqualizeRate instead (note: tempEqualizeRate is the inverse of confusingly named " +
+        [Obsolete("Use CompProperties_DoorExpanded.tempEqualizeRate instead (note: tempEqualizeRate is the inverse of " +
             "tempLeakRate, then multiplied by TemperatureTuning.Door_TempEqualizeIntervalClosed)")]
         public int tempLeakRate = TemperatureTuning.Door_TempEqualizeIntervalClosed;
-        public float doorOpenMultiplier = Building_DoorExpanded.VisualDoorOffsetEnd;
-        [Obsolete("Use the DoorOpenSpeed stat instead (note: DoorOpenSpeed stat is the inverse of confusingly named doorOpenSpeedRate)")]
+        [Obsolete("No longer in use")]
+        public float doorOpenMultiplier = 0f; // Building_DoorExpanded.VisualDoorOffsetEnd;
+        [Obsolete("Use the DoorOpenSpeed stat instead (note: DoorOpenSpeed stat is the inverse of doorOpenSpeedRate)")]
         public float doorOpenSpeedRate = 1.0f;
         public GraphicData doorFrame;
         public Vector3 doorFrameOffset;
@@ -63,7 +64,7 @@ namespace DoorsExpanded
                     // tempLeakRate is counterintuitive whereby lower tempLeakRate resulted in faster temperature equalization rate.
                     // So tempLeakRate is deprecated in favor of a new props.tempEqualizeRate, such that:
                     tempEqualizeRate = TemperatureTuning.Door_TempEqualizeIntervalClosed / tempLeakRate,
-                    doorOpenMultiplier = doorOpenMultiplier,
+                    //doorOpenMultiplier = doorOpenMultiplier,
                     doorFrame = doorFrame,
                     doorFrameOffset = doorFrameOffset,
                     doorFrameSplit = doorFrameSplit,

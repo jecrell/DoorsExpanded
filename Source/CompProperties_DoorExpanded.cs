@@ -71,7 +71,11 @@ namespace DoorsExpanded
             if (typeof(Building_DoorRemote).IsAssignableFrom(parentDef.thingClass))
             {
                 var remoteDoorDescription = "PH_RemoteDoor".Translate();
-                if (!parentDef.description.Contains(remoteDoorDescription))
+                if(parentDef.description is null)
+                {
+                    parentDef.description = remoteDoorDescription;
+                }
+                else if(!parentDef.description.Contains(remoteDoorDescription))
                 {
                     parentDef.description += " " + remoteDoorDescription;
                 }
@@ -106,6 +110,7 @@ namespace DoorsExpanded
                     .FindAll(def => typeof(Building_DoorRemoteButton).IsAssignableFrom(def.thingClass));
                 buildingProps.relatedBuildCommands = cachedDoorRemoteDefs;
             }
+
         }
 
         [ThreadStatic]

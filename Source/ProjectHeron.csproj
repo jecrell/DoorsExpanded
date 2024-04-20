@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configurations>RW1.3;RW1.3Unstable;RW1.4Unstable</Configurations>
+    <Configurations>RW1.3;RW1.3Unstable;RW1.4Unstable;RW1.5Unstable</Configurations>
     <Configuration Condition=" '$(Configuration)' == '' ">RW1.3</Configuration>
     <AssemblyName>DoorsExpanded</AssemblyName>
     <TargetFramework>net472</TargetFramework>
@@ -53,6 +53,7 @@
     </When>
   </Choose>
   <ItemGroup>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.4.3901" />
     <PackageReference Include="Lib.Harmony" Version="2.1.*" ExcludeAssets="runtime" />
   </ItemGroup>
   <ItemGroup>

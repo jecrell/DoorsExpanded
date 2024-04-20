@@ -33,34 +33,38 @@ namespace DoorsExpanded
             {
                 securedRemotely = value;
                 // Reactive update due to Forbidden depending on SecuredRemotely (via ForcedClosed).
-                Notify_ForbiddenInputChanged();
+                ForbidUtility.SetForbidden(this, value);
             }
         }
 
-        protected override bool OpenInt
+        protected bool OpenInt
         {
             set
             {
-                base.OpenInt = value;
+                base.openInt = value;
                 // Reactive update due to Forbidden depending on OpenInt (via Open via ForcedClosed).
-                Notify_ForbiddenInputChanged();
+                ForbidUtility.SetForbidden(this, value);
+            }
+        }
+
+        protected bool HoldOpenInt
+        {
+            set
+            {
+                base.holdOpenInt = value;
             }
         }
 
         // When secured remotely, only care about whether its held open remotely;
         // else can be held open either remotely or by gizmo.
-        public override bool HoldOpen => securedRemotely ? HoldOpenRemotely : HoldOpenRemotely || base.HoldOpen;
+        public bool HoldOpen => securedRemotely ? HoldOpenRemotely : HoldOpenRemotely || base.HoldOpen;
 
         public bool HoldOpenRemotely => Button is { ButtonOn: true };
 
         public bool ForcedClosed => SecuredRemotely && !Open;
 
-        public override bool Forbidden => ForcedClosed || base.Forbidden;
+        public bool Forbidden => ForcedClosed || ForbidUtility.IsForbidden(this, this.Faction);
 
-        // For purposes of determining whether a door can be closed automatically,
-        // treat a powered door that's linked to an enabled button (NeedsPower is false) as always being "friendly touched".
-        internal protected override bool FriendlyTouchedRecently =>
-            button is { NeedsPower: false } && DoorPowerOn || base.FriendlyTouchedRecently;
 
         public override void ExposeData()
         {
@@ -75,12 +79,11 @@ namespace DoorsExpanded
         private static readonly float LockDrawY =
             AltitudeLayer.MetaOverlays.AltitudeFor() + Altitudes.AltInc * 6; // from OverlayDrawer.RenderQuestionMarkOverlay
 
-        public override void Draw()
+        protected override void DrawAt(Vector3 drawLoc, bool flip = false)
         {
             if (ForcedClosed)
             {
                 // This is based off OverlayDrawer.RenderQuestionMarkOverlay/RenderPulsingOverlayInternal, with customized parameters.
-                var drawLoc = DrawPos;
                 drawLoc.y = LockDrawY;
                 var sineInput = (Time.realtimeSinceStartup + 397f * (thingIDNumber % 571)) * LockPulseFrequency;
                 var alpha = (Mathf.Sin(sineInput) + 1f) * 0.5f;
@@ -90,7 +93,7 @@ namespace DoorsExpanded
                 drawBatch.DrawMesh(MeshPool.plane05, Matrix4x4.TRS(drawLoc, Quaternion.identity, Vector3.one), material,
                     layer: 0, renderInstanced: true);
             }
-            base.Draw();
+            base.DrawAt(drawLoc, flip);
         }
 
         private static readonly AccessTools.FieldRef<OverlayDrawer, DrawBatch> OverlayDrawer_drawBatch =
@@ -161,7 +164,7 @@ namespace DoorsExpanded
 
         public void Notify_ButtonPushed()
         {
-            if (DoorPowerOff)
+            if (powerComp is CompPowerTrader power && !power.PowerOn)
             {
                 Messages.Message("PH_CannotOpenRemotelyWithoutPower".Translate(Label), this, MessageTypeDefOf.RejectInput);
                 return;

@@ -19,7 +19,7 @@ namespace DoorsExpanded
 
         public DoorsExpandedMod(ModContentPack content) : base(content)
         {
-            HarmonyPatches.EarlyPatches();
+            //HarmonyPatches.EarlyPatches(); Removed in 1.5
             Settings = GetSettings<DoorsExpandedSettings>();
         }
 

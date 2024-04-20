@@ -1,3 +1,7 @@
+1.5.0.0 (04-20-2024)
+========================
+Updated for RimWorld 1.5 to use the new MultiTileDoor class instead of invisible doors. Saves from 1.4 to 1.5 will need to rebuild their doors in the new 1.5 version.
+
 1.4.1.1 (10-21-2022)
 ========================
 Initial update for RimWorld 1.4 for Doors Expanded
